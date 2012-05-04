@@ -1,0 +1,176 @@
+=head1 NAME
+
+optargs - declarative options and arguments for Perl scripts
+
+=head1 SYNOPSIS
+
+    use optargs;
+
+    opt quiet => (
+        isa     => 'Bool',
+        alias   => 'q',
+        comment => 'be quiet please',
+    );
+
+    print "Working \n" unless opts->quiet;
+
+=head1 DESCRIPTION
+
+B<optargs> provides command-line option and argument processing for
+Perl scripts.  It is designed to be a much simpler way to write
+programs than the venerable Getopt::* modules, using a declarative
+style.
+
+How exactly does one define a command line application? B<optargs>
+assumes a fairly common (but by no means universal) approach:
+
+=over
+
+=item Command
+
+The program name - i.e. the filename be executed by the shell.
+
+=item Options
+
+Options are parameters that affect the way a command runs. They are
+generally not required to be present, but that is configurable. Options
+are prefixed with '-' for single letter option names or '--' for long
+option names.
+
+=item Arguments
+
+Arguments are positional parameters that that a command needs know in
+order to do its work. Some arguments may be optional.
+
+=back
+
+A command may also have sub-commands with their own options and
+arguments.  From the users point of view sub-commands and their options
+are indisinguishable from options and arguments to the main command,
+but from an implementation perspective they are separate, stand-alone
+programs, with possibly their own set of sub-commands.
+
+=head2 Declaring Options and Arguments
+
+B<optargs> exports the following functions for definition:
+
+=over
+
+=item opt name => ( %parameters )
+
+Define a command option.
+
+=over
+
+=item isa
+
+define option value type.
+
+=item required
+
+define option value is required.
+
+=item default
+
+define options default value. If passed a coderef, it will be executed
+if no value is provided on the command line.
+
+=item alias
+
+define option param's alias.
+
+=item comment
+
+this comment is used to generate help. help can show --help
+
+=back
+
+=item arg
+
+Define or retrieve arguments.
+
+
+=back
+
+Note that any call to opt() or arg() causes the next call to opts(),
+args() or optargs() (described below) to reset their values and reparse
+@ARGV, so you probably want to define all your options and arguments
+before attempting to retrieving them.
+
+=head2 Parsing and Retrieving Values
+
+B<optargs> exports the following functions for parsing and retriving
+option and argument values. These function nearly behave like
+singletons: they will return the same object each time they are called
+unless @ARGV changes, @argv is given, or after a call to opt() or
+arg().
+
+=over
+
+=item opts( [ @argv ] ) -> Blessed HashRef
+
+Parses @ARGV by default (or @argv when given) for options and arguments
+and returns a hashref containing key/value pairs for the I<options
+only>. The hashref is blessed into $caller::opts and has accessor
+methods for each option.
+
+=item optargs( [ @argv ] ) -> Blessed HashRef
+
+Parses @ARGV by default (or @argv when given) for options and arguments
+and return a hashref containing key/value pairs for options and
+arguments I<combined>. The hashref is blessed into $caller::optargs and
+has accessor methods for each value.
+
+=back
+
+=head1 TYPES
+
+The I<isa> parameter, when given as a string, is mapped to native
+L<Getopt::Long> types like so:
+
+     optarg          Getopt::Long
+    ------------------------------
+     'Bool'          '!'
+     'Counter'       '+'
+     'Str'           '=s'
+     'Int'           '=i'
+     'Num'           '=f'
+     'ArrayRef'      's@'
+     'HashRef'       's%'
+
+=head1 SEE ALSO
+
+L<Getopt::Long>
+
+=head1 SUPPORT
+
+This distribution is managed via github:
+
+    http://github.com/mlawren/optargs
+
+Code is tidied up on Git commit using githook-perltidy:
+
+    http://github.com/mlawren/githook-perltidy
+
+Test coverage according to L<Devel::Cover> is as follows:
+
+    ------------------------- ------ ------ ------ ------ ------ ------
+    File                 stmt   bran   cond    sub    pod   time  total
+    ------------------------- ------ ------ ------ ------ ------ ------
+    blib/lib/optargs.pm  94.2   88.5   83.3   93.8  100.0  100.0   92.9
+    Total                94.2   88.5   83.3   93.8  100.0  100.0   92.9
+    ------------------------- ------ ------ ------ ------ ------ ------
+
+=head1 AUTHOR
+
+Mark Lawrence <nomad@null.net>
+
+=head1 LICENSE
+
+Copyright 2012 Mark Lawrence <nomad@null.net>
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 3 of the License, or (at your
+option) any later version.
+

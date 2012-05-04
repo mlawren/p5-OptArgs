@@ -1,0 +1,74 @@
+use strict;
+use warnings;
+use Test::More;
+use Test::Fatal;
+use optargs;
+
+opt bool => ( isa => 'Bool' );
+is_deeply opts, { bool => undef }, 'nothing';
+
+@ARGV = (qw/--bool/);
+is_deeply opts, { bool => 1 }, 'got a bool';
+
+opt str => ( isa => 'Str' );
+is_deeply opts, { bool => undef, str => undef }, 'bool reset on new opt';
+
+opt int      => ( isa => 'Int' );
+opt num      => ( isa => 'Num' );
+opt arrayref => ( isa => 'ArrayRef' );
+opt hashref  => ( isa => 'HashRef' );
+
+is_deeply opts,
+  {
+    bool     => undef,
+    str      => undef,
+    int      => undef,
+    num      => undef,
+    arrayref => undef,
+    hashref  => undef,
+  },
+  'deep match';
+
+is opts->bool,     undef, 'opt->bool';
+is opts->str,      undef, 'opt->str';
+is opts->int,      undef, 'opt->int';
+is opts->num,      undef, 'opt->num';
+is opts->arrayref, undef, 'opt->arrayref';
+is opts->hashref,  undef, 'opt->hashref';
+
+@ARGV = qw(--int=3);
+is opts->int, 3,     'int val';
+is opts->str, undef, 'undef Str still';
+
+@ARGV = qw(--num=3.14);
+is opts->num, 3.14, 'num val';
+
+@ARGV = qw(--num=14 --bool --str something);
+is opts->num, 14, 'num val';
+ok opts->bool, 'bool ok';
+is opts->str, 'something', 'str something';
+
+is_deeply opts,
+  {
+    bool     => 1,
+    str      => 'something',
+    int      => undef,
+    num      => 14,
+    arrayref => undef,
+    hashref  => undef,
+  },
+  'deep match';
+
+@ARGV = qw(--arrayref=14);
+is_deeply opts->arrayref, [14], 'arrayref single';
+
+@ARGV = qw(--arrayref=14 --arrayref=15);
+is_deeply opts->arrayref, [ 14, 15 ], 'arrayref multi';
+
+@ARGV = qw(--arrayref=15 --arrayref=14);
+is_deeply opts->arrayref, [ 15, 14 ], 'arrayref multi order';
+
+@ARGV = qw(--hashref one=1 --hashref two=2);
+is_deeply opts->hashref, { one => 1, two => 2 }, 'hashref multi';
+
+done_testing;
