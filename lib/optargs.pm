@@ -6,7 +6,7 @@ use Getopt::Long qw/GetOptionsFromArray/;
 use Carp qw/croak/;
 
 our $VERSION = '0.0.1_1';
-our @EXPORT  = (qw/opt opts optargs/);
+our @EXPORT  = (qw/opt opts arg args optargs/);
 
 Getopt::Long::Configure(qw/pass_through/);
 
@@ -17,6 +17,16 @@ my %opts;
 my %args;
 my %optargs;
 
+my %opt_types = (
+    'Bool'     => '!',
+    'Counter'  => '+',
+    'Str'      => '=s',
+    'Int'      => '=i',
+    'Num'      => '=f',
+    'ArrayRef' => '=s@',
+    'HashRef'  => '=s%',
+);
+
 my @opt_required = (qw/isa/);
 
 my %opt_defaults = (
@@ -26,14 +36,20 @@ my %opt_defaults = (
     comment  => undef,
 );
 
-my %TYPE_MAP = (
-    'Bool'     => '!',
-    'Counter'  => '+',
+my %arg_types = (
     'Str'      => '=s',
     'Int'      => '=i',
     'Num'      => '=f',
     'ArrayRef' => '=s@',
     'HashRef'  => '=s%',
+);
+
+my @arg_required = (qw/isa/);
+
+my %arg_defaults = (
+    isa      => undef,
+    required => undef,
+    comment  => undef,
 );
 
 sub _reset {
@@ -83,8 +99,43 @@ sub opt {
     $params->{ISA} .= '|' . $params->{alias} if $params->{alias};
 
     $params->{ISA} .=
-      exists $TYPE_MAP{ $params->{isa} }
-      ? $TYPE_MAP{ $params->{isa} }
+      exists $opt_types{ $params->{isa} }
+      ? $opt_types{ $params->{isa} }
+      : croak "unknown type: $params->{isa}";
+
+    $definition{$caller}->{$name} = $params;
+    push( @{ $definition_list{$caller} }, $params );
+
+    return;
+}
+
+sub arg {
+    my $caller = caller;
+
+    _reset($caller);
+
+    my $name = shift;
+    croak 'usage: arg $name => (%parameters)' unless $name;
+    croak "arg '$name' already defined" if exists $definition{$caller}->{$name};
+
+    my $params = {@_};
+    if ( my @missing = grep { !exists $params->{$_} } @arg_required ) {
+        croak "missing required parameter(s): @missing";
+    }
+
+    $params = { %arg_defaults, %$params };
+    if ( my @invalid = grep { !exists $arg_defaults{$_} } keys %$params ) {
+        my @valid = keys %arg_defaults;
+        croak "invalid parameter(s): @invalid (valid: @valid)";
+    }
+
+    $params->{name} = $name;
+    $params->{type} = 'arg';
+    $params->{ISA}  = $params->{name};
+
+    $params->{ISA} .=
+      exists $arg_types{ $params->{isa} }
+      ? $arg_types{ $params->{isa} }
       : croak "unknown type: $params->{isa}";
 
     $definition{$caller}->{$name} = $params;
@@ -107,25 +158,39 @@ sub _optargs {
     foreach my $try ( @{ $definition_list{$caller} } ) {
         my $result;
 
-        if ( GetOptionsFromArray( $source, $try->{ISA} => \$result ) ) {
-            $refoptargs->{ $try->{name} } = $result;
+        if ( $try->{type} eq 'opt' ) {
+            if ( GetOptionsFromArray( $source, $try->{ISA} => \$result ) ) {
+                $refopts->{ $try->{name} }    = $result;
+                $refoptargs->{ $try->{name} } = $result;
 
-            no strict 'refs';
-            no warnings 'redefine';
+                no strict 'refs';
+                no warnings 'redefine';
 
-            *{ $caller . '::_optargs::' . $try->{name} } = sub { $result };
-
-            if ( $try->{type} eq 'opt' ) {
-                $refopts->{ $try->{name} } = $result;
-                *{ $caller . '::_opts::' . $try->{name} } = sub { $result };
+                *{ $caller . '::_opts::' . $try->{name} }    = sub { $result };
+                *{ $caller . '::_optargs::' . $try->{name} } = sub { $result };
             }
             else {
-                $refargs->{ $try->{name} } = $result;
-                *{ $caller . '::_args::' . $try->{name} } = sub { $result };
+                return;
             }
         }
-        else {
-            return;
+        elsif ( !@$source ) {
+            croak "missing argument: " . uc $try->{name} . "\n";
+        }
+        else {    #arg
+            unshift( @$source, '--' . $try->{name} );
+            if ( GetOptionsFromArray( $source, $try->{ISA} => \$result ) ) {
+                $refargs->{ $try->{name} }    = $result;
+                $refoptargs->{ $try->{name} } = $result;
+
+                no strict 'refs';
+                no warnings 'redefine';
+
+                *{ $caller . '::_args::' . $try->{name} }    = sub { $result };
+                *{ $caller . '::_optargs::' . $try->{name} } = sub { $result };
+            }
+            else {
+                return;
+            }
         }
     }
 
@@ -145,6 +210,13 @@ sub opts {
 
     _optargs( $caller, @_ );
     return $opts{$caller};
+}
+
+sub args {
+    my $caller = caller;
+
+    _optargs( $caller, @_ );
+    return $args{$caller};
 }
 
 sub optargs {

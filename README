@@ -19,8 +19,6 @@ SYNOPSIS
         print "Working on: ". args->item ."\n"
             unless opts->quiet;
 
-        print Dumper(optargs);
-
 DESCRIPTION
     optargs provides command-line option and argument processing for Perl
     scripts. It is designed to be a much simpler way to write programs than
@@ -69,30 +67,49 @@ DESCRIPTION
         comment
             this comment is used to generate help. help can show --help
 
-    arg Define or retrieve arguments.
+    arg name => ( %parameters )
+        Define a command argument.
+
+        isa define option value type.
+
+        required
+            define option value is required.
+
+        default
+            define options default value. If passed a coderef, it will be
+            executed if no value is provided on the command line.
+
+        comment
+            this comment is used to generate help. help can show --help
 
     Note that any call to opt() or arg() causes the next call to opts(),
     args() or optargs() (described below) to reset their values and reparse
     @ARGV, so you probably want to define all your options and arguments
-    before attempting to retrieving them.
+    before retrieving their values.
 
   Parsing and Retrieving Values
     optargs exports the following functions for parsing and retriving option
     and argument values. These function nearly behave like singletons: they
-    will return the same object each time they are called unless @ARGV
+    will return the same values each time they are called unless @ARGV
     changes, @argv is given, or after a call to opt() or arg().
 
     opts( [ @argv ] ) -> Blessed HashRef
         Parses @ARGV by default (or @argv when given) for options and
         arguments and returns a hashref containing key/value pairs for the
-        *options only*. The hashref is blessed into $caller::opts and has
+        *options only*. The hashref is blessed into $caller::_opts and has
+        accessor methods for each option.
+
+    args( [ @argv ] ) -> Blessed HashRef
+        Parses @ARGV by default (or @argv when given) for options and
+        arguments and returns a hashref containing key/value pairs for the
+        *arguments only*. The hashref is blessed into $caller::_args and has
         accessor methods for each option.
 
     optargs( [ @argv ] ) -> Blessed HashRef
         Parses @ARGV by default (or @argv when given) for options and
         arguments and return a hashref containing key/value pairs for
         options and arguments *combined*. The hashref is blessed into
-        $caller::optargs and has accessor methods for each value.
+        $caller::_optargs and has accessor methods for each value.
 
 TYPES
     The *isa* parameter, when given as a string, is mapped to native

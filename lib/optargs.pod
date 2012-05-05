@@ -12,7 +12,14 @@ optargs - declarative options and arguments for Perl scripts
         comment => 'be quiet please',
     );
 
-    print "Working \n" unless opts->quiet;
+    arg item => (
+        isa     => 'Str',
+        default => 1,
+        comment => 'try this many times',
+    );
+
+    print "Working on: ". args->item ."\n"
+        unless opts->quiet;
 
 =head1 DESCRIPTION
 
@@ -85,23 +92,43 @@ this comment is used to generate help. help can show --help
 
 =back
 
-=item arg
+=item arg name => ( %parameters )
 
-Define or retrieve arguments.
+Define a command argument.
 
+=over
+
+=item isa
+
+define option value type.
+
+=item required
+
+define option value is required.
+
+=item default
+
+define options default value. If passed a coderef, it will be executed
+if no value is provided on the command line.
+
+=item comment
+
+this comment is used to generate help. help can show --help
+
+=back
 
 =back
 
 Note that any call to opt() or arg() causes the next call to opts(),
 args() or optargs() (described below) to reset their values and reparse
 @ARGV, so you probably want to define all your options and arguments
-before attempting to retrieving them.
+before retrieving their values.
 
 =head2 Parsing and Retrieving Values
 
 B<optargs> exports the following functions for parsing and retriving
 option and argument values. These function nearly behave like
-singletons: they will return the same object each time they are called
+singletons: they will return the same values each time they are called
 unless @ARGV changes, @argv is given, or after a call to opt() or
 arg().
 
@@ -111,15 +138,22 @@ arg().
 
 Parses @ARGV by default (or @argv when given) for options and arguments
 and returns a hashref containing key/value pairs for the I<options
-only>. The hashref is blessed into $caller::opts and has accessor
+only>. The hashref is blessed into $caller::_opts and has accessor
+methods for each option.
+
+=item args( [ @argv ] ) -> Blessed HashRef
+
+Parses @ARGV by default (or @argv when given) for options and arguments
+and returns a hashref containing key/value pairs for the I<arguments
+only>. The hashref is blessed into $caller::_args and has accessor
 methods for each option.
 
 =item optargs( [ @argv ] ) -> Blessed HashRef
 
 Parses @ARGV by default (or @argv when given) for options and arguments
 and return a hashref containing key/value pairs for options and
-arguments I<combined>. The hashref is blessed into $caller::optargs and
-has accessor methods for each value.
+arguments I<combined>. The hashref is blessed into $caller::_optargs
+and has accessor methods for each value.
 
 =back
 
