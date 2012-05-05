@@ -10,3 +10,6 @@ MYMETA.yml
 Makefile
 blib/
 inc/
+cover_db/
+old/
+.*
