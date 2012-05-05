@@ -173,10 +173,7 @@ sub _optargs {
                 return;
             }
         }
-        elsif ( !@$source ) {
-            croak "missing argument: " . uc $try->{name} . "\n";
-        }
-        else {    #arg
+        elsif (@$source) {
             unshift( @$source, '--' . $try->{name} );
             if ( GetOptionsFromArray( $source, $try->{ISA} => \$result ) ) {
                 $refargs->{ $try->{name} }    = $result;
@@ -191,6 +188,9 @@ sub _optargs {
             else {
                 return;
             }
+        }
+        else {
+            croak "missing argument: " . uc $try->{name} . "\n";
         }
     }
 
