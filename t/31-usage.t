@@ -23,7 +23,7 @@ arg target => (
 
 is exception { optargs }, 'missing argument: TARGET
 
-usage: 31-usage.t [option] TARGET
+usage: 31-usage.t [options] TARGET
     --dry-run    do nothing
     --quiet      be quiet about it
       TARGET     name of the database to deploy
@@ -51,7 +51,7 @@ arg target => (
 
 is exception { optargs }, 'missing argument: TARGET
 
-usage: 31-usage.t [option] TARGET
+usage: 31-usage.t [options] TARGET
     --quiet      be quiet about it
     --dry-run    do nothing
       TARGET     name of the database to deploy
@@ -84,7 +84,7 @@ arg target2 => (
 
 is exception { optargs }, 'missing argument: TARGET
 
-usage: 31-usage.t [option] TARGET [option] TARGET2
+usage: 31-usage.t [options] TARGET [options] TARGET2
     --quiet      be quiet about it
       TARGET     name of the database to deploy
     --dry-run    do nothing
@@ -108,7 +108,7 @@ opt dry_run => (
 
 is exception { optargs }, 'missing argument: TARGET
 
-usage: 31-usage.t TARGET [option]
+usage: 31-usage.t TARGET [options]
       TARGET     name of the database to deploy
     --dry-run    do nothing
 ', 'usage';

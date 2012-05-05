@@ -162,7 +162,7 @@ sub _usage {
 
         if ( $def->{type} eq 'opt' ) {
             next if $have_opt;
-            $usage .= ' [option]';
+            $usage .= ' [options]';
             $have_opt++;
         }
         elsif ( $def->{type} eq 'arg' ) {
