@@ -17,8 +17,9 @@ opt quiet => (
 );
 
 arg target => (
-    isa     => 'Str',
-    comment => 'name of the database to deploy',
+    isa      => 'Str',
+    comment  => 'name of the database to deploy',
+    required => 1,
 );
 
 is exception { optargs }, 'missing argument: TARGET
@@ -26,7 +27,7 @@ is exception { optargs }, 'missing argument: TARGET
 usage: 31-usage.t [options] TARGET
     --dry-run    do nothing
     --quiet      be quiet about it
-      TARGET     name of the database to deploy
+      TARGET     name of the database to deploy (required)
 ', 'usage';
 
 package y;
@@ -45,8 +46,9 @@ opt dry_run => (
 );
 
 arg target => (
-    isa     => 'Str',
-    comment => 'name of the database to deploy',
+    isa      => 'Str',
+    comment  => 'name of the database to deploy',
+    required => 1,
 );
 
 is exception { optargs }, 'missing argument: TARGET
@@ -54,7 +56,7 @@ is exception { optargs }, 'missing argument: TARGET
 usage: 31-usage.t [options] TARGET
     --quiet      be quiet about it
     --dry-run    do nothing
-      TARGET     name of the database to deploy
+      TARGET     name of the database to deploy (required)
 ', 'usage';
 
 package z;
@@ -68,8 +70,9 @@ opt quiet => (
 );
 
 arg target => (
-    isa     => 'Str',
-    comment => 'name of the database to deploy',
+    isa      => 'Str',
+    comment  => 'name of the database to deploy',
+    required => 1,
 );
 
 opt dry_run => (
@@ -84,11 +87,11 @@ arg target2 => (
 
 is exception { optargs }, 'missing argument: TARGET
 
-usage: 31-usage.t [options] TARGET [options] TARGET2
+usage: 31-usage.t [options] TARGET [options] [TARGET2]
     --quiet      be quiet about it
-      TARGET     name of the database to deploy
+      TARGET     name of the database to deploy (required)
     --dry-run    do nothing
-      TARGET2    name of the database to deploy
+      TARGET2    name of the database to deploy (optional)
 ', 'usage';
 
 package zz;
@@ -97,8 +100,9 @@ use Test::Fatal;
 use optargs;
 
 arg target => (
-    isa     => 'Str',
-    comment => 'name of the database to deploy',
+    isa      => 'Str',
+    comment  => 'name of the database to deploy',
+    required => 1,
 );
 
 opt dry_run => (
@@ -109,7 +113,7 @@ opt dry_run => (
 is exception { optargs }, 'missing argument: TARGET
 
 usage: 31-usage.t TARGET [options]
-      TARGET     name of the database to deploy
+      TARGET     name of the database to deploy (required)
     --dry-run    do nothing
 ', 'usage';
 

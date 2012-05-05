@@ -51,7 +51,7 @@ like exception {
     args;
 }, qr/no defined/, 'no defined';
 
-arg str => ( isa => 'Str', comment => 'comment', );
+arg str => ( isa => 'Str', comment => 'comment', required => 1 );
 
 like exception {
     arg str => ();

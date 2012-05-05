@@ -171,7 +171,8 @@ sub _usage {
             $have_opt++;
         }
         elsif ( $def->{type} eq 'arg' ) {
-            $usage .= uc ' ' . $def->{name};
+            $usage .= uc ' ' . $def->{name} if $def->{required};
+            $usage .= uc ' [' . $def->{name} . ']' unless $def->{required};
             $have_opt = 0;
         }
     }
@@ -193,6 +194,8 @@ sub _usage {
         elsif ( $def->{type} eq 'arg' ) {
             $usage .=
               sprintf( $format, '  ' . uc( $def->{name} ), $def->{comment} );
+            $usage .= ' (required)' if $def->{required};
+            $usage .= ' (optional)' unless $def->{required};
         }
         $usage .= "\n";
     }
@@ -206,52 +209,77 @@ sub _optargs {
     return if exists $optargs{$caller} and !@_ and !@ARGV;
     croak "no defined option/argument" unless exists $definition_list{$caller};
 
-    my $source     = @_ ? \@_ : \@ARGV;
-    my $refopts    = {};
-    my $refargs    = {};
+    my $source = @_ ? \@_ : \@ARGV;
     my $refoptargs = {};
 
     foreach my $try ( @{ $definition_list{$caller} } ) {
         my $result;
 
-        if ( $try->{type} eq 'opt' ) {
+        if ( $try->{type} eq 'arg' ) {
+            if (@$source) {
+                unshift( @$source, '--' . $try->{name} );
+                if ( GetOptionsFromArray( $source, $try->{ISA} => \$result ) ) {
+                    $refoptargs->{ $try->{name} } =
+                      defined $result
+                      ? $result
+                      : $try->{default};
+                }
+                else {
+                    return;
+                }
+            }
+            elsif ( $try->{default} ) {
+                $refoptargs->{ $try->{name} } = $try->{default};
+            }
+            elsif ( $try->{required} ) {
+                die _usage( $caller, "missing argument: " . uc $try->{name} );
+            }
+
+        }
+        elsif ( $try->{type} eq 'opt' ) {
+
             if ( GetOptionsFromArray( $source, $try->{ISA} => \$result ) ) {
-                $refopts->{ $try->{name} }    = $result;
-                $refoptargs->{ $try->{name} } = $result;
-
-                no strict 'refs';
-                no warnings 'redefine';
-
-                *{ $caller . '::_opts::' . $try->{name} }    = sub { $result };
-                *{ $caller . '::_optargs::' . $try->{name} } = sub { $result };
+                $refoptargs->{ $try->{name} } =
+                  defined $result
+                  ? $result
+                  : $try->{default};
             }
             else {
                 return;
             }
-        }
-        elsif (@$source) {
-            unshift( @$source, '--' . $try->{name} );
-            if ( GetOptionsFromArray( $source, $try->{ISA} => \$result ) ) {
-                $refargs->{ $try->{name} }    = $result;
-                $refoptargs->{ $try->{name} } = $result;
-
-                no strict 'refs';
-                no warnings 'redefine';
-
-                *{ $caller . '::_args::' . $try->{name} }    = sub { $result };
-                *{ $caller . '::_optargs::' . $try->{name} } = sub { $result };
-            }
-            else {
-                return;
-            }
-        }
-        else {
-            die _usage( $caller, "missing argument: " . uc $try->{name} );
         }
     }
 
     if (@$source) {
         die _usage( $caller, "unexpected option or argument: @$source" );
+    }
+
+    my $refopts = {};
+    my $refargs = {};
+
+    foreach my $try ( @{ $definition_list{$caller} } ) {
+
+        # Re-calculate the default if it was a subref
+        my $result = $refoptargs->{ $try->{name} };
+        if ( ref $result eq 'CODE' ) {
+            $result = $result->( {%$refoptargs} );
+            $refoptargs->{ $try->{name} } = $result;
+        }
+
+        no strict 'refs';
+        no warnings 'redefine';
+
+        my $subref = sub { $result };
+        *{ $caller . '::_optargs::' . $try->{name} } = $subref;
+
+        if ( $try->{type} eq 'opt' ) {
+            $refopts->{ $try->{name} } = $result;
+            *{ $caller . '::_opts::' . $try->{name} } = $subref;
+        }
+        elsif ( $try->{type} eq 'arg' ) {
+            $refargs->{ $try->{name} } = $result;
+            *{ $caller . '::_args::' . $try->{name} } = $subref;
+        }
     }
 
     $optargs{$caller} = bless $refoptargs, $caller . '::_optargs';
