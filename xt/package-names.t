@@ -1,5 +1,3 @@
-#!/usr/bin/env perl
-
 use Test::Most 'bail';
 use File::Find;
 
