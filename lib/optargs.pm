@@ -6,7 +6,7 @@ use Getopt::Long qw/GetOptionsFromArray/;
 use Carp qw/croak/;
 
 our $VERSION = '0.0.1_1';
-our @EXPORT  = (qw/opt opts arg args optargs/);
+our @EXPORT  = (qw/opt opts arg args optargs usage/);
 
 Getopt::Long::Configure(qw/pass_through/);
 
@@ -201,6 +201,11 @@ sub _usage {
     }
 
     return $usage;
+}
+
+sub usage {
+    my $caller = caller;
+    return _usage($caller);
 }
 
 sub _optargs {

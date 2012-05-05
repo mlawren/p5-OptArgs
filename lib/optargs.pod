@@ -188,6 +188,17 @@ These function nearly behave like singletons: they will return the same
 hashref each time they are called unless @ARGV changes, a new @argv is
 given, or opt() or arg() are called.
 
+=head2 Utility Functions
+
+=over
+
+=item usage() -> Str
+
+Returns a usage string based on the defined opts and args. Can be
+called at any time.
+
+=back
+
 =head1 SEE ALSO
 
 L<Getopt::Long>

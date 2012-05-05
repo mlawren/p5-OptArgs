@@ -22,13 +22,19 @@ arg target => (
     required => 1,
 );
 
+is usage, 'usage: 31-usage.t [options] TARGET
+    --dry-run    do nothing
+    --quiet      be quiet about it
+      TARGET     name of the database to deploy (required)
+', 'plain usage';
+
 is exception { optargs }, 'missing argument: TARGET
 
 usage: 31-usage.t [options] TARGET
     --dry-run    do nothing
     --quiet      be quiet about it
       TARGET     name of the database to deploy (required)
-', 'usage';
+', 'missing usage';
 
 package y;
 use Test::More;
