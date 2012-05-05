@@ -157,6 +157,9 @@ sub _usage {
     my $have_opt;
     my $maxlength = 0;
     foreach my $def ( @{ $definition_list{$caller} } ) {
+        my $length = length $def->{name};
+        $maxlength = $length if $length > $maxlength;
+
         if ( $def->{type} eq 'opt' ) {
             next if $have_opt;
             $usage .= ' [option]';
@@ -166,13 +169,11 @@ sub _usage {
             $usage .= uc ' ' . $def->{name};
             $have_opt = 0;
         }
-        my $length = length $def->{name};
-        $maxlength = $length if $length > $maxlength;
     }
 
     $usage .= "\n";
 
-    my $format = '    %-' . ( $maxlength + 2 ) . 's    %s';
+    my $format = '    %-' . ( $maxlength + 2 ) . 's    %-s';
     foreach my $def ( @{ $definition_list{$caller} } ) {
         if ( $def->{type} eq 'opt' ) {
             if ( exists $def->{dashed} ) {
