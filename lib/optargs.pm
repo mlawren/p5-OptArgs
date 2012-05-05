@@ -144,6 +144,56 @@ sub arg {
     return;
 }
 
+sub _usage {
+    my $caller = shift;
+    my $error  = shift;
+
+    croak 'missing $caller' unless exists $definition_list{$caller};
+
+    require File::Basename;
+    my $usage = $error ? $error . "\n\n" : '';
+    $usage .= 'usage: ' . File::Basename::basename($0);
+
+    my $have_opt;
+    my $maxlength = 0;
+    foreach my $def ( @{ $definition_list{$caller} } ) {
+        if ( $def->{type} eq 'opt' ) {
+            next if $have_opt;
+            $usage .= ' [option]';
+            $have_opt++;
+        }
+        elsif ( $def->{type} eq 'arg' ) {
+            $usage .= uc ' ' . $def->{name};
+            $have_opt = 0;
+        }
+        my $length = length $def->{name};
+        $maxlength = $length if $length > $maxlength;
+    }
+
+    $usage .= "\n";
+
+    my $format = '    %-' . ( $maxlength + 2 ) . 's    %s';
+    foreach my $def ( @{ $definition_list{$caller} } ) {
+        if ( $def->{type} eq 'opt' ) {
+            if ( exists $def->{dashed} ) {
+                $usage .=
+                  sprintf( $format, '--' . $def->{dashed}, $def->{comment} );
+            }
+            else {
+                $usage .=
+                  sprintf( $format, '--' . $def->{name}, $def->{comment} );
+            }
+        }
+        elsif ( $def->{type} eq 'arg' ) {
+            $usage .=
+              sprintf( $format, '  ' . uc( $def->{name} ), $def->{comment} );
+        }
+        $usage .= "\n";
+    }
+
+    return $usage;
+}
+
 sub _optargs {
     my $caller = shift;
 
@@ -190,12 +240,12 @@ sub _optargs {
             }
         }
         else {
-            croak "missing argument: " . uc $try->{name} . "\n";
+            die _usage( $caller, "missing argument: " . uc $try->{name} );
         }
     }
 
     if (@$source) {
-        croak "unexpected option or argument: @$source";
+        die _usage( $caller, "unexpected option or argument: @$source" );
     }
 
     $optargs{$caller} = bless $refoptargs, $caller . '::_optargs';

@@ -18,8 +18,8 @@ optargs - declarative options and arguments for Perl scripts
         comment => 'try this many times',
     );
 
-    print "Working on: ". args->item ."\n"
-        unless opts->quiet;
+    print "Working on: ". optargs->item ."\n"
+        unless optargs->quiet;
 
 =head1 DESCRIPTION
 
@@ -49,17 +49,22 @@ option names.
 Arguments are positional parameters that that a command needs know in
 order to do its work. Some arguments may be optional.
 
-=back
+=item Sub-commands
 
 A command may also have sub-commands with their own options and
 arguments.  From the users point of view sub-commands and their options
 are indisinguishable from options and arguments to the main command,
-but from an implementation perspective they are separate, stand-alone
-programs, with possibly their own set of sub-commands.
+but from an implementation perspective they could (perhaps should) be
+separate, stand-alone programs, with possibly their own set of
+sub-commands.
+
+=back
 
 =head2 Declaring Options and Arguments
 
-B<optargs> exports the following functions for definition:
+B<optargs> exports the following functions for defining Options and
+Arguments. The order in which they are defined also determines the
+order they appear in usage messages.
 
 =over
 
@@ -127,33 +132,35 @@ before retrieving their values.
 =head2 Parsing and Retrieving Values
 
 B<optargs> exports the following functions for parsing and retriving
-option and argument values. These function nearly behave like
-singletons: they will return the same values each time they are called
-unless @ARGV changes, @argv is given, or after a call to opt() or
-arg().
+option and argument values. They all parse @ARGV by default (or @argv
+when given) once only for options and arguments and return a blessed
+hashref containing key/value pairs.  These function nearly behave like
+singletons: they will return the same hashref each time they are called
+unless @ARGV changes, a new @argv is given, or opt() or arg() are
+called.
+
+An error / usage message will be generated if an invalid combination of
+options and arguments has been given.
 
 =over
 
 =item opts( [ @argv ] ) -> Blessed HashRef
 
-Parses @ARGV by default (or @argv when given) for options and arguments
-and returns a hashref containing key/value pairs for the I<options
-only>. The hashref is blessed into $caller::_opts and has accessor
-methods for each option.
+Return a hashref containing key/value pairs for the I<options only>.
+The hashref is blessed into $caller::_opts and has accessor methods for
+each option.
 
 =item args( [ @argv ] ) -> Blessed HashRef
 
-Parses @ARGV by default (or @argv when given) for options and arguments
-and returns a hashref containing key/value pairs for the I<arguments
-only>. The hashref is blessed into $caller::_args and has accessor
-methods for each option.
+Return a hashref containing key/value pairs for the I<arguments only>.
+The hashref is blessed into $caller::_args and has accessor methods for
+each option.
 
 =item optargs( [ @argv ] ) -> Blessed HashRef
 
-Parses @ARGV by default (or @argv when given) for options and arguments
-and return a hashref containing key/value pairs for options and
-arguments I<combined>. The hashref is blessed into $caller::_optargs
-and has accessor methods for each value.
+Return a hashref containing key/value pairs for options and arguments
+I<combined>. The hashref is blessed into $caller::_optargs and has
+accessor methods for each value.
 
 =back
 
