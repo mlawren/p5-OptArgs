@@ -35,8 +35,17 @@ like exception {
 }, qr/invalid parameter/, 'invalid parameter';
 
 like exception {
-    arg no_isa => ( isa => 'NoType', comment => 'comment', );
+    arg bad_type => ( isa => 'NoType', comment => 'comment', );
 }, qr/unknown type/, 'unknown type';
+
+like exception {
+    arg clash => (
+        isa      => 'Str',
+        comment  => 'comment',
+        required => 1,
+        default  => 1
+    );
+}, qr/cannot be used together/, 'clash';
 
 like exception {
     args;

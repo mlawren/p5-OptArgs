@@ -48,8 +48,9 @@ my @arg_required = (qw/isa comment/);
 
 my %arg_defaults = (
     isa      => undef,
-    required => undef,
     comment  => undef,
+    required => undef,
+    default  => undef,
 );
 
 sub _reset {
@@ -127,6 +128,10 @@ sub arg {
     if ( my @invalid = grep { !exists $arg_defaults{$_} } keys %$params ) {
         my @valid = keys %arg_defaults;
         croak "invalid parameter(s): @invalid (valid: @valid)";
+    }
+
+    if ( defined $params->{default} and defined $params->{required} ) {
+        croak "'default' and 'required' cannot be used together";
     }
 
     $params->{name} = $name;
