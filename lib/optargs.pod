@@ -24,9 +24,9 @@ optargs - declarative options and arguments for Perl scripts
 =head1 DESCRIPTION
 
 B<optargs> provides command-line option and argument processing for
-Perl scripts.  It is designed to be a much simpler way to write
-programs than the venerable Getopt::* modules, using a declarative
-style.
+Perl scripts.  It is designed to be a very simple way to write programs
+using a declarative style. L<Getopt::Long> is used for the underlying
+parsing.
 
 How exactly does one define a command line application? B<optargs>
 assumes a fairly common (but by no means universal) approach:
@@ -64,61 +64,86 @@ sub-commands.
 
 B<optargs> exports the following functions for defining Options and
 Arguments. The order in which they are defined also determines the
-order they appear in usage messages.
+order they appear in usage messages, and the order in which they are
+processed.
 
 =over
 
 =item opt name => ( %parameters )
 
-Define a command option.
+Define a Command Option with the following parameters:
 
 =over
 
 =item isa
 
-define option value type.
+Required. Is mapped to a L<Getopt::Long> type according to the
+following table:
 
-=item required
-
-define option value is required.
-
-=item default
-
-define options default value. If passed a coderef, it will be executed
-if no value is provided on the command line.
-
-=item alias
-
-define option param's alias.
+     optargs         Getopt::Long
+    ------------------------------
+     'Bool'          '!'
+     'Counter'       '+'
+     'Str'           '=s'
+     'Int'           '=i'
+     'Num'           '=f'
+     'ArrayRef'      's@'
+     'HashRef'       's%'
 
 =item comment
 
-this comment is used to generate help. help can show --help
+Required. Used to generate the usage/help message.
+
+=item default
+
+The value set when the option is not used.
+
+If this is a subroutine reference it will be called after parsing has
+finished.
+
+=item alias
+
+Can be single characters or words separated by '|' if more than one
+alias is desired. If the option name contains underscores ('_') then an
+alias with '-' substitutions will be automatically added.
 
 =back
 
 =item arg name => ( %parameters )
 
-Define a command argument.
+Define a Command Argument with the following parameters:
 
 =over
 
 =item isa
 
-define option value type.
+Required. Is mapped to a L<Getopt::Long> type according to the
+following table:
 
-=item required
-
-define option value is required.
-
-=item default
-
-define options default value. If passed a coderef, it will be executed
-if no value is provided on the command line.
+     optargs         Getopt::Long
+    ------------------------------
+     'Str'           '=s'
+     'Int'           '=i'
+     'Num'           '=f'
+     'ArrayRef'      's@'
+     'HashRef'       's%'
 
 =item comment
 
-this comment is used to generate help. help can show --help
+Required. Used to generate the usage/help message.
+
+=item required
+
+Set to a true value when the caller must specify this argument.  Can
+not be used if a 'default' is given.
+
+=item default
+
+The value set when the argument is not given. Can not be used if
+'required' is set.
+
+If this is a subroutine reference it will be called after parsing has
+finished.
 
 =back
 
@@ -133,14 +158,9 @@ before retrieving their values.
 
 B<optargs> exports the following functions for parsing and retriving
 option and argument values. They all parse @ARGV by default (or @argv
-when given) once only for options and arguments and return a blessed
-hashref containing key/value pairs.  These function nearly behave like
-singletons: they will return the same hashref each time they are called
-unless @ARGV changes, a new @argv is given, or opt() or arg() are
-called.
-
-An error / usage message will be generated if an invalid combination of
-options and arguments has been given.
+when given) for options and arguments.  An error / usage message will
+be generated if an invalid combination of options and arguments has
+been given.
 
 =over
 
@@ -164,26 +184,16 @@ accessor methods for each value.
 
 =back
 
-=head1 TYPES
-
-The I<isa> parameter, when given as a string, is mapped to native
-L<Getopt::Long> types like so:
-
-     optarg          Getopt::Long
-    ------------------------------
-     'Bool'          '!'
-     'Counter'       '+'
-     'Str'           '=s'
-     'Int'           '=i'
-     'Num'           '=f'
-     'ArrayRef'      's@'
-     'HashRef'       's%'
+These function nearly behave like singletons: they will return the same
+hashref each time they are called unless @ARGV changes, a new @argv is
+given, or opt() or arg() are called.
 
 =head1 SEE ALSO
 
 L<Getopt::Long>
 
-=head1 SUPPORT
+=head1 SUPPORT & DEVELOPMENT
+
 
 This distribution is managed via github:
 
@@ -195,12 +205,13 @@ Code is tidied up on Git commit using githook-perltidy:
 
 Test coverage according to L<Devel::Cover> is as follows:
 
-    ------------------------- ------ ------ ------ ------ ------ ------
-    File                 stmt   bran   cond    sub    pod   time  total
-    ------------------------- ------ ------ ------ ------ ------ ------
-    blib/lib/optargs.pm  94.2   88.5   83.3   93.8  100.0  100.0   92.9
-    Total                94.2   88.5   83.3   93.8  100.0  100.0   92.9
-    ------------------------- ------ ------ ------ ------ ------ ------
+    --------------------------------------------------------------
+    File                  stmt  bran  cond   sub   pod  time total
+    --------------------------------------------------------------
+    blib/lib/optargs.pm   98.8  89.7 100.0 100.0 100.0  91.1  97.0
+    lib/optargs.pod      100.0   n/a   n/a 100.0   n/a   8.9 100.0
+    Total                 98.9  89.7 100.0 100.0 100.0 100.0  97.0
+    --------------------------------------------------------------
 
 =head1 AUTHOR
 
