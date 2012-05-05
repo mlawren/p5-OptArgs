@@ -30,10 +30,10 @@ my %opt_types = (
 my @opt_required = (qw/isa comment/);
 
 my %opt_defaults = (
-    isa      => undef,
-    required => undef,
-    alias    => undef,
-    comment  => undef,
+    isa     => undef,
+    comment => undef,
+    default => undef,
+    alias   => undef,
 );
 
 my %arg_types = (
