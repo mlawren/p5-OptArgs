@@ -27,7 +27,7 @@ my %opt_types = (
     'HashRef'  => '=s%',
 );
 
-my @opt_required = (qw/isa/);
+my @opt_required = (qw/isa comment/);
 
 my %opt_defaults = (
     isa      => undef,
@@ -44,7 +44,7 @@ my %arg_types = (
     'HashRef'  => '=s%',
 );
 
-my @arg_required = (qw/isa/);
+my @arg_required = (qw/isa comment/);
 
 my %arg_defaults = (
     isa      => undef,

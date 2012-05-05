@@ -27,18 +27,22 @@ like exception {
 }, qr/missing required parameter/, 'required isa';
 
 like exception {
-    arg str => ( isa => 'Str', dummy => 1 );
+    arg no_isa => ( isa => 'Str' );
+}, qr/missing required parameter/, 'required both';
+
+like exception {
+    arg str => ( isa => 'Str', comment => 'comment', dummy => 1 );
 }, qr/invalid parameter/, 'invalid parameter';
 
 like exception {
-    arg no_isa => ( isa => 'NoType' );
+    arg no_isa => ( isa => 'NoType', comment => 'comment', );
 }, qr/unknown type/, 'unknown type';
 
 like exception {
     args;
 }, qr/no defined/, 'no defined';
 
-arg str => ( isa => 'Str' );
+arg str => ( isa => 'Str', comment => 'comment', );
 
 like exception {
     arg str => ();
@@ -56,14 +60,14 @@ like exception {
     args;
 }, qr/unexpected option or argument/, 'unexpected option or argument';
 
-arg int => ( isa => 'Int' );
+arg int => ( isa => 'Int', comment => 'comment', );
 @ARGV = qw(x 3.14);
 
 like exception {
     args;
 }, qr/unexpected option or argument/, 'Gave real to an int';
 
-opt bool => ( isa => 'Bool' );
+opt bool => ( isa => 'Bool', comment => 'comment', );
 
 like exception {
     arg bool => ();

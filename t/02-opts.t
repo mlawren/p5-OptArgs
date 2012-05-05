@@ -4,7 +4,7 @@ use Test::More;
 use Test::Fatal;
 use optargs;
 
-opt bool => ( isa => 'Bool' );
+opt bool => ( isa => 'Bool', comment => 'comment' );
 is_deeply opts, { bool => undef }, 'nothing';
 
 @ARGV = (qw/--bool/);
@@ -13,13 +13,13 @@ is_deeply opts, { bool => 1 }, 'got a bool';
 is_deeply opts(qw/--no-bool/), { bool => 0 }, 'manual argv got no bool';
 is_deeply opts,                { bool => 0 }, 'still got no bool';
 
-opt str => ( isa => 'Str' );
+opt str => ( isa => 'Str', comment => 'comment' );
 is_deeply opts, { bool => undef, str => undef }, 'bool reset on new opt';
 
-opt int      => ( isa => 'Int' );
-opt num      => ( isa => 'Num' );
-opt arrayref => ( isa => 'ArrayRef' );
-opt hashref  => ( isa => 'HashRef' );
+opt int      => ( isa => 'Int',      comment => 'comment' );
+opt num      => ( isa => 'Num',      comment => 'comment' );
+opt arrayref => ( isa => 'ArrayRef', comment => 'comment' );
+opt hashref  => ( isa => 'HashRef',  comment => 'comment' );
 
 is_deeply opts,
   {

@@ -5,8 +5,9 @@ use Test::Fatal;
 use optargs;
 
 opt str => (
-    isa   => 'Str',
-    alias => 's',
+    isa     => 'Str',
+    alias   => 's',
+    comment => 'comment',
 );
 
 is_deeply opts, { str => undef }, 'nothing';
@@ -20,8 +21,9 @@ is_deeply opts, { str => 'x' }, 'alias';
 is opts->str, 'x', 'fullname method';
 
 opt two => (
-    isa   => 'Str',
-    alias => 't|u',
+    isa     => 'Str',
+    alias   => 't|u',
+    comment => 'comment',
 );
 
 @ARGV = (qw/-t x/);

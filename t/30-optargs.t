@@ -5,11 +5,15 @@ use Test::Fatal;
 use optargs;
 
 opt quiet => (
-    isa   => 'Str',
-    alias => 'q',
+    isa     => 'Str',
+    alias   => 'q',
+    comment => 'comment',
 );
 
-arg door => ( isa => 'Str', );
+arg door => (
+    isa     => 'Str',
+    comment => 'comment',
+);
 
 @ARGV = (qw/bedroom/);
 is_deeply optargs, { quiet => undef, door => 'bedroom' }, 'optargs structure';

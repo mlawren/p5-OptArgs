@@ -4,8 +4,9 @@ use Test::More;
 use optargs;
 
 opt count => (
-    isa   => 'Counter',
-    alias => 'c',
+    isa     => 'Counter',
+    alias   => 'c',
+    comment => 'comment',
 );
 
 TODO: {

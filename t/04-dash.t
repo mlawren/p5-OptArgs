@@ -5,8 +5,9 @@ use Test::Fatal;
 use optargs;
 
 opt long_str => (
-    isa   => 'Str',
-    alias => 's|t',
+    isa     => 'Str',
+    alias   => 's|t',
+    comment => 'comment',
 );
 
 is_deeply opts, { long_str => undef }, 'nothing';
