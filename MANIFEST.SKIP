@@ -12,4 +12,5 @@ Makefile.old
 \.gz$
 old/
 xt/
-optargs
+^optargs
+^cover_db
