@@ -10,6 +10,9 @@ is_deeply opts, { bool => undef }, 'nothing';
 @ARGV = (qw/--bool/);
 is_deeply opts, { bool => 1 }, 'got a bool';
 
+is_deeply opts(qw/--no-bool/), { bool => 0 }, 'manual argv got no bool';
+is_deeply opts,                { bool => 0 }, 'still got no bool';
+
 opt str => ( isa => 'Str' );
 is_deeply opts, { bool => undef, str => undef }, 'bool reset on new opt';
 
