@@ -144,6 +144,11 @@ DESCRIPTION
     hashref each time they are called unless @ARGV changes, a new @argv is
     given, or opt() or arg() are called.
 
+  Utility Functions
+    usage() -> Str
+        Returns a usage string based on the defined opts and args. Can be
+        called at any time.
+
 SEE ALSO
     Getopt::Long
 
