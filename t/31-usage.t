@@ -23,17 +23,23 @@ arg target => (
 );
 
 is usage, 'usage: 31-usage.t [options] TARGET
+
     --dry-run    do nothing
     --quiet      be quiet about it
-      TARGET     name of the database to deploy (required)
+
+    TARGET       name of the database to deploy (required)
+
 ', 'plain usage';
 
 is exception { optargs }, 'missing argument: TARGET
 
 usage: 31-usage.t [options] TARGET
+
     --dry-run    do nothing
     --quiet      be quiet about it
-      TARGET     name of the database to deploy (required)
+
+    TARGET       name of the database to deploy (required)
+
 ', 'missing usage';
 
 package y;
@@ -60,9 +66,12 @@ arg target => (
 is exception { optargs }, 'missing argument: TARGET
 
 usage: 31-usage.t [options] TARGET
+
     --quiet      be quiet about it
     --dry-run    do nothing
-      TARGET     name of the database to deploy (required)
+
+    TARGET       name of the database to deploy (required)
+
 ', 'usage';
 
 package z;
@@ -94,10 +103,15 @@ arg target2 => (
 is exception { optargs }, 'missing argument: TARGET
 
 usage: 31-usage.t [options] TARGET [options] [TARGET2]
+
     --quiet      be quiet about it
-      TARGET     name of the database to deploy (required)
+
+    TARGET       name of the database to deploy (required)
+
     --dry-run    do nothing
-      TARGET2    name of the database to deploy (optional)
+
+    TARGET2      name of the database to deploy (optional)
+
 ', 'usage';
 
 package zz;
@@ -119,8 +133,11 @@ opt dry_run => (
 is exception { optargs }, 'missing argument: TARGET
 
 usage: 31-usage.t TARGET [options]
-      TARGET     name of the database to deploy (required)
+
+    TARGET       name of the database to deploy (required)
+
     --dry-run    do nothing
+
 ', 'usage';
 
 done_testing();

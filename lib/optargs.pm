@@ -178,10 +178,13 @@ sub _usage {
     }
 
     $usage .= "\n";
+    my $prev = '';
 
     my $format = '    %-' . ( $maxlength + 2 ) . 's    %-s';
     foreach my $def ( @{ $definition_list{$caller} } ) {
         if ( $def->{type} eq 'opt' ) {
+            $usage .= "\n" if $prev ne 'opt';
+
             if ( exists $def->{dashed} ) {
                 $usage .=
                   sprintf( $format, '--' . $def->{dashed}, $def->{comment} );
@@ -190,16 +193,22 @@ sub _usage {
                 $usage .=
                   sprintf( $format, '--' . $def->{name}, $def->{comment} );
             }
+
+            $prev = 'opt';
         }
         elsif ( $def->{type} eq 'arg' ) {
-            $usage .=
-              sprintf( $format, '  ' . uc( $def->{name} ), $def->{comment} );
+            $usage .= "\n" if $prev ne 'arg';
+
+            $usage .= sprintf( $format, uc( $def->{name} ), $def->{comment} );
             $usage .= ' (required)' if $def->{required};
             $usage .= ' (optional)' unless $def->{required};
+
+            $prev = 'arg';
         }
         $usage .= "\n";
     }
 
+    $usage .= "\n";
     return $usage;
 }
 
