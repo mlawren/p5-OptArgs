@@ -31,9 +31,7 @@ is usage, 'usage: 31-usage.t [options] TARGET
 
 ', 'plain usage';
 
-is exception { optargs }, 'missing argument: TARGET
-
-usage: 31-usage.t [options] TARGET
+is exception { optargs }, 'usage: 31-usage.t [options] TARGET
 
     --dry-run    do nothing
     --quiet      be quiet about it
@@ -63,9 +61,7 @@ arg target => (
     required => 1,
 );
 
-is exception { optargs }, 'missing argument: TARGET
-
-usage: 31-usage.t [options] TARGET
+is exception { optargs }, 'usage: 31-usage.t [options] TARGET
 
     --quiet      be quiet about it
     --dry-run    do nothing
@@ -100,9 +96,8 @@ arg target2 => (
     comment => 'name of the database to deploy',
 );
 
-is exception { optargs }, 'missing argument: TARGET
-
-usage: 31-usage.t [options] TARGET [options] [TARGET2]
+is exception { optargs },
+  'usage: 31-usage.t [options] TARGET [options] [TARGET2]
 
     --quiet      be quiet about it
 
@@ -130,9 +125,7 @@ opt dry_run => (
     comment => 'do nothing',
 );
 
-is exception { optargs }, 'missing argument: TARGET
-
-usage: 31-usage.t TARGET [options]
+is exception { optargs }, 'usage: 31-usage.t TARGET [options]
 
     TARGET       name of the database to deploy (required)
 

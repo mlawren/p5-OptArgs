@@ -61,7 +61,7 @@ like exception {
 
 like exception {
     args;
-}, qr/missing argument/, 'missing argument';
+}, qr/^usage:/, 'missing argument';
 
 @ARGV = (qw/x x2/);
 

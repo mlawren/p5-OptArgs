@@ -246,7 +246,7 @@ sub _optargs {
                 $refoptargs->{ $try->{name} } = $try->{default};
             }
             elsif ( $try->{required} ) {
-                die _usage( $caller, "missing argument: " . uc $try->{name} );
+                die _usage($caller);
             }
 
         }
