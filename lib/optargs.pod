@@ -98,8 +98,10 @@ Required. Used to generate the usage/help message.
 
 The value set when the option is not used.
 
-If this is a subroutine reference it will be called after parsing has
-finished.
+If this is a subroutine reference it will be called with a hashref
+containg all option/argument values after parsing the source has
+finished.  The value to be set must be returned, and any changes to the
+hashref are ignored.
 
 =item alias
 
@@ -142,8 +144,10 @@ not be used if a 'default' is given.
 The value set when the argument is not given. Can not be used if
 'required' is set.
 
-If this is a subroutine reference it will be called after parsing has
-finished.
+If this is a subroutine reference it will be called with a hashref
+containg all option/argument values after parsing the source has
+finished.  The value to be set must be returned, and any changes to the
+hashref are ignored.
 
 =back
 
