@@ -32,24 +32,17 @@ is_deeply opts,
   },
   'deep match';
 
-is opts->bool,     undef, 'opt->bool';
-is opts->str,      undef, 'opt->str';
-is opts->int,      undef, 'opt->int';
-is opts->num,      undef, 'opt->num';
-is opts->arrayref, undef, 'opt->arrayref';
-is opts->hashref,  undef, 'opt->hashref';
-
 @ARGV = qw(--int=3);
-is opts->int, 3,     'int val';
-is opts->str, undef, 'undef Str still';
+is opts->{int}, 3,     'int val';
+is opts->{str}, undef, 'undef Str still';
 
 @ARGV = qw(--num=3.14);
-is opts->num, 3.14, 'num val';
+is opts->{num}, 3.14, 'num val';
 
 @ARGV = qw(--num=14 --bool --str something);
-is opts->num, 14, 'num val';
-ok opts->bool, 'bool ok';
-is opts->str, 'something', 'str something';
+is opts->{num}, 14, 'num val';
+ok opts->{bool}, 'bool ok';
+is opts->{str}, 'something', 'str something';
 
 is_deeply opts,
   {
@@ -62,19 +55,16 @@ is_deeply opts,
   },
   'deep match';
 
-opts->{bool} = 0;
-is opts->bool, 0, 'method match';
-
 @ARGV = qw(--arrayref=14);
-is_deeply opts->arrayref, [14], 'arrayref single';
+is_deeply opts->{arrayref}, [14], 'arrayref single';
 
 @ARGV = qw(--arrayref=14 --arrayref=15);
-is_deeply opts->arrayref, [ 14, 15 ], 'arrayref multi';
+is_deeply opts->{arrayref}, [ 14, 15 ], 'arrayref multi';
 
 @ARGV = qw(--arrayref=15 --arrayref=14);
-is_deeply opts->arrayref, [ 15, 14 ], 'arrayref multi order';
+is_deeply opts->{arrayref}, [ 15, 14 ], 'arrayref multi order';
 
 @ARGV = qw(--hashref one=1 --hashref two=2);
-is_deeply opts->hashref, { one => 1, two => 2 }, 'hashref multi';
+is_deeply opts->{hashref}, { one => 1, two => 2 }, 'hashref multi';
 
 done_testing;

@@ -14,11 +14,9 @@ is_deeply opts, { str => undef }, 'nothing';
 
 @ARGV = (qw/--str x/);
 is_deeply opts, { str => 'x' }, 'fullname';
-is opts->str, 'x', 'fullname method';
 
 @ARGV = (qw/-s x/);
 is_deeply opts, { str => 'x' }, 'alias';
-is opts->str, 'x', 'fullname method';
 
 opt two => (
     isa     => 'Str',

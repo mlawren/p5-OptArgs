@@ -7,18 +7,22 @@ use Carp qw/croak/;
 
 our $VERSION   = '0.0.1';
 our @EXPORT    = (qw/opt opts arg args optargs usage/);
-our @EXPORT_OK = (qw/subcommand/);
+our @EXPORT_OK = (qw/bopts bargs boptargs subcommand/);
 
 Getopt::Long::Configure(qw/pass_through no_auto_abbrev/);
 
-my %subcommands;
-my @subcommands;
 my %definition;
 my %definition_list;
 
+my %subcommands;
+my @subcommands;
+
 my %opts;
+my %bopts;
 my %args;
+my %bargs;
 my %optargs;
+my %boptargs;
 
 my %opt_types = (
     'Bool'     => '!',
@@ -61,13 +65,17 @@ sub _reset {
     my $caller = shift;
 
     no strict 'refs';
-    undef *{ $caller . '::_opts::' . $_ }    for keys %{ $opts{$caller} };
-    undef *{ $caller . '::_args::' . $_ }    for keys %{ $args{$caller} };
-    undef *{ $caller . '::_optargs::' . $_ } for keys %{ $optargs{$caller} };
+    undef *{ $caller . '::_opts::' . $_ }    for keys %{ $bopts{$caller} };
+    undef *{ $caller . '::_args::' . $_ }    for keys %{ $bargs{$caller} };
+    undef *{ $caller . '::_optargs::' . $_ } for keys %{ $boptargs{$caller} };
 
     delete $opts{$caller};
     delete $args{$caller};
     delete $optargs{$caller};
+
+    delete $bopts{$caller};
+    delete $bargs{$caller};
+    delete $boptargs{$caller};
 
     return;
 }
@@ -359,31 +367,18 @@ sub _optargs {
             $optargs->{ $try->{name} } = $result;
         }
 
-        no strict 'refs';
-        no warnings 'redefine';
-
-        *{ $caller . '::_optargs::' . $try->{name} } = sub {
-            $optargs->{ $try->{name} };
-        };
-
         if ( $try->{type} eq 'opt' ) {
             $opts->{ $try->{name} } = $result;
-            *{ $caller . '::_opts::' . $try->{name} } = sub {
-                $opts->{ $try->{name} };
-            };
         }
         elsif ( $try->{type} eq 'arg' ) {
             $args->{ $try->{name} } = $result;
-            *{ $caller . '::_args::' . $try->{name} } = sub {
-                $args->{ $try->{name} };
-            };
         }
 
     }
 
-    $optargs{$caller} = bless $optargs, $caller . '::_optargs';
-    $opts{$caller}    = bless $opts,    $caller . '::_opts';
-    $args{$caller}    = bless $args,    $caller . '::_args';
+    $optargs{$caller} = $optargs;
+    $opts{$caller}    = $opts;
+    $args{$caller}    = $args;
 
     if ( $package ne $caller ) {
         $optargs{$package} = $optargs{$caller};
@@ -398,10 +393,48 @@ sub _optargs {
     return;
 }
 
+sub _boptargs {
+    my $caller = shift;
+    _optargs( $caller, @_ );
+
+    return if exists $optargs{$caller};
+
+    no strict 'refs';
+    no warnings 'redefine';
+
+    foreach ( keys %{ $optargs{$caller} } ) {
+        *{ $caller . '::_optargs::' . $_ } = sub {
+            $optargs{$caller}->{$_};
+          }
+    }
+    $boptargs{$caller} = bless $optargs{$caller}, $caller . '::_optargs';
+
+    foreach ( keys %{ $opts{$caller} } ) {
+        *{ $caller . '::_opts::' . $_ } = sub {
+            $opts{$caller}->{$_};
+          }
+    }
+    $bopts{$caller} = bless $opts{$caller}, $caller . '::_opts';
+
+    foreach ( keys %{ $args{$caller} } ) {
+        *{ $caller . '::_args::' . $_ } = sub {
+            $args{$caller}->{$_};
+          }
+    }
+    $bargs{$caller} = bless $args{$caller}, $caller . '::_args';
+}
+
 sub opts {
     my $caller = caller;
 
     _optargs( $caller, @_ );
+    return $opts{$caller};
+}
+
+sub bopts {
+    my $caller = caller;
+
+    _boptargs( $caller, @_ );
     return $opts{$caller};
 }
 
@@ -412,10 +445,24 @@ sub args {
     return $args{$caller};
 }
 
+sub bargs {
+    my $caller = caller;
+
+    _boptargs( $caller, @_ );
+    return $args{$caller};
+}
+
 sub optargs {
     my $caller = caller;
 
-    _optargs( $caller, @_ );
+    _boptargs( $caller, @_ );
+    return $optargs{$caller};
+}
+
+sub boptargs {
+    my $caller = caller;
+
+    _boptargs( $caller, @_ );
     return $optargs{$caller};
 }
 
@@ -426,16 +473,13 @@ sub subcommand {
     croak "subcommand already defined: $caller"
       if $subcommands{$caller};
 
+    ( my $parent = $caller ) =~ s/(.*)::.*/$1/;
+
+    croak "$caller has no parent command!"
+      unless ( $parent ne $caller and exists $definition{$parent} );
+
     $subcommands{$caller} = $desc;
     push( @subcommands, $caller );
-
-    ( my $parent = $caller ) =~ s/(.*)::/$1/;
-    croak "$caller has no parent!" unless $parent;
-
-    no strict 'refs';
-    *{ $caller . '::_opts::ISA' }    = [ $parent . '::_opts' ];
-    *{ $caller . '::_args::ISA' }    = [ $parent . '::_args' ];
-    *{ $caller . '::_optargs::ISA' } = [ $parent . '::_optargs' ];
 }
 
 1;

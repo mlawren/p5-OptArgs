@@ -32,13 +32,4 @@ is_deeply args,
   },
   'deep match';
 
-is args->str, 'k',  'arg->str';
-is args->int, 1,    'arg->int';
-is args->num, 3.14, 'arg->num';
-is_deeply args->arrayref, [1], 'arg->arrayref';
-is_deeply args->hashref, { one => 1 }, 'arg->hashref';
-
-args->{num} = 2 * args->num;
-is args->num, 6.28, 'method match';
-
 done_testing;
