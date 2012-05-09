@@ -19,8 +19,8 @@ SYNOPSIS
             comment => 'try this many times',
         );
 
-        print "Working on: ". optargs->item ."\n"
-            unless optargs->quiet;
+        my $ref = optargs;
+        print "Working on: $ref->{item}\n" unless $ref->{quiet};
 
 DESCRIPTION
     OptArgs provides command-line option and argument processing for Perl
@@ -132,20 +132,16 @@ DESCRIPTION
     generated if an invalid combination of options and arguments has been
     given.
 
-    opts( [ @argv ] ) -> Blessed HashRef
+    opts( [ @argv ] ) -> HashRef
         Return a hashref containing key/value pairs for the *options only*.
-        The hashref is blessed into $caller::_opts and has accessor methods
-        for each option.
 
-    args( [ @argv ] ) -> Blessed HashRef
+    args( [ @argv ] ) -> HashRef
         Return a hashref containing key/value pairs for the *arguments
-        only*. The hashref is blessed into $caller::_args and has accessor
-        methods for each option.
+        only*.
 
-    optargs( [ @argv ] ) -> Blessed HashRef
+    optargs( [ @argv ] ) -> HashRef
         Return a hashref containing key/value pairs for options and
-        arguments *combined*. The hashref is blessed into $caller::_optargs
-        and has accessor methods for each value.
+        arguments *combined*.
 
     These function nearly behave like singletons: they will return the same
     hashref each time they are called unless @ARGV changes, a new @argv is

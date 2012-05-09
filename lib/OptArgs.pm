@@ -7,7 +7,7 @@ use Carp qw/croak/;
 
 our $VERSION   = '0.0.1';
 our @EXPORT    = (qw/opt opts arg args optargs usage/);
-our @EXPORT_OK = (qw/bopts bargs boptargs subcommand/);
+our @EXPORT_OK = (qw/subcommand/);
 
 Getopt::Long::Configure(qw/pass_through no_auto_abbrev/);
 
@@ -18,11 +18,8 @@ my %subcommands;
 my @subcommands;
 
 my %opts;
-my %bopts;
 my %args;
-my %bargs;
 my %optargs;
-my %boptargs;
 
 my %opt_types = (
     'Bool'     => '!',
@@ -64,18 +61,9 @@ my %arg_defaults = (
 sub _reset {
     my $caller = shift;
 
-    no strict 'refs';
-    undef *{ $caller . '::_opts::' . $_ }    for keys %{ $bopts{$caller} };
-    undef *{ $caller . '::_args::' . $_ }    for keys %{ $bargs{$caller} };
-    undef *{ $caller . '::_optargs::' . $_ } for keys %{ $boptargs{$caller} };
-
     delete $opts{$caller};
     delete $args{$caller};
     delete $optargs{$caller};
-
-    delete $bopts{$caller};
-    delete $bargs{$caller};
-    delete $boptargs{$caller};
 
     return;
 }
@@ -393,48 +381,10 @@ sub _optargs {
     return;
 }
 
-sub _boptargs {
-    my $caller = shift;
-    _optargs( $caller, @_ );
-
-    return if exists $optargs{$caller};
-
-    no strict 'refs';
-    no warnings 'redefine';
-
-    foreach ( keys %{ $optargs{$caller} } ) {
-        *{ $caller . '::_optargs::' . $_ } = sub {
-            $optargs{$caller}->{$_};
-          }
-    }
-    $boptargs{$caller} = bless $optargs{$caller}, $caller . '::_optargs';
-
-    foreach ( keys %{ $opts{$caller} } ) {
-        *{ $caller . '::_opts::' . $_ } = sub {
-            $opts{$caller}->{$_};
-          }
-    }
-    $bopts{$caller} = bless $opts{$caller}, $caller . '::_opts';
-
-    foreach ( keys %{ $args{$caller} } ) {
-        *{ $caller . '::_args::' . $_ } = sub {
-            $args{$caller}->{$_};
-          }
-    }
-    $bargs{$caller} = bless $args{$caller}, $caller . '::_args';
-}
-
 sub opts {
     my $caller = caller;
 
     _optargs( $caller, @_ );
-    return $opts{$caller};
-}
-
-sub bopts {
-    my $caller = caller;
-
-    _boptargs( $caller, @_ );
     return $opts{$caller};
 }
 
@@ -445,24 +395,10 @@ sub args {
     return $args{$caller};
 }
 
-sub bargs {
-    my $caller = caller;
-
-    _boptargs( $caller, @_ );
-    return $args{$caller};
-}
-
 sub optargs {
     my $caller = caller;
 
-    _boptargs( $caller, @_ );
-    return $optargs{$caller};
-}
-
-sub boptargs {
-    my $caller = caller;
-
-    _boptargs( $caller, @_ );
+    _optargs( $caller, @_ );
     return $optargs{$caller};
 }
 

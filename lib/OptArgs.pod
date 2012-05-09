@@ -22,8 +22,8 @@ OptArgs - integrated argument and option processing for Perl
         comment => 'try this many times',
     );
 
-    print "Working on: ". optargs->item ."\n"
-        unless optargs->quiet;
+    my $ref = optargs;
+    print "Working on: $ref->{item}\n" unless $ref->{quiet};
 
 =head1 DESCRIPTION
 
@@ -172,23 +172,18 @@ been given.
 
 =over
 
-=item opts( [ @argv ] ) -> Blessed HashRef
+=item opts( [ @argv ] ) -> HashRef
 
 Return a hashref containing key/value pairs for the I<options only>.
-The hashref is blessed into $caller::_opts and has accessor methods for
-each option.
 
-=item args( [ @argv ] ) -> Blessed HashRef
+=item args( [ @argv ] ) -> HashRef
 
 Return a hashref containing key/value pairs for the I<arguments only>.
-The hashref is blessed into $caller::_args and has accessor methods for
-each option.
 
-=item optargs( [ @argv ] ) -> Blessed HashRef
+=item optargs( [ @argv ] ) -> HashRef
 
 Return a hashref containing key/value pairs for options and arguments
-I<combined>. The hashref is blessed into $caller::_optargs and has
-accessor methods for each value.
+I<combined>.
 
 =back
 
