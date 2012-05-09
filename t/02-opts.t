@@ -62,6 +62,9 @@ is_deeply opts,
   },
   'deep match';
 
+opts->{bool} = 0;
+is opts->bool, 0, 'method match';
+
 @ARGV = qw(--arrayref=14);
 is_deeply opts->arrayref, [14], 'arrayref single';
 

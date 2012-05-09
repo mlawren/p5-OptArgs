@@ -25,4 +25,9 @@ is_deeply optargs(qw/kitchen/), { quiet => undef, door => 'kitchen' },
 is optargs->quiet, undef,     'fullname method';
 is optargs->door,  'kitchen', 'fullname method';
 
+optargs->{quiet} = 1;
+optargs->{door}  = 'bathroom';
+is optargs->quiet, 1,          'method match';
+is optargs->door,  'bathroom', 'method match';
+
 done_testing;
