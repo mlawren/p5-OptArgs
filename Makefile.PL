@@ -13,6 +13,7 @@ requires 'Scalar::Util' => 0;
 
 test_requires 'Test::More';
 test_requires 'Test::Fatal';
+test_requires 'Test::Output';
 
 author_tests 'xt';
 

@@ -1,11 +1,11 @@
 NAME
-    optargs - declarative options and arguments for Perl scripts
+    OptArgs - integrated argument and option processing for Perl
 
 VERSION
     0.0.1 Development release.
 
 SYNOPSIS
-        use optargs;
+        use OptArgs;
 
         opt quiet => (
             isa     => 'Bool',

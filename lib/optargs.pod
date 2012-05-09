@@ -1,6 +1,6 @@
 =head1 NAME
 
-optargs - declarative options and arguments for Perl scripts
+OptArgs - integrated argument and option processing for Perl
 
 =head1 VERSION
 
@@ -8,7 +8,7 @@ optargs - declarative options and arguments for Perl scripts
 
 =head1 SYNOPSIS
 
-    use optargs;
+    use OptArgs;
 
     opt quiet => (
         isa     => 'Bool',
