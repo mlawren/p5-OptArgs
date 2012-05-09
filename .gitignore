@@ -13,4 +13,4 @@ inc/
 cover_db/
 old/
 .*
-optargs-*
+OptArgs-*
