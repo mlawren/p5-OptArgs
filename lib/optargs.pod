@@ -2,6 +2,10 @@
 
 optargs - declarative options and arguments for Perl scripts
 
+=head1 VERSION
+
+0.0.1 Development release.
+
 =head1 SYNOPSIS
 
     use optargs;

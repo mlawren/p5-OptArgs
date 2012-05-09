@@ -1,6 +1,9 @@
 NAME
     optargs - declarative options and arguments for Perl scripts
 
+VERSION
+    0.0.1 Development release.
+
 SYNOPSIS
         use optargs;
 
@@ -76,8 +79,10 @@ DESCRIPTION
         default
             The value set when the option is not used.
 
-            If this is a subroutine reference it will be called after
-            parsing has finished.
+            If this is a subroutine reference it will be called with a
+            hashref containg all option/argument values after parsing the
+            source has finished. The value to be set must be returned, and
+            any changes to the hashref are ignored.
 
         alias
             Can be single characters or words separated by '|' if more than
@@ -110,8 +115,10 @@ DESCRIPTION
             The value set when the argument is not given. Can not be used if
             'required' is set.
 
-            If this is a subroutine reference it will be called after
-            parsing has finished.
+            If this is a subroutine reference it will be called with a
+            hashref containg all option/argument values after parsing the
+            source has finished. The value to be set must be returned, and
+            any changes to the hashref are ignored.
 
     Note that any call to opt() or arg() causes the next call to opts(),
     args() or optargs() (described below) to reset their values and reparse

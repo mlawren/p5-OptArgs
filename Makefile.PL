@@ -1,6 +1,7 @@
 use inc::Module::Install;
 
 name 'optargs';
+version '0.0.1_1';
 all_from 'lib/optargs.pm';
 readme_from 'lib/optargs.pod';
 

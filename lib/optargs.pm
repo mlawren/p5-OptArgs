@@ -5,7 +5,7 @@ use Exporter 'import';
 use Getopt::Long qw/GetOptionsFromArray/;
 use Carp qw/croak/;
 
-our $VERSION = '0.0.1_1';
+our $VERSION = '0.0.1';
 our @EXPORT  = (qw/opt opts arg args optargs usage/);
 
 Getopt::Long::Configure(qw/pass_through/);
