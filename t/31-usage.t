@@ -4,7 +4,7 @@ use warnings;
 package x;
 use Test::More;
 use Test::Fatal;
-use optargs;
+use OptArgs;
 
 opt dry_run => (
     isa     => 'Bool',
@@ -43,7 +43,7 @@ is exception { optargs }, 'usage: 31-usage.t [options] TARGET
 package y;
 use Test::More;
 use Test::Fatal;
-use optargs;
+use OptArgs;
 
 opt quiet => (
     isa     => 'Bool',
@@ -73,7 +73,7 @@ is exception { optargs }, 'usage: 31-usage.t [options] TARGET
 package z;
 use Test::More;
 use Test::Fatal;
-use optargs;
+use OptArgs;
 
 opt quiet => (
     isa     => 'Bool',
@@ -112,7 +112,7 @@ is exception { optargs },
 package zz;
 use Test::More;
 use Test::Fatal;
-use optargs;
+use OptArgs;
 
 arg target => (
     isa      => 'Str',

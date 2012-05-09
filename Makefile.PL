@@ -1,9 +1,9 @@
 use inc::Module::Install;
 
-name 'optargs';
+name 'OptArgs';
 version '0.0.1_1';
-all_from 'lib/optargs.pm';
-readme_from 'lib/optargs.pod';
+all_from 'lib/OptArgs.pm';
+readme_from 'lib/OptArgs.pod';
 
 requires 'Exporter'     => 0;
 requires 'Carp'         => 0;

@@ -3,7 +3,7 @@ use warnings;
 
 package x;
 use Test::More;
-use optargs;
+use OptArgs;
 
 my $str = 1;
 opt subref => (

@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use Test::More;
 use Test::Fatal;
-use optargs;
+use OptArgs;
 
 opt quiet => (
     isa     => 'Str',

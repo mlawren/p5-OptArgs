@@ -1,7 +1,7 @@
 package app::multi::new::project;
 use strict;
 use warnings;
-use optargs;
+use OptArgs;
 
 sub run {
     use Data::Show;

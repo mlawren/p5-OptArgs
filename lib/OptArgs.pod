@@ -27,12 +27,12 @@ OptArgs - integrated argument and option processing for Perl
 
 =head1 DESCRIPTION
 
-B<optargs> provides command-line option and argument processing for
+B<OptArgs> provides command-line option and argument processing for
 Perl scripts.  It is designed to be a very simple way to write programs
 using a declarative style. L<Getopt::Long> is used for the underlying
 parsing.
 
-How exactly does one define a command line application? B<optargs>
+How exactly does one define a command line application? B<OptArgs>
 assumes a fairly common (but by no means universal) approach:
 
 =over
@@ -66,7 +66,7 @@ sub-commands.
 
 =head2 Declaring Options and Arguments
 
-B<optargs> exports the following functions for defining Options and
+B<OptArgs> exports the following functions for defining Options and
 Arguments. The order in which they are defined also determines the
 order they appear in usage messages, and the order in which they are
 processed.
@@ -164,7 +164,7 @@ before retrieving their values.
 
 =head2 Parsing and Retrieving Values
 
-B<optargs> exports the following functions for parsing and retriving
+B<OptArgs> exports the following functions for parsing and retriving
 option and argument values. They all parse @ARGV by default (or @argv
 when given) for options and arguments.  An error / usage message will
 be generated if an invalid combination of options and arguments has

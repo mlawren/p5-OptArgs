@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 package app::multi;
-use optargs;
+use OptArgs;
 
 opt dry_run => (
     isa     => 'Bool',
@@ -29,7 +29,7 @@ sub run {
 }
 
 package app::multi::init;
-use optargs qw/subcommand opt arg/;
+use OptArgs qw/subcommand opt arg/;
 
 subcommand('do the y thing');
 
@@ -39,7 +39,7 @@ opt opty => (
 );
 
 package app::multi::new;
-use optargs qw/subcommand opt arg/;
+use OptArgs qw/subcommand opt arg/;
 
 subcommand('do the z thing');
 
@@ -51,7 +51,7 @@ arg thread => (
 );
 
 package app::multi::new::project;
-use optargs qw/subcommand opt/;
+use OptArgs qw/subcommand opt/;
 
 subcommand('do the new project thing');
 
@@ -61,7 +61,7 @@ opt popt => (
 );
 
 package app::multi::new::issue;
-use optargs qw/subcommand opt/;
+use OptArgs qw/subcommand opt/;
 
 subcommand('create a new issue');
 
@@ -71,7 +71,7 @@ opt iopt => (
 );
 
 package app::multi::new::task;
-use optargs qw/subcommand opt arg/;
+use OptArgs qw/subcommand opt arg/;
 
 subcommand('create a new task thread');
 
@@ -88,7 +88,7 @@ arg targ => (
 );
 
 package app::multi::new::task::pretty;
-use optargs qw/subcommand opt/;
+use OptArgs qw/subcommand opt/;
 
 subcommand('create a new task thread prettier than before');
 

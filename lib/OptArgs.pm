@@ -1,4 +1,4 @@
-package optargs;
+package OptArgs;
 use strict;
 use warnings;
 use Exporter 'import';
@@ -362,17 +362,23 @@ sub _optargs {
         no strict 'refs';
         no warnings 'redefine';
 
-        my $subref = sub { $result };
-        *{ $caller . '::_optargs::' . $try->{name} } = $subref;
+        *{ $caller . '::_optargs::' . $try->{name} } = sub {
+            $optargs->{ $try->{name} };
+        };
 
         if ( $try->{type} eq 'opt' ) {
             $opts->{ $try->{name} } = $result;
-            *{ $caller . '::_opts::' . $try->{name} } = $subref;
+            *{ $caller . '::_opts::' . $try->{name} } = sub {
+                $opts->{ $try->{name} };
+            };
         }
         elsif ( $try->{type} eq 'arg' ) {
             $args->{ $try->{name} } = $result;
-            *{ $caller . '::_args::' . $try->{name} } = $subref;
+            *{ $caller . '::_args::' . $try->{name} } = sub {
+                $args->{ $try->{name} };
+            };
         }
+
     }
 
     $optargs{$caller} = bless $optargs, $caller . '::_optargs';

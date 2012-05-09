@@ -23,11 +23,11 @@ SYNOPSIS
             unless optargs->quiet;
 
 DESCRIPTION
-    optargs provides command-line option and argument processing for Perl
+    OptArgs provides command-line option and argument processing for Perl
     scripts. It is designed to be a very simple way to write programs using
     a declarative style. Getopt::Long is used for the underlying parsing.
 
-    How exactly does one define a command line application? optargs assumes
+    How exactly does one define a command line application? OptArgs assumes
     a fairly common (but by no means universal) approach:
 
     Command
@@ -52,7 +52,7 @@ DESCRIPTION
         set of sub-commands.
 
   Declaring Options and Arguments
-    optargs exports the following functions for defining Options and
+    OptArgs exports the following functions for defining Options and
     Arguments. The order in which they are defined also determines the order
     they appear in usage messages, and the order in which they are
     processed.
@@ -126,7 +126,7 @@ DESCRIPTION
     before retrieving their values.
 
   Parsing and Retrieving Values
-    optargs exports the following functions for parsing and retriving option
+    OptArgs exports the following functions for parsing and retriving option
     and argument values. They all parse @ARGV by default (or @argv when
     given) for options and arguments. An error / usage message will be
     generated if an invalid combination of options and arguments has been

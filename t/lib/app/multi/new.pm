@@ -1,7 +1,7 @@
 package app::multi::new;
 use strict;
 use warnings;
-use optargs;
+use OptArgs;
 
 sub run {
     print "you are in new, thanks\n";

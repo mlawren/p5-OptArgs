@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Test::More;
-use optargs;
+use OptArgs;
 
 opt count => (
     isa     => 'Counter',

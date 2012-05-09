@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use Test::More;
 use Test::Fatal;
-use optargs;
+use OptArgs;
 
 opt bool => ( isa => 'Bool', comment => 'comment' );
 is_deeply opts, { bool => undef }, 'nothing';
