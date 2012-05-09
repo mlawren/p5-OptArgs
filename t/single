@@ -1,0 +1,34 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+use OptArgs;
+
+opt quiet => (
+    isa     => 'Bool',
+    comment => 'be quiet about it',
+);
+
+opt dry_run => (
+    isa     => 'Bool',
+    comment => 'do nothing',
+);
+
+arg database => (
+    isa      => 'Str',
+    comment  => 'name of the database to deploy',
+    required => 1,
+);
+
+arg schema => (
+    isa     => 'Num',
+    comment => 'schema of the database to deploy',
+    default => 'main',
+);
+
+#die usage();
+
+print "Not " if opts->{dry_run};
+print "Deploying to " . args->{database} . "\n";
+
