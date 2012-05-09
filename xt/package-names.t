@@ -1,4 +1,4 @@
-use Test::Most 'bail';
+use Test::More;
 use File::Find;
 
 sub expected_package_name($) {
