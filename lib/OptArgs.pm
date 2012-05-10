@@ -1,13 +1,13 @@
 package OptArgs;
 use strict;
 use warnings;
-use Exporter 'import';
-use Getopt::Long qw/GetOptionsFromArray/;
 use Carp qw/croak/;
+use Exporter::Tidy
+  default => [qw/opt arg opts args optargs usage subcommand/],
+  all     => [qw//];
+use Getopt::Long qw/GetOptionsFromArray/;
 
-our $VERSION   = '0.0.1';
-our @EXPORT    = (qw/opt opts arg args optargs usage/);
-our @EXPORT_OK = (qw/subcommand/);
+our $VERSION = '0.0.1';
 
 Getopt::Long::Configure(qw/pass_through no_auto_abbrev/);
 
