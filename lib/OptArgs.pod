@@ -202,6 +202,18 @@ called at any time.
 
 =back
 
+=head2 Writing Sub-Commands
+
+B<OptArgs> exports the following functions for defining subcommands.
+
+=over
+
+=item subcommand($description)
+
+TBD.
+
+=back
+
 =head1 SEE ALSO
 
 L<Getopt::Long>
