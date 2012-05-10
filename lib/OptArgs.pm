@@ -373,9 +373,12 @@ sub _optargs {
         $opts{$package}    = $opts{$caller};
         $args{$package}    = $args{$caller};
 
-        require Module::Load;
-        Module::Load::load($package);
-        $package->run;
+        if ( eval "require $package;1;" ) {
+            $package->run;
+        }
+        else {
+            die $@;
+        }
     }
 
     return;
