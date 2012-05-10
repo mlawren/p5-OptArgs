@@ -208,7 +208,7 @@ B<OptArgs> exports the following functions for defining subcommands.
 
 =over
 
-=item subcommand($description)
+=item comment($description)
 
 TBD.
 

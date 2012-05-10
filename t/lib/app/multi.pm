@@ -29,9 +29,9 @@ sub run {
 }
 
 package app::multi::init;
-use OptArgs qw/subcommand opt arg/;
+use OptArgs qw/comment opt arg/;
 
-subcommand('do the y thing');
+comment('do the y thing');
 
 opt opty => (
     isa     => 'Bool',
@@ -39,9 +39,9 @@ opt opty => (
 );
 
 package app::multi::new;
-use OptArgs qw/subcommand opt arg/;
+use OptArgs qw/comment opt arg/;
 
-subcommand('do the z thing');
+comment('do the z thing');
 
 arg thread => (
     isa      => 'Str',
@@ -51,9 +51,9 @@ arg thread => (
 );
 
 package app::multi::new::project;
-use OptArgs qw/subcommand opt/;
+use OptArgs qw/comment opt/;
 
-subcommand('do the new project thing');
+comment('do the new project thing');
 
 opt popt => (
     isa     => 'Bool',
@@ -61,9 +61,9 @@ opt popt => (
 );
 
 package app::multi::new::issue;
-use OptArgs qw/subcommand opt/;
+use OptArgs qw/comment opt/;
 
-subcommand('create a new issue');
+comment('create a new issue');
 
 opt iopt => (
     isa     => 'Bool',
@@ -71,9 +71,9 @@ opt iopt => (
 );
 
 package app::multi::new::task;
-use OptArgs qw/subcommand opt arg/;
+use OptArgs qw/comment opt arg/;
 
-subcommand('create a new task thread');
+comment('create a new task thread');
 
 opt topt => (
     isa     => 'Bool',
@@ -88,9 +88,9 @@ arg targ => (
 );
 
 package app::multi::new::task::pretty;
-use OptArgs qw/subcommand opt/;
+use OptArgs qw/comment opt/;
 
-subcommand('create a new task thread prettier than before');
+comment('create a new task thread prettier than before');
 
 opt optz => (
     isa     => 'Bool',

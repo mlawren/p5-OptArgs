@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Carp qw/croak/;
 use Exporter::Tidy
-  default => [qw/opt arg opts args optargs usage subcommand/],
+  default => [qw/opt arg opts args optargs usage comment/],
   all     => [qw//];
 use Getopt::Long qw/GetOptionsFromArray/;
 
@@ -14,8 +14,8 @@ Getopt::Long::Configure(qw/pass_through no_auto_abbrev/);
 my %definition;
 my %definition_list;
 
-my %subcommands;
-my @subcommands;
+my %comments;
+my @comments;
 
 my %opts;
 my %args;
@@ -168,7 +168,7 @@ sub _usage {
 
             my @parent = @{ $definition_list{$parent} };
             $parent[$#parent] = {
-                type => 'subcommand',
+                type => 'comment',
                 name => $name,
             };
 
@@ -195,7 +195,7 @@ sub _usage {
             $usage .= uc ' [' . $def->{name} . ']' unless $def->{required};
             $have_opt = 0;
         }
-        elsif ( $def->{type} eq 'subcommand' ) {
+        elsif ( $def->{type} eq 'comment' ) {
             $usage .= ' ' . $def->{name};
             $have_opt = 0;
         }
@@ -208,7 +208,7 @@ sub _usage {
 
     foreach my $def (@defines) {
         if ( $def->{type} eq 'opt' ) {
-            $usage .= "\n" unless ( $prev eq 'opt' or $prev eq 'subcommand' );
+            $usage .= "\n" unless ( $prev eq 'opt' or $prev eq 'comment' );
 
             if ( exists $def->{dashed} ) {
                 $usage .=
@@ -222,12 +222,12 @@ sub _usage {
             $prev = 'opt';
         }
         elsif ( $def->{type} eq 'arg' ) {
-            $usage .= "\n" unless ( $prev eq 'arg' or $prev eq 'subcommand' );
+            $usage .= "\n" unless ( $prev eq 'arg' or $prev eq 'comment' );
 
             $usage .= sprintf( $format, uc( $def->{name} ), $def->{comment} );
 
             if ( $def->{dispatch} ) {
-                my @list = grep { $_ =~ /^${caller}::[^:]+$/ } @subcommands;
+                my @list = grep { $_ =~ /^${caller}::[^:]+$/ } @comments;
 
                 my $max = 0;
                 map { $max = $_ > $max ? $_ : $max } map { length $_ } @list;
@@ -239,7 +239,7 @@ sub _usage {
                 if (@list) {
 
                     foreach my $subc (@list) {
-                        my $desc = $subcommands{$subc};
+                        my $desc = $comments{$subc};
                         ( my $name = $subc ) =~ s/.*::(.*)/$1/;
                         $usage .= sprintf( $format, $name, $desc );
                     }
@@ -248,9 +248,9 @@ sub _usage {
 
             $prev = 'arg';
         }
-        elsif ( $def->{type} eq 'subcommand' ) {
-            $usage .= "\n" unless $prev eq 'subcommand';
-            $prev = 'subcommand';
+        elsif ( $def->{type} eq 'comment' ) {
+            $usage .= "\n" unless $prev eq 'comment';
+            $prev = 'comment';
         }
     }
 
@@ -405,20 +405,15 @@ sub optargs {
     return $optargs{$caller};
 }
 
-sub subcommand {
+sub comment {
     my $caller = caller;
     my $desc = shift || croak 'subcomand($description)';
 
-    croak "subcommand already defined: $caller"
-      if $subcommands{$caller};
+    croak "comment already defined: $caller"
+      if $comments{$caller};
 
-    ( my $parent = $caller ) =~ s/(.*)::.*/$1/;
-
-    croak "$caller has no parent command!"
-      unless ( $parent ne $caller and exists $definition{$parent} );
-
-    $subcommands{$caller} = $desc;
-    push( @subcommands, $caller );
+    $comments{$caller} = $desc;
+    push( @comments, $caller );
 }
 
 1;
