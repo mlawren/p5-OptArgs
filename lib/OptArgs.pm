@@ -369,9 +369,9 @@ sub _optargs {
     $args{$caller}    = $args;
 
     if ( $package ne $caller ) {
-        $optargs{$package} = $optargs{$caller};
-        $opts{$package}    = $opts{$caller};
-        $args{$package}    = $args{$caller};
+        $optargs{$package} = $optargs;
+        $opts{$package}    = $opts;
+        $args{$package}    = $args;
 
         unless ( eval "require $package;1;" ) {
             require Carp;
