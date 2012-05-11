@@ -347,6 +347,10 @@ sub _optargs {
     }
 
     foreach my $try (@definitions) {
+        if ( $try->{dispatch} ) {
+            delete $optargs->{ $try->{name} };
+            next;
+        }
 
         # Re-calculate the default if it was a subref
         my $result = $optargs->{ $try->{name} };
