@@ -266,8 +266,12 @@ sub usage {
 sub _optargs {
     my $caller = shift;
 
-    return if exists $optargs{$caller} and !@_ and !@ARGV;
-    croak "no defined option/argument" unless exists $definition_list{$caller};
+    return $caller if exists $optargs{$caller} and !@_ and !@ARGV;
+
+    croak "no defined option/argument for $caller"
+      unless exists $definition_list{$caller};
+
+    $definition_list{$caller} ||= [];
 
     my $source = @_ ? \@_ : \@ARGV;
     my $package = $caller;
@@ -417,6 +421,7 @@ sub dispatch {
     die $@ unless eval "require $class;1;";
 
     _reset($class);
+
     my $package = _optargs( $class, @_ );
     return $package->$method;
 }

@@ -23,11 +23,6 @@ arg command => (
     dispatch => 1,
 );
 
-sub run {
-    optargs();
-    print "multi, thanks\n";
-}
-
 package app::multi::init;
 use OptArgs qw/comment opt arg/;
 
@@ -96,5 +91,10 @@ opt optz => (
     isa     => 'Bool',
     comment => 'do nothing',
 );
+
+package app::multi::new::task::noopts;
+use OptArgs qw/comment opt/;
+
+comment('create a new task with no opts or args');
 
 1;
