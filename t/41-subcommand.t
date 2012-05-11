@@ -4,9 +4,10 @@ use Test::More;
 use Test::Output;
 use Test::Fatal;
 use lib 't/lib';
-use app::multi;
+use OptArgs qw/dispatch/;
 
-is exception { app::multi->run }, 'usage: 41-subcommand.t [options] COMMAND
+is exception { dispatch('app::multi') },
+  'usage: 41-subcommand.t [options] COMMAND
 
     --dry-run    do nothing
     --verbose    do it loudly
@@ -18,12 +19,12 @@ is exception { app::multi->run }, 'usage: 41-subcommand.t [options] COMMAND
 ', 'no arguments';
 
 stdout_is(
-    sub { app::multi->run('init') },
+    sub { dispatch(qw/app::multi init/) },
     'you are in init, thanks
 ', 'init'
 );
 
-is exception { app::multi->run(qw/init -q/) },
+is exception { dispatch(qw/app::multi init -q/) },
   'unexpected option or argument: -q
 
 usage: 41-subcommand.t [options] init [options]

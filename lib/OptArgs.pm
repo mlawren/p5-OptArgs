@@ -4,7 +4,7 @@ use warnings;
 use Carp qw/croak/;
 use Exporter::Tidy
   default => [qw/opt arg opts args optargs usage comment/],
-  all     => [qw//];
+  other   => [qw/dispatch/];
 use Getopt::Long qw/GetOptionsFromArray/;
 
 our $VERSION = '0.0.1';
@@ -373,15 +373,14 @@ sub _optargs {
         $opts{$package}    = $opts{$caller};
         $args{$package}    = $args{$caller};
 
-        if ( eval "require $package;1;" ) {
-            $package->run;
+        unless ( eval "require $package;1;" ) {
+            require Carp;
+            Carp::confess $@;
         }
-        else {
-            die $@;
-        }
+        return $package;
     }
 
-    return;
+    return $caller;
 }
 
 sub opts {
@@ -403,6 +402,16 @@ sub optargs {
 
     _optargs( $caller, @_ );
     return $optargs{$caller};
+}
+
+sub dispatch {
+    my $class = shift;
+
+    die $@ unless eval "require $class;1;";
+
+    _reset($class);
+    my $package = _optargs( $class, @_ );
+    return $package->run;
 }
 
 sub comment {

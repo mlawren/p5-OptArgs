@@ -5,6 +5,6 @@ use FindBin;
 use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/lib";
 
-use app::multi;
-app::multi->run;
+use OptArgs qw/dispatch/;
+dispatch('app::multi');
 

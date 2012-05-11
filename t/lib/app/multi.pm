@@ -24,8 +24,8 @@ arg command => (
 );
 
 sub run {
-    shift if $_[0] eq __PACKAGE__;
-    optargs(@_);
+    optargs();
+    print "multi, thanks\n";
 }
 
 package app::multi::init;

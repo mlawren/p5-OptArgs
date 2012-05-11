@@ -204,11 +204,16 @@ called at any time.
 
 =head2 Writing Sub-Commands
 
-B<OptArgs> exports the following functions for defining subcommands.
+B<OptArgs> exports the following functions for defining and running
+subcommands.
 
 =over
 
 =item comment($description)
+
+TBD.
+
+=item dispatch($class, [ @argv ])
 
 TBD.
 
