@@ -152,6 +152,16 @@ DESCRIPTION
         Returns a usage string based on the defined opts and args. Can be
         called at any time.
 
+  Writing Sub-Commands
+    OptArgs exports the following functions for defining and running
+    subcommands.
+
+    comment($description)
+        TBD.
+
+    dispatch($class, [ @argv ])
+        TBD.
+
 SEE ALSO
     Getopt::Long
 
