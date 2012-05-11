@@ -409,13 +409,16 @@ sub optargs {
 }
 
 sub dispatch {
-    my $class = shift;
+    my $method = shift;
+    my $class  = shift;
+
+    croak 'dispatch($method, $class, [@argv])' unless $method and $class;
 
     die $@ unless eval "require $class;1;";
 
     _reset($class);
     my $package = _optargs( $class, @_ );
-    return $package->run;
+    return $package->$method;
 }
 
 sub comment {

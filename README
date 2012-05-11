@@ -159,7 +159,7 @@ DESCRIPTION
     comment($description)
         TBD.
 
-    dispatch($class, [ @argv ])
+    dispatch($method, $rootclass, [ @argv ])
         TBD.
 
 SEE ALSO

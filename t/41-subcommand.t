@@ -6,7 +6,7 @@ use Test::Fatal;
 use lib 't/lib';
 use OptArgs qw/dispatch/;
 
-is exception { dispatch('app::multi') },
+is exception { dispatch(qw/run app::multi/) },
   'usage: 41-subcommand.t [options] COMMAND
 
     --dry-run    do nothing
@@ -19,12 +19,12 @@ is exception { dispatch('app::multi') },
 ', 'no arguments';
 
 stdout_is(
-    sub { dispatch(qw/app::multi init/) },
+    sub { dispatch(qw/run app::multi init/) },
     'you are in init, thanks
 ', 'init'
 );
 
-is exception { dispatch(qw/app::multi init -q/) },
+is exception { dispatch(qw/run app::multi init -q/) },
   'unexpected option or argument: -q
 
 usage: 41-subcommand.t [options] init [options]

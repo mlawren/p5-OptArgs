@@ -213,7 +213,7 @@ subcommands.
 
 TBD.
 
-=item dispatch($class, [ @argv ])
+=item dispatch($method, $rootclass, [ @argv ])
 
 TBD.
 
