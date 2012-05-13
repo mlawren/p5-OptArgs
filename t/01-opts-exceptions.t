@@ -45,7 +45,7 @@ like exception {
 opt str => ( isa => 'Str', comment => 'comment' );
 
 like exception {
-    opt str => ();
+    opt str => ( isa => 'Str', comment => 'comment', );
 }, qr/already defined/, 'already defined';
 
 @ARGV = (qw/--str x --bool/);

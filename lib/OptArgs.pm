@@ -38,6 +38,7 @@ my %opt_defaults = (
     comment => undef,
     default => undef,
     alias   => undef,
+    package => undef,
 );
 
 my %arg_types = (
@@ -56,6 +57,7 @@ my %arg_defaults = (
     required => undef,
     default  => undef,
     dispatch => undef,
+    package  => undef,
 );
 
 sub _reset {
@@ -71,11 +73,8 @@ sub _reset {
 sub opt {
     my $caller = caller;
 
-    _reset($caller);
-
     my $name = shift;
     croak 'usage: opt $name => (%parameters)' unless $name;
-    croak "opt '$name' already defined" if exists $definition{$caller}->{$name};
 
     my $params = {@_};
     if ( my @missing = grep { !exists $params->{$_} } @opt_required ) {
@@ -87,6 +86,10 @@ sub opt {
         my @valid = keys %opt_defaults;
         croak "invalid parameter(s): @invalid (valid: @valid)";
     }
+
+    $caller = delete $params->{package} if defined $params->{package};
+    croak "opt '$name' already defined" if exists $definition{$caller}->{$name};
+    _reset($caller);
 
     $params->{name} = $name;
     $params->{type} = 'opt';
@@ -117,7 +120,6 @@ sub arg {
 
     my $name = shift;
     croak 'usage: arg $name => (%parameters)' unless $name;
-    croak "arg '$name' already defined" if exists $definition{$caller}->{$name};
 
     my $params = {@_};
     if ( my @missing = grep { !exists $params->{$_} } @arg_required ) {
@@ -133,6 +135,10 @@ sub arg {
     if ( defined $params->{default} and defined $params->{required} ) {
         croak "'default' and 'required' cannot be used together";
     }
+
+    $caller = delete $params->{package} if defined $params->{package};
+    croak "arg '$name' already defined" if exists $definition{$caller}->{$name};
+    _reset($caller);
 
     $params->{name} = $name;
     $params->{type} = 'arg';
@@ -335,7 +341,8 @@ sub _optargs {
 
                 die _usage( $oldpackage,
                     "unknown " . uc( $try->{name} ) . ': ' . $subcmd )
-                  unless exists $definition{$package};
+                  unless exists $definition{$package}
+                      or exists $comments{$package};
 
                 push( @current,     @{ $definition_list{$package} } );
                 push( @definitions, @{ $definition_list{$package} } );
@@ -381,10 +388,6 @@ sub _optargs {
         $opts{$package}    = $opts;
         $args{$package}    = $args;
 
-        unless ( eval "require $package;1;" ) {
-            require Carp;
-            Carp::confess $@;
-        }
         return $package;
     }
 
@@ -418,23 +421,32 @@ sub dispatch {
 
     croak 'dispatch($method, $class, [@argv])' unless $method and $class;
 
-    die $@ unless eval "require $class;1;";
+    croak $@ unless eval "require $class;1;";
 
     _reset($class);
 
     my $package = _optargs( $class, @_ );
+
+    croak $@ unless ( $package->can($method) || eval "require $package;1;" );
+
     return $package->$method;
 }
 
 sub comment {
+
     my $caller = caller;
     my $desc = shift || croak 'subcomand($description)';
+
+    $caller = shift if @_;
 
     croak "comment already defined: $caller"
       if $comments{$caller};
 
     $comments{$caller} = $desc;
     push( @comments, $caller );
+
+    $definition{$caller}      ||= {};
+    $definition_list{$caller} ||= [];
 }
 
 1;

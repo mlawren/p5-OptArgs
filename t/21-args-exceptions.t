@@ -54,7 +54,7 @@ like exception {
 arg str => ( isa => 'Str', comment => 'comment', required => 1 );
 
 like exception {
-    arg str => ();
+    arg str => ( isa => 'Str', comment => 'comment', );
 }, qr/already defined/, 'already defined';
 
 @ARGV = ();
@@ -79,7 +79,7 @@ like exception {
 opt bool => ( isa => 'Bool', comment => 'comment', );
 
 like exception {
-    arg bool => ();
+    arg bool => ( isa => 'Str', comment => 'comment', );
 }, qr/already defined/, 'already defined';
 
 done_testing;

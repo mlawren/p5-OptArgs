@@ -113,6 +113,10 @@ Can be single characters or words separated by '|' if more than one
 alias is desired. If the option name contains underscores ('_') then an
 alias with '-' substitutions will be automatically added.
 
+=item package
+
+Used to put an opt into another package than the current one.
+
 =back
 
 =item arg name => ( %parameters )
@@ -152,6 +156,10 @@ If this is a subroutine reference it will be called with a hashref
 containg all option/argument values after parsing the source has
 finished.  The value to be set must be returned, and any changes to the
 hashref are ignored.
+
+=item package
+
+Used to put an arg into another package than the current one.
 
 =back
 
