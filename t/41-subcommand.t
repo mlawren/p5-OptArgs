@@ -9,12 +9,12 @@ use OptArgs qw/dispatch/;
 is exception { dispatch(qw/run app::multi/) },
   'usage: 41-subcommand.t [options] COMMAND
 
-    --dry-run    do nothing
-    --verbose    do it loudly
+    --dry-run, -n    do nothing
+    --verbose, -v    do it loudly
 
     COMMAND      (required) valid values include:
-        init         do the y thing
-        new          do the z thing
+        init       do the y thing
+        new        do the z thing
 
 ', 'no arguments';
 
@@ -29,9 +29,8 @@ is exception { dispatch(qw/run app::multi init -q/) },
 
 usage: 41-subcommand.t [options] init [options]
 
-    --dry-run    do nothing
-    --verbose    do it loudly
-
+    --dry-run, -n    do nothing
+    --verbose, -v    do it loudly
     --opty       do nothing
 
 ', 'unexpected option';

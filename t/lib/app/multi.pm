@@ -1,74 +1,56 @@
+package app::multi;
 use strict;
 use warnings;
-
-package app::multi;
 use OptArgs;
 
 opt dry_run => (
     isa     => 'Bool',
-    comment => 'do nothing',
     alias   => 'n',
+    comment => 'do nothing',
 );
 
 opt verbose => (
     isa     => 'Bool',
-    comment => 'do it loudly',
     alias   => 'v',
+    comment => 'do it loudly',
 );
 
 arg command => (
-    isa      => 'Str',
-    comment  => '(required) valid values include:',
+    isa      => 'SubCmd',
     required => 1,
-    dispatch => 1,
+    comment  => '(required) valid values include:',
 );
 
-package app::multi::init;
-use OptArgs qw/comment opt arg/;
-
-comment('do the y thing');
+subcmd( 'init', 'do the y thing' );
 
 opt opty => (
     isa     => 'Bool',
     comment => 'do nothing',
 );
 
-package app::multi::new;
-use OptArgs qw/comment opt arg/;
-
-comment('do the z thing');
+subcmd( 'new', 'do the z thing' );
 
 arg thread => (
-    isa      => 'Str',
-    comment  => '',
+    isa      => 'SubCmd',
     required => 1,
-    dispatch => 1,
+    comment  => '',
 );
 
-package app::multi::new::project;
-use OptArgs qw/comment opt/;
-
-comment('do the new project thing');
+subcmd( qw/new project/, 'do the new project thing' );
 
 opt popt => (
     isa     => 'Bool',
     comment => 'do nothing',
 );
 
-package app::multi::new::issue;
-use OptArgs qw/comment opt/;
-
-comment('create a new issue');
+subcmd( qw/new issue/, 'create a new issue' );
 
 opt iopt => (
     isa     => 'Bool',
     comment => 'do nothing',
 );
 
-package app::multi::new::task;
-use OptArgs qw/comment opt arg/;
-
-comment('create a new task thread');
+subcmd( qw/new task/, 'create a new task thread' );
 
 opt topt => (
     isa     => 'Bool',
@@ -76,25 +58,18 @@ opt topt => (
 );
 
 arg targ => (
-    isa      => 'Str',
-    comment  => '',
+    isa      => 'SubCmd',
     required => 1,
-    dispatch => 1,
+    comment  => '',
 );
 
-package app::multi::new::task::pretty;
-use OptArgs qw/comment opt/;
-
-comment('create a new task thread prettier than before');
+subcmd( qw/new task pretty/, 'create a new task prettier than before' );
 
 opt optz => (
     isa     => 'Bool',
     comment => 'do nothing',
 );
 
-package app::multi::new::task::noopts;
-use OptArgs qw/comment opt/;
-
-comment('create a new task with no opts or args');
+subcmd( qw/new task noopts/, 'create a new task with no opts or args' );
 
 1;

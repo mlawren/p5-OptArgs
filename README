@@ -90,6 +90,9 @@ DESCRIPTION
             ('_') then an alias with '-' substitutions will be automatically
             added.
 
+        package
+            Used to put an opt into another package than the current one.
+
     arg name => ( %parameters )
         Define a Command Argument with the following parameters:
 
@@ -103,6 +106,7 @@ DESCRIPTION
                  'Num'           '=f'
                  'ArrayRef'      's@'
                  'HashRef'       's%'
+                 'SubCmd'        '=s'
 
         comment
             Required. Used to generate the usage/help message.
@@ -119,6 +123,9 @@ DESCRIPTION
             hashref containg all option/argument values after parsing the
             source has finished. The value to be set must be returned, and
             any changes to the hashref are ignored.
+
+        package
+            Used to put an arg into another package than the current one.
 
     Note that any call to opt() or arg() causes the next call to opts(),
     args() or optargs() (described below) to reset their values and reparse
@@ -169,6 +176,10 @@ SUPPORT & DEVELOPMENT
     This distribution is managed via github:
 
         http://github.com/mlawren/optargs
+
+    This distribution follows the semantic versioning model:
+
+        http://semver.org/
 
     Code is tidied up on Git commit using githook-perltidy:
 

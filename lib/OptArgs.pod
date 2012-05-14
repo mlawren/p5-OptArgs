@@ -137,6 +137,7 @@ following table:
      'Num'           '=f'
      'ArrayRef'      's@'
      'HashRef'       's%'
+     'SubCmd'        '=s'
 
 =item comment
 
@@ -217,7 +218,7 @@ subcommands.
 
 =over
 
-=item comment($description)
+=item subcmd(@cmd, $description)
 
 TBD.
 
@@ -237,6 +238,10 @@ L<Getopt::Long>
 This distribution is managed via github:
 
     http://github.com/mlawren/optargs
+
+This distribution follows the semantic versioning model:
+
+    http://semver.org/
 
 Code is tidied up on Git commit using githook-perltidy:
 
