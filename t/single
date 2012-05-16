@@ -15,6 +15,13 @@ opt dry_run => (
     comment => 'do nothing',
 );
 
+opt help => (
+    isa     => 'Bool',
+    alias   => 'h',
+    ishelp  => 1,
+    comment => 'this help message',
+);
+
 arg database => (
     isa      => 'Str',
     comment  => 'name of the database to deploy',

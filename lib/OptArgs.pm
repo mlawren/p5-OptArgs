@@ -41,6 +41,7 @@ my %opt_defaults = (
     default => undef,
     alias   => undef,
     package => undef,
+    ishelp  => undef,
 );
 
 my %arg_types = (
@@ -93,6 +94,9 @@ sub opt {
     $caller = delete $params->{package} if defined $params->{package};
     croak "opt '$name' already defined" if $seen{$caller}->{$name}++;
     _reset($caller);
+
+    croak "'ishelp' can only be applied to Bool opts"
+      if $params->{ishelp} and $params->{isa} ne 'Bool';
 
     $params->{name} = $name;
     $params->{type} = 'opt';
@@ -294,6 +298,8 @@ sub _optargs {
     my @config  = @{ $config{$caller} };
     my @current = @config;
 
+    my $ishelp;
+
     while ( my $try = shift @current ) {
         my $result;
 
@@ -304,6 +310,8 @@ sub _optargs {
                   defined $result
                   ? $result
                   : $try->{default};
+
+                $ishelp = 1 if $optargs->{ $try->{name} } and $try->{ishelp};
             }
             else {
                 return;
@@ -332,7 +340,7 @@ sub _optargs {
             elsif ( $try->{default} ) {
                 $optargs->{ $try->{name} } = $try->{default};
             }
-            elsif ( $try->{required} ) {
+            elsif ( $try->{required} and !$ishelp ) {
                 die _usage($package);
             }
 
@@ -356,6 +364,10 @@ sub _optargs {
             }
 
         }
+    }
+
+    if ($ishelp) {
+        die _usage( $package, "[help request]" );
     }
 
     if (@$source) {

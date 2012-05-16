@@ -117,6 +117,15 @@ alias with '-' substitutions will be automatically added.
 
 Used to put an opt into another package than the current one.
 
+=item ishelp
+
+When true flags this option as a help option, which when given will
+then result in an internal "die usage()" call. This is basically a
+shortcut saving you from doing the following in each (sub)command:
+
+    my $opts = optargs;
+    die usage('help requested') if $opts->{help};
+
 =back
 
 =item arg name => ( %parameters )
