@@ -24,19 +24,19 @@ arg target => (
 
 is usage, 'usage: 31-usage.t [options] TARGET
 
-    --dry-run    do nothing
-    --quiet      be quiet about it
+    --dry-run         do nothing
+    --quiet           be quiet about it
 
-    TARGET       name of the database to deploy
+    TARGET            name of the database to deploy
 
 ', 'plain usage';
 
 is exception { optargs }, 'usage: 31-usage.t [options] TARGET
 
-    --dry-run    do nothing
-    --quiet      be quiet about it
+    --dry-run         do nothing
+    --quiet           be quiet about it
 
-    TARGET       name of the database to deploy
+    TARGET            name of the database to deploy
 
 ', 'missing usage';
 
@@ -63,10 +63,10 @@ arg target => (
 
 is exception { optargs }, 'usage: 31-usage.t [options] TARGET
 
-    --quiet      be quiet about it
-    --dry-run    do nothing
+    --quiet           be quiet about it
+    --dry-run         do nothing
 
-    TARGET       name of the database to deploy
+    TARGET            name of the database to deploy
 
 ', 'usage';
 
@@ -99,13 +99,13 @@ arg target2 => (
 is exception { optargs },
   'usage: 31-usage.t [options] TARGET [options] [TARGET2]
 
-    --quiet      be quiet about it
+    --quiet           be quiet about it
 
-    TARGET       name of the database to deploy
+    TARGET            name of the database to deploy
 
-    --dry-run    do nothing
+    --dry-run         do nothing
 
-    TARGET2      name of the database to deploy
+    TARGET2           name of the database to deploy
 
 ', 'usage';
 
@@ -127,9 +127,9 @@ opt dry_run => (
 
 is exception { optargs }, 'usage: 31-usage.t TARGET [options]
 
-    TARGET       name of the database to deploy
+    TARGET            name of the database to deploy
 
-    --dry-run    do nothing
+    --dry-run         do nothing
 
 ', 'usage';
 

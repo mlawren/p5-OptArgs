@@ -39,7 +39,7 @@ my %opt_defaults = (
     isa     => undef,
     comment => undef,
     default => undef,
-    alias   => undef,
+    alias   => '',
     package => undef,
     ishelp  => undef,
 );
@@ -193,66 +193,79 @@ sub _usage {
         }
     }
 
-    my $have_opt  = 0;
-    my $maxlength = 0;
+    my $have_opt = 0;
+    my $maxopt   = 0;
+    my $maxalias = 0;
+    my $maxarg   = 0;
 
     foreach my $def (@config) {
         my $length = length $def->{name};
-        $maxlength = $length if $length > $maxlength;
 
         if ( $def->{type} eq 'opt' ) {
+            $maxopt = $length if $length > $maxopt;
+
+            foreach ( split( /|/, $def->{alias} ) ) {
+                $maxalias = length $_ if length $_ > $maxalias;
+            }
+
             next if $have_opt;
             $usage .= ' [options]';
             $have_opt++;
         }
         elsif ( $def->{type} eq 'arg' or $def->{type} eq 'subcmd' ) {
+            $maxarg = $length if $length > $maxarg;
+
             my $tmp = $usage .= ' ';
             $usage .= '[' unless $def->{required} or $def->{parent};
             $usage .= $def->{parent} ? $def->{name} : uc $def->{name};
             $usage .= ']' unless $def->{required} or $def->{parent};
             $have_opt = 0;
+
+            if ( $def->{type} eq 'subcmd' ) {
+                my @list = grep { $_ =~ /^${caller}::[^:]+$/ } @subcmd;
+
+                foreach my $subc (@list) {
+                    $subc =~ m/.*::(.*)/;
+                    my $length = length $1;
+                    $maxarg = $length + 4 if $length + 4 > $maxarg;
+                }
+            }
         }
     }
 
     $usage .= "\n";
 
-    my $prev = '';
-    my $format = '    %-' . ( $maxlength + 2 ) . "s    %-s\n";
+    $maxalias++;
+    $maxopt++;
 
+    my $oformat = "--%-${maxopt}s  %-${maxalias}s";
+
+    my $opts = sprintf( $oformat, '', '' );
+    my $length = length $opts;
+    $maxarg = $length > $maxarg ? $length : $maxarg;
+    my $aformat = "    %-${maxarg}s     %-s\n";
+
+    my $prev = '';
     foreach my $def (@config) {
         if ( $def->{type} eq 'opt' ) {
             $usage .= "\n" unless ( $prev eq 'opt' or $prev eq 'subcmd' );
+            my $name = exists $def->{dashed} ? $def->{dashed} : $def->{name};
+            $name .= ',' if $def->{alias};
 
             my $alias =
               join( ', ', map { '-' . $_ } split( /|/, $def->{alias} || '' ) );
-            $alias = ', ' . $alias if $alias;
 
-            if ( exists $def->{dashed} ) {
-                $usage .= sprintf( $format,
-                    '--' . $def->{dashed} . $alias,
-                    $def->{comment} );
-            }
-            else {
-                $usage .= sprintf( $format,
-                    '--' . $def->{name} . $alias,
-                    $def->{comment} );
-            }
+            my $opts = sprintf( $oformat, $name, $alias );
+            $usage .= sprintf( $aformat, $opts, $def->{comment} );
         }
         elsif ( $def->{type} eq 'arg' or $def->{type} eq 'subcmd' ) {
             next if $def->{parent};
             $usage .= "\n" unless ( $prev eq 'arg' or $prev eq 'subcmd' );
 
-            $usage .= sprintf( $format, uc( $def->{name} ), $def->{comment} );
+            $usage .= sprintf( $aformat, uc( $def->{name} ), $def->{comment} );
 
             if ( $def->{type} eq 'subcmd' ) {
                 my @list = grep { $_ =~ /^${caller}::[^:]+$/ } @subcmd;
-
-                my $max = 0;
-                map { $max = $_ > $max ? $_ : $max } map { length $_ } @list;
-                my $format =
-                    '        %-'
-                  . ( $max - length( $caller . '::' ) )
-                  . "s       %-s\n";
 
                 if (@list) {
 
@@ -260,7 +273,7 @@ sub _usage {
                         my $desc = $desc{$subc};
                         ( my $name = $subc ) =~ s/.*::(.*)/$1/;
                         $name =~ s/_/-/;
-                        $usage .= sprintf( $format, $name, $desc );
+                        $usage .= sprintf( $aformat, '    ' . $name, $desc );
                     }
                 }
 
