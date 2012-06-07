@@ -6,7 +6,6 @@ use Exporter::Tidy
   default => [qw/opt arg opts args optargs usage subcmd/],
   other   => [qw/dispatch/];
 use Getopt::Long qw/GetOptionsFromArray/;
-use Data::Show;
 use List::Util qw/max/;
 
 our $VERSION = '0.0.1';
