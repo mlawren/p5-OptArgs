@@ -113,10 +113,6 @@ Can be single characters or words separated by '|' if more than one
 alias is desired. If the option name contains underscores ('_') then an
 alias with '-' substitutions will be automatically added.
 
-=item package
-
-Used to put an opt into another package than the current one.
-
 =item ishelp
 
 When true flags this option as a help option, which when given will
@@ -167,10 +163,6 @@ containg all option/argument values after parsing the source has
 finished.  The value to be set must be returned, and any changes to the
 hashref are ignored.
 
-=item package
-
-Used to put an arg into another package than the current one.
-
 =back
 
 =back
@@ -183,31 +175,18 @@ before retrieving their values.
 =head2 Parsing and Retrieving Values
 
 B<OptArgs> exports the following functions for parsing and retriving
-option and argument values. They all parse @ARGV by default (or @argv
-when given) for options and arguments.  An error / usage message will
-be generated if an invalid combination of options and arguments has
-been given.
+option and argument values:
 
 =over
 
-=item opts( [ @argv ] ) -> HashRef
-
-Return a hashref containing key/value pairs for the I<options only>.
-
-=item args( [ @argv ] ) -> HashRef
-
-Return a hashref containing key/value pairs for the I<arguments only>.
-
 =item optargs( [ @argv ] ) -> HashRef
 
-Return a hashref containing key/value pairs for options and arguments
-I<combined>.
+Parse @ARGV by default (or @argv when given) and returns a hashref
+containing key/value pairs for options and arguments I<combined>.  An
+error / usage exception is thrown if an invalid combination of options
+and arguments is given.
 
 =back
-
-These function nearly behave like singletons: they will return the same
-hashref each time they are called unless @ARGV changes, a new @argv is
-given, or opt() or arg() are called.
 
 =head2 Utility Functions
 

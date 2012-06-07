@@ -6,19 +6,17 @@ use OptArgs;
 
 opt long_str => (
     isa     => 'Str',
-    alias   => 's|t',
+    alias   => 's',
     comment => 'comment',
 );
 
-is_deeply opts, { long_str => undef }, 'nothing';
+@ARGV = (qw/--long-str x/);
+is_deeply optargs, { long_str => 'x' }, 'dashed';
 
 @ARGV = (qw/--long_str x/);
-is_deeply opts, { long_str => 'x' }, 'fullname';
+is_deeply optargs, { long_str => 'x' }, 'fullname';
 
 @ARGV = (qw/-s x/);
-is_deeply opts, { long_str => 'x' }, 'alias';
-
-@ARGV = (qw/-t x/);
-is_deeply opts, { long_str => 'x' }, 'alias2';
+is_deeply optargs, { long_str => 'x' }, 'alias';
 
 done_testing;

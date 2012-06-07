@@ -10,24 +10,10 @@ opt str => (
     comment => 'comment',
 );
 
-is_deeply opts, { str => undef }, 'nothing';
-
 @ARGV = (qw/--str x/);
-is_deeply opts, { str => 'x' }, 'fullname';
+is_deeply optargs, { str => 'x' }, 'fullname';
 
 @ARGV = (qw/-s x/);
-is_deeply opts, { str => 'x' }, 'alias';
-
-opt two => (
-    isa     => 'Str',
-    alias   => 't|u',
-    comment => 'comment',
-);
-
-@ARGV = (qw/-t x/);
-is_deeply opts, { str => undef, two => 'x' }, 'two alias deeply';
-
-@ARGV = (qw/-u x/);
-is_deeply opts, { str => undef, two => 'x' }, 'two alias deeply';
+is_deeply optargs, { str => 'x' }, 'alias';
 
 done_testing;

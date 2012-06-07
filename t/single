@@ -3,39 +3,36 @@ use strict;
 use warnings;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
+use Data::Dumper;
 use OptArgs;
-
-opt quiet => (
-    isa     => 'Bool',
-    comment => 'be quiet about it',
-);
-
-opt dry_run => (
-    isa     => 'Bool',
-    comment => 'do nothing',
-);
 
 opt help => (
     isa     => 'Bool',
     alias   => 'h',
     ishelp  => 1,
-    comment => 'this help message',
+    comment => 'print this help message and exit',
 );
 
-arg database => (
+opt dry_run => (
+    isa     => 'Bool',
+    comment => 'do nothing',
+    alias   => 'n',
+);
+
+arg arg1 => (
     isa      => 'Str',
-    comment  => 'name of the database to deploy',
+    comment  => 'a mandatory argument',
     required => 1,
 );
 
-arg schema => (
+arg arg2 => (
     isa     => 'Num',
-    comment => 'schema of the database to deploy',
-    default => 'main',
+    comment => 'an argument whose value defaults to "optional"',
+    default => 'optional',
 );
 
 #die usage();
 
-print "Not " if opts->{dry_run};
-print "Deploying to " . args->{database} . "\n";
+my $opts = optargs;
+print Dumper($opts);
 

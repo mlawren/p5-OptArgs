@@ -3,6 +3,12 @@ use strict;
 use warnings;
 use OptArgs;
 
+arg command => (
+    isa      => 'SubCmd',
+    required => 1,
+    comment  => '(required) valid values include:',
+);
+
 opt dry_run => (
     isa     => 'Bool',
     alias   => 'n',
@@ -13,12 +19,6 @@ opt verbose => (
     isa     => 'Bool',
     alias   => 'v',
     comment => 'do it loudly',
-);
-
-arg command => (
-    isa      => 'SubCmd',
-    required => 1,
-    comment  => '(required) valid values include:',
 );
 
 subcmd( 'init', 'do the y thing' );
