@@ -29,6 +29,7 @@ arg arg2 => (
     isa     => 'Num',
     comment => 'an argument whose value defaults to "optional"',
     default => 'optional',
+    greedy  => 1,
 );
 
 #die usage();

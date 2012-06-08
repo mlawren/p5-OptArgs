@@ -163,6 +163,12 @@ containg all option/argument values after parsing the source has
 finished.  The value to be set must be returned, and any changes to the
 hashref are ignored.
 
+=item greedy
+
+If true the argument swallows the rest of the command line. It doesn't
+make sense to define any more arguments once you have used this as they
+will never be seen.
+
 =back
 
 =back

@@ -144,6 +144,7 @@ my %arg_params = (
     comment  => undef,
     required => undef,
     default  => undef,
+    greedy   => undef,
 );
 
 my @arg_required = (qw/isa comment/);
@@ -214,6 +215,7 @@ sub _usage {
         $usage .= ' ' if $usage;
         $usage .= '[' unless $def->{required};
         $usage .= uc $def->{name};
+        $usage .= '...' if $def->{greedy};
         $usage .= ']' unless $def->{required};
 
         $length_a = max( $length_a, map { length $_ } @{ $def->{subcommands} } )
@@ -304,7 +306,13 @@ sub _optargs {
         }
         elsif ( $try->{type} eq 'arg' or $try->{type} eq 'subcmd' ) {
             if (@$source) {
-                $result = shift @$source;
+                if ( $try->{greedy} ) {
+                    $result = "@$source";
+                    shift @$source while @$source;
+                }
+                else {
+                    $result = shift @$source;
+                }
 
                 # TODO: type check using Param::Utils?
             }
