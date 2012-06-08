@@ -257,7 +257,9 @@ sub _usage {
         elsif ( $def->{type} eq 'subcmd' ) {
             $usage .= sprintf( $format_a, uc $def->{name}, $def->{comment} );
             foreach my $subcommand ( @{ $def->{subcommands} } ) {
-                my $desc = $desc{ $def->{package} . '::' . $subcommand };
+                my $pkg = $def->{package} . '::' . $subcommand;
+                $pkg =~ s/-/_/g;
+                my $desc = $desc{$pkg};
                 $usage .= sprintf( $format_a, '    ' . $subcommand, $desc );
             }
         }
