@@ -130,6 +130,11 @@ DESCRIPTION
             source has finished. The value to be set must be returned, and
             any changes to the hashref are ignored.
 
+        greedy
+            If true the argument swallows the rest of the command line. It
+            doesn't make sense to define any more arguments once you have
+            used this as they will never be seen.
+
     Note that any call to opt() or arg() causes the next call to opts(),
     args() or optargs() (described below) to reset their values and reparse
     @ARGV, so you probably want to define all your options and arguments
