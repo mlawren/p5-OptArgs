@@ -224,14 +224,14 @@ TBD.
 
 =head1 SEE ALSO
 
-L<Getopt::Long>
+L<Getopt::Long>, L<Exporter::Tidy>
 
 =head1 SUPPORT & DEVELOPMENT
 
 
 This distribution is managed via github:
 
-    http://github.com/mlawren/optargs
+    http://github.com/mlawren/p5-OptArgs
 
 This distribution follows the semantic versioning model:
 
