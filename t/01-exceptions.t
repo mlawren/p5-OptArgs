@@ -2,7 +2,21 @@ use strict;
 use warnings;
 use Test::More;
 use Test::Fatal;
-use OptArgs;
+use OptArgs qw/:all/;
+
+#------------------------------------------------------------------------
+# subcmd()
+#------------------------------------------------------------------------
+
+like exception {
+    subcmd;
+},
+  qr/subcmd/,
+  'subcmd usage';
+
+like exception {
+    subcmd( 'cmd', 'description' );
+}, qr/parent command not found/, 'subcmd before opt/arg';
 
 #------------------------------------------------------------------------
 # optargs()
@@ -12,9 +26,7 @@ use OptArgs;
 
 like exception {
     optargs;
-},
-  qr/no option or argument defined/,
-  'no defined';
+}, qr/no option or argument defined/, 'no defined';
 
 #------------------------------------------------------------------------
 # opt()
@@ -153,5 +165,31 @@ opt bool => ( isa => 'Bool', comment => 'comment', );
 like exception {
     arg bool => ( isa => 'Str', comment => 'comment', );
 }, qr/already defined/, 'already defined';
+
+#------------------------------------------------------------------------
+# subcmd()
+#------------------------------------------------------------------------
+
+subcmd( 'cmd', 'description' );
+
+like exception {
+    subcmd( 'cmd', 'description' );
+}, qr/already defined/, 'subcmd already defined';
+
+#------------------------------------------------------------------------
+# dispatch()
+#------------------------------------------------------------------------
+
+like exception {
+    dispatch;
+}, qr/dispatch/, 'dispatch usage';
+
+like exception {
+    dispatch('one only');
+}, qr/dispatch/, 'dispatch usage one arg';
+
+like exception {
+    dispatch( 'nosub', 'noclass' );
+}, qr/locate noclass/, 'noclass';
 
 done_testing;
