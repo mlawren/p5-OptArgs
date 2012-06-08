@@ -10,11 +10,29 @@ use List::Util qw/max/;
 
 our $VERSION = '0.0.1';
 
-my %caller;    # current 'caller' keyed by real caller
 my %seen;      # hash of hashes keyed by 'caller', then opt/arg name
 my %opts;      # option configuration keyed by 'caller'
 my %args;      # argument configuration keyed by 'caller'
+my %caller;    # current 'caller' keyed by real caller
 my %desc;      # sub-command descriptions
+
+# internal method for App::optargs
+sub _cmdlist {
+    my $package = shift || croak '_cmdlist($package)';
+    $package =~ s/-/_/g;
+    my @list = ($package);
+
+    if ( exists $args{$package} ) {
+        my @subcmd =
+          map { exists $_->{subcommands} ? $_->{subcommands} : () }
+          @{ $args{$package} };
+
+        foreach my $subcmd ( map { @$_ } @subcmd ) {
+            push( @list, _cmdlist( $package . '::' . $subcmd ) );
+        }
+    }
+    return @list;
+}
 
 # ------------------------------------------------------------------------
 # Sub-commands work by faking caller context in opt() and arg()
