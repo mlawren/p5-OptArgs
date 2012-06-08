@@ -1,7 +1,7 @@
 package OptArgs;
 use strict;
 use warnings;
-use Carp qw/croak/;
+use Carp qw/croak carp/;
 use Exporter::Tidy
   default => [qw/opt arg opts args optargs usage subcmd/],
   other   => [qw/dispatch/];
@@ -10,11 +10,12 @@ use List::Util qw/max/;
 
 our $VERSION = '0.0.1';
 
-my %seen;      # hash of hashes keyed by 'caller', then opt/arg name
-my %opts;      # option configuration keyed by 'caller'
-my %args;      # argument configuration keyed by 'caller'
-my %caller;    # current 'caller' keyed by real caller
-my %desc;      # sub-command descriptions
+my %seen;           # hash of hashes keyed by 'caller', then opt/arg name
+my %opts;           # option configuration keyed by 'caller'
+my %args;           # argument configuration keyed by 'caller'
+my %caller;         # current 'caller' keyed by real caller
+my %desc;           # sub-command descriptions
+my %dispatching;    # track optargs() calls from dispatch classes
 
 # internal method for App::optargs
 sub _cmdlist {
@@ -371,6 +372,10 @@ sub _optargs {
 
 sub optargs {
     my $caller = caller;
+
+    carp "optargs() called from dispatch handler"
+      if $dispatching{$caller};
+
     my ( $package, $optargs ) = _optargs( $caller, @_ );
     return $optargs;
 }
@@ -392,7 +397,11 @@ sub dispatch {
 
     die "Can't find method $method via package $package" unless $sub;
 
-    return $sub->($optargs);
+    $dispatching{$class}++;
+    my @results = $sub->($optargs);
+    $dispatching{$class}--;
+    return @results if wantarray;
+    return $results[0];
 }
 
 1;
