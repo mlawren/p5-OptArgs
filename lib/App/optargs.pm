@@ -38,27 +38,25 @@ opt full => (
 );
 
 sub run {
-    my $opts  = shift;
-    my $class = $opts->{class};
+    my $opts = shift;
 
-    die $@ unless eval "require $class;";
-    binmode( STDOUT, ':encoding(utf8)' );
+    die $@ unless eval "require $opts->{class};";
 
-    my $initial = scalar split( /::/, $class );
+    my $initial = scalar split( /::/, $opts->{class} );
     my $indent = $opts->{spacer} x $opts->{indent};
 
-    foreach my $cmd ( OptArgs::_cmdlist($class) ) {
+    binmode( STDOUT, ':encoding(utf8)' );
+
+    foreach my $cmd ( OptArgs::_cmdlist( $opts->{class} ) ) {
         my $length = scalar split( /::/, $cmd ) - $initial;
         my $space = $indent x $length;
 
         my $usage = OptArgs::_usage($cmd);
         $usage =~ s/^usage: optargs/usage: $opts->{command}/;
-        $usage =~ s/^/$space/gm;
 
         unless ( $opts->{full} ) {
-            $usage =~ s/usage: //;
-            $usage =~ m/(.*?)$/sm;
-            print "$1\n";
+            $usage =~ m/usage: (.*?)$/m;
+            print $space . $1 . "\n";
             next;
         }
 
@@ -66,6 +64,7 @@ sub run {
         print $space, '#' x $n, "\n";
         print $space, "# $cmd\n";
         print $space, '#' x $n, "\n";
+        $usage =~ s/^/$space/gm;
         print $usage;
         print $space . "\n";
     }
