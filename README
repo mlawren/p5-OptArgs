@@ -153,6 +153,9 @@ DESCRIPTION
         error / usage exception is thrown if an invalid combination of
         options and arguments is given.
 
+        Note that @ARGV will be decoded into UTF-8 (if necessary) from
+        whatever I18N::Langinfo says your environment encoding is.
+
   Utility Functions
     usage([$message]) -> Str
         Returns a usage string based on the defined opts and args, prefixed
