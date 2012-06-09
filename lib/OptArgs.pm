@@ -28,6 +28,10 @@ sub _cmdlist {
           map { exists $_->{subcommands} ? $_->{subcommands} : () }
           @{ $args{$package} };
 
+        push( @subcmd,
+            map { exists $_->{fallback} ? [ uc $_->{fallback}->{name} ] : () }
+              @{ $args{$package} } );
+
         foreach my $subcmd ( map { @$_ } @subcmd ) {
             push( @list, _cmdlist( $package . '::' . $subcmd ) );
         }
@@ -201,6 +205,13 @@ sub arg {
     push( @{ $args{$package} }, $params );
     $opts{$package} ||= [];
     $seen{$package}->{$name}++;
+
+    if ( $params->{fallback} ) {
+        my $p = $package . '::' . uc $params->{fallback}->{name};
+        $p =~ s/-/_/;
+        $opts{$p} = [];
+        $args{$p} = [];
+    }
 
     return;
 }
