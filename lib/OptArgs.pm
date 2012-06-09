@@ -275,7 +275,7 @@ sub _usage {
 
             if ( $def->{fallback} ) {
                 $usage .= sprintf( $format_a,
-                    '    ' . '<' . $def->{fallback}->{name} . '>',
+                    '    ' . uc $def->{fallback}->{name},
                     $def->{fallback}->{comment} );
             }
         }
