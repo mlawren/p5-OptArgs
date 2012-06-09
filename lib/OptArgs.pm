@@ -65,7 +65,7 @@ sub subcmd {
     $opts{$package}  = [];
     $args{$package}  = [];
 
-    my $parent_arg = ( grep { $_->{type} eq 'subcmd' } @{ $args{$parent} } )[0];
+    my $parent_arg = ( grep { $_->{isa} eq 'SubCmd' } @{ $args{$parent} } )[0];
     push( @{ $parent_arg->{subcommands} }, $name );
 
     return;
@@ -199,7 +199,6 @@ sub arg {
     $params->{length}  = length $name;
     $params->{acount}  = 0;
     $params->{type}    = 'arg';
-    $params->{type}    = 'subcmd' if $params->{isa} eq 'SubCmd';
     $params->{ISA}     = $params->{name} . $arg_isa{ $params->{isa} };
 
     push( @{ $args{$package} }, $params );
@@ -238,7 +237,7 @@ sub _usage {
         $usage .= ']' unless $def->{required};
 
         $length_a = max( $length_a, map { length $_ } @{ $def->{subcommands} } )
-          if $def->{type} eq 'subcmd';
+          if $def->{isa} eq 'SubCmd';
     }
 
     while ( $parent =~ s/(.*)::(.*)/$1/ ) {
@@ -266,18 +265,6 @@ sub _usage {
 
         if ( $def->{type} eq 'arg' ) {
             $usage .= sprintf( $format_a, uc $def->{name}, $def->{comment} );
-        }
-        elsif ( $def->{type} eq 'opt' ) {
-            my $opt = '--' . $def->{name};
-            $opt =~ s/_/-/g;
-            $opt .= ',' if $def->{alias};
-            my $tmp = sprintf( $format_b,
-                $opt, $def->{alias} ? '-' . $def->{alias} : '' );
-
-            $usage .= sprintf( $format_a, $tmp, $def->{comment} );
-        }
-        elsif ( $def->{type} eq 'subcmd' ) {
-            $usage .= sprintf( $format_a, uc $def->{name}, $def->{comment} );
             foreach my $subcommand ( @{ $def->{subcommands} } ) {
                 my $pkg = $def->{package} . '::' . $subcommand;
                 $pkg =~ s/-/_/g;
@@ -290,6 +277,15 @@ sub _usage {
                     '    ' . uc $def->{fallback}->{name},
                     $def->{fallback}->{comment} );
             }
+        }
+        elsif ( $def->{type} eq 'opt' ) {
+            my $opt = '--' . $def->{name};
+            $opt =~ s/_/-/g;
+            $opt .= ',' if $def->{alias};
+            my $tmp = sprintf( $format_b,
+                $opt, $def->{alias} ? '-' . $def->{alias} : '' );
+
+            $usage .= sprintf( $format_a, $tmp, $def->{comment} );
         }
     }
 
@@ -330,7 +326,7 @@ sub _optargs {
         if ( $try->{type} eq 'opt' ) {
             GetOptionsFromArray( $source, $try->{ISA} => \$result );
         }
-        elsif ( $try->{type} eq 'arg' or $try->{type} eq 'subcmd' ) {
+        elsif ( $try->{type} eq 'arg' ) {
             if (@$source) {
                 if ( $try->{greedy} ) {
                     $result = "@$source";
