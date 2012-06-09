@@ -181,11 +181,6 @@ key/value pairs, which are only used in usage messages.
 
 =back
 
-Note that any call to opt() or arg() causes the next call to opts(),
-args() or optargs() (described below) to reset their values and reparse
-@ARGV, so you probably want to define all your options and arguments
-before retrieving their values.
-
 =head2 Parsing and Retrieving Values
 
 B<OptArgs> exports the following functions for parsing and retriving
@@ -206,10 +201,10 @@ and arguments is given.
 
 =over
 
-=item usage() -> Str
+=item usage([$message]) -> Str
 
-Returns a usage string based on the defined opts and args. Can be
-called at any time.
+Returns a usage string based on the defined opts and args, prefixed
+with $message if given.
 
 =back
 

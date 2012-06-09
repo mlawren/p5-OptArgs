@@ -300,7 +300,7 @@ sub _usage {
 
 sub usage {
     my $caller = caller;
-    return _usage($caller);
+    return _usage( $caller, @_ );
 }
 
 # ------------------------------------------------------------------------
