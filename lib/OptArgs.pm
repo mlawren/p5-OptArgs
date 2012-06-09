@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Carp qw/croak carp/;
 use Exporter::Tidy
-  default => [qw/opt arg opts args optargs usage subcmd/],
+  default => [qw/opt arg optargs usage subcmd/],
   other   => [qw/dispatch/];
 use Getopt::Long qw/GetOptionsFromArray/;
 use List::Util qw/max/;
