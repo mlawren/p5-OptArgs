@@ -146,7 +146,7 @@ my %arg_params = (
     required => undef,
     default  => undef,
     greedy   => undef,
-    fallthru => undef,
+    fallback => undef,
 );
 
 my @arg_required = (qw/isa comment/);
@@ -184,8 +184,11 @@ sub arg {
     croak "'default' and 'required' cannot be used together"
       if defined $params->{default} and defined $params->{required};
 
-    croak "'fallthru' only valid with isa 'SubCmd'"
-      if $params->{fallthru} and $params->{isa} ne 'SubCmd';
+    croak "'fallback' only valid with isa 'SubCmd'"
+      if $params->{fallback} and $params->{isa} ne 'SubCmd';
+
+    croak "fallback must be a hashref"
+      if defined $params->{fallback} && ref $params->{fallback} ne 'HASH';
 
     $params->{package} = $package;
     $params->{name}    = $name;
@@ -269,6 +272,12 @@ sub _usage {
                 my $desc = $desc{$pkg};
                 $usage .= sprintf( $format_a, '    ' . $subcommand, $desc );
             }
+
+            if ( $def->{fallback} ) {
+                $usage .= sprintf( $format_a,
+                    '    ' . '<' . $def->{fallback}->{name} . '>',
+                    $def->{fallback}->{comment} );
+            }
         }
     }
 
@@ -337,7 +346,7 @@ sub _optargs {
                     $package = $newpackage;
                     push( @config, @{ $opts{$package} }, @{ $args{$package} } );
                 }
-                elsif ( !$try->{fallthru} ) {
+                elsif ( !$try->{fallback} ) {
                     die _usage( $package,
                         "unknown " . uc( $try->{name} ) . ': ' . $result );
                 }

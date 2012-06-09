@@ -7,7 +7,10 @@ use OptArgs ':all';
 arg subcmd => (
     isa      => 'SubCmd',
     comment  => 'first',
-    fallthru => 1,
+    fallback => {
+        name => 'other',
+        comment => 'comment',
+    },
 );
 
 @ARGV = (qw//);

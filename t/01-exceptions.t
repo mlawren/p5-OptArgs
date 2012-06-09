@@ -120,12 +120,23 @@ like exception {
 }, qr/cannot be used together/, 'clash';
 
 like exception {
-    arg fallthru => (
+    arg fallback => (
         isa      => 'Str',
         comment  => 'comment',
-        fallthru => 1,
+        fallback => {
+            name    => 'other',
+            comment => 'comment',
+        },
     );
-}, qr/only valid with isa/, 'fallthru';
+}, qr/only valid with isa/, 'fallback';
+
+like exception {
+    arg fallback => (
+        isa      => 'SubCmd',
+        comment  => 'comment',
+        fallback => 1,
+    );
+}, qr/must be a hashref/, 'fallback hashref';
 
 arg astr => ( isa => 'Str', comment => 'comment', required => 1 );
 
