@@ -5,9 +5,11 @@ version '0.0.1_2';
 all_from 'lib/OptArgs.pm';
 readme_from 'lib/OptArgs.pod';
 
-requires 'Exporter::Tidy' => 0;
 requires 'Carp'           => 0;
+requires 'Encode'         => 0;
+requires 'Exporter::Tidy' => 0;
 requires 'Getopt::Long'   => 2.37;
+requires 'I18N::Langinfo' => 0;
 requires 'Scalar::Util'   => 0;
 
 test_requires 'Test::More';

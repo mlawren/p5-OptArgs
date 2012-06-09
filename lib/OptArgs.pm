@@ -2,10 +2,12 @@ package OptArgs;
 use strict;
 use warnings;
 use Carp qw/croak carp/;
+use Encode qw/decode/;
 use Exporter::Tidy
   default => [qw/opt arg optargs usage subcmd/],
   other   => [qw/dispatch/];
 use Getopt::Long qw/GetOptionsFromArray/;
+use I18N::Langinfo qw/langinfo/;
 use List::Util qw/max/;
 
 our $VERSION = '0.0.1';
@@ -305,8 +307,15 @@ sub usage {
 # ------------------------------------------------------------------------
 sub _optargs {
     my $caller  = shift;
-    my $source  = @_ ? \@_ : \@ARGV;
+    my $source  = \@_;
     my $package = $caller;
+
+    if ( !@_ ) {
+        my $codeset = eval { langinfo( I18N::Langinfo::CODESET() ) };
+        @ARGV = map { Encode::is_utf8($_) ? $_ : decode $codeset, $_ } @ARGV
+          unless $@;
+        $source = \@ARGV;
+    }
 
     croak "no option or argument defined for $caller"
       unless exists $opts{$package}

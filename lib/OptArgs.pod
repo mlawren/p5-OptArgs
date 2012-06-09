@@ -195,6 +195,9 @@ containing key/value pairs for options and arguments I<combined>.  An
 error / usage exception is thrown if an invalid combination of options
 and arguments is given.
 
+Note that C<@ARGV> will be decoded into UTF-8 (if necessary) from
+whatever L<I18N::Langinfo> says your environment encoding is.
+
 =back
 
 =head2 Utility Functions
