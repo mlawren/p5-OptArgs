@@ -171,9 +171,11 @@ will never be seen.
 
 =item fallback
 
-If C<isa> is a C<SubCmd> this option (when true) will stop the
+If C<isa> is a C<SubCmd> this option (when set) will stop the
 generation of the usage message when the argument is not found as a
-sub-command. The current command will be called instead.
+sub-command. The current command will be called instead. This option
+when set must be a HASH reference containing "name" and "comment"
+key/value pairs, which are only used in usage messages.
 
 =back
 
