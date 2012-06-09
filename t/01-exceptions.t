@@ -115,9 +115,17 @@ like exception {
         isa      => 'Str',
         comment  => 'comment',
         required => 1,
-        default  => 1
+        default  => 1,
     );
 }, qr/cannot be used together/, 'clash';
+
+like exception {
+    arg fallthru => (
+        isa      => 'Str',
+        comment  => 'comment',
+        fallthru => 1,
+    );
+}, qr/only valid with isa/, 'fallthru';
 
 arg astr => ( isa => 'Str', comment => 'comment', required => 1 );
 

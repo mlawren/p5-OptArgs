@@ -146,6 +146,7 @@ my %arg_params = (
     required => undef,
     default  => undef,
     greedy   => undef,
+    fallthru => undef,
 );
 
 my @arg_required = (qw/isa comment/);
@@ -182,6 +183,9 @@ sub arg {
 
     croak "'default' and 'required' cannot be used together"
       if defined $params->{default} and defined $params->{required};
+
+    croak "'fallthru' only valid with isa 'SubCmd'"
+      if $params->{fallthru} and $params->{isa} ne 'SubCmd';
 
     $params->{package} = $package;
     $params->{name}    = $name;
@@ -326,16 +330,17 @@ sub _optargs {
                 die _usage( $package, "unknown option: " . $result )
                   if ( $result =~ m/^-/ );
 
-                my $oldpackage = $package;
-                $package = $package . '::' . $result;
-                $package =~ s/-/_/;
+                my $newpackage = $package . '::' . $result;
+                $newpackage =~ s/-/_/;
 
-                die _usage( $oldpackage,
-                    "unknown " . uc( $try->{name} ) . ': ' . $result )
-                  unless exists $seen{$package};
-
-                push( @config, @{ $opts{$package} }, @{ $args{$package} } );
-
+                if ( exists $seen{$newpackage} ) {
+                    $package = $newpackage;
+                    push( @config, @{ $opts{$package} }, @{ $args{$package} } );
+                }
+                elsif ( !$try->{fallthru} ) {
+                    die _usage( $package,
+                        "unknown " . uc( $try->{name} ) . ': ' . $result );
+                }
             }
 
         }

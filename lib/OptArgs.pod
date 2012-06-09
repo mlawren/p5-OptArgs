@@ -169,6 +169,12 @@ If true the argument swallows the rest of the command line. It doesn't
 make sense to define any more arguments once you have used this as they
 will never be seen.
 
+=item fallthru
+
+If C<isa> is a C<SubCmd> this option (when true) will stop the
+generation of the usage message when the argument is not found as a
+sub-command. The current command will be called instead.
+
 =back
 
 =back
