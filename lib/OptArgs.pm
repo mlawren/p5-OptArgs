@@ -243,7 +243,8 @@ sub _usage {
 
     while ( $parent =~ s/(.*)::(.*)/$1/ ) {
         last unless $seen{$parent};
-        $usage = $2 . ' ' . $usage;
+        ( my $name = $2 ) =~ s/_/-/g;
+        $usage = $name . ' ' . $usage;
         unshift( @config, @{ $opts{$parent} } );
     }
 
