@@ -9,8 +9,8 @@ use OptArgs qw/dispatch/;
 is exception { dispatch(qw/run app::multi/) }, 'usage: 41-subcommand.t COMMAND
 
     COMMAND            (required) valid values include:
-        init           do the y thing
-        new            do the z thing
+      init             do the y thing
+      new              do the z thing
 
     --dry-run, -n      do nothing
     --verbose, -v      do it loudly
