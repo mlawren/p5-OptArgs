@@ -312,8 +312,15 @@ sub _optargs {
 
     if ( !@_ and @ARGV ) {
         my $codeset = eval { langinfo( I18N::Langinfo::CODESET() ) };
-        @ARGV = map { Encode::is_utf8($_) ? $_ : decode $codeset, $_ } @ARGV
-          unless $@;
+        if ( !$@ ) {
+            @ARGV =
+              map { Encode::is_utf8($_) ? $_ : decode( $codeset, $_ ) } @ARGV;
+        }
+        else {
+
+            # our best attempt?
+            @ARGV = map { Encode::is_utf8($_) ? $_ : decode_utf8($_) } @ARGV;
+        }
         $source = \@ARGV;
     }
 
