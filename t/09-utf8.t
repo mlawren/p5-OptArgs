@@ -1,25 +1,16 @@
 use strict;
 use warnings;
+
+# do not "use utf8"
+#use utf8;
+use FindBin qw/$Bin/;
 use Encode qw/is_utf8 decode_utf8/;
 use Test::More;
 use Test::Fatal;
 use OptArgs ':all';
 
-# Do not "use utf8;"
-# We need @ARGV to contain bytes, not UTF8 strings
-# But we also need to check that optargs works when given UTF-8 strings
-# in @ARGV, which could occur if -C or -A is given to Perl
-
-my $bytes;
-my $utf8;
-
-sub reset_args {
-    $bytes = '¥£€$¢₡₢₣₤₥₦₧₨₩₪₫₭₮₯/';
-    $utf8  = decode_utf8($bytes);
-
-    ok !is_utf8($bytes), 'bytes are bytes';
-    ok is_utf8($utf8),   'utf8 is utf8';
-}
+my $complex = '¥£€$¢₡₢₣₤₥₦₧₨₩₪₫₭₮₯/';
+my $utf8    = decode_utf8($complex);
 
 arg one => (
     isa      => 'Str',
@@ -37,31 +28,28 @@ opt opt => (
     comment => 'unicode opt',
 );
 
-reset_args();
-@ARGV = ( $bytes, $utf8, '--opt', $bytes );
+@ARGV = ( $utf8, $complex, '--opt', $complex );
 is_deeply optargs,
   { one => $utf8, two => $utf8, opt => $utf8 },
   'decoded bytes to utf8 using environment encoding';
 
-reset_args();
-@ARGV = ( $utf8, $bytes, '--opt', $utf8 );
-is_deeply optargs,
-  { one => $utf8, two => $utf8, opt => $utf8 },
-  'decoded bytes to utf8 using environment encoding';
+my $output = qx/$^X $Bin\/single $complex/;
 
-# Check for a missing I18N::Langinfo::CODESET
-sub I18N::Langinfo::CODESET { die "missing" }
+my $VAR1;
+if ( $output =~ m/\$VAR1/ ) {
+    my $result = eval $output;
 
-reset_args();
-@ARGV = ( $bytes, $utf8, '--opt', $bytes );
-is_deeply optargs,
-  { one => $utf8, two => $utf8, opt => $utf8 },
-  'decoded utf8 when I18N::Langinfo::CODESET is invalid';
+    is_deeply $result, { arg1 => $utf8, arg2 => 'optional', },
+      'external argument encoding';
+}
 
-reset_args();
-@ARGV = ( '--opt', $bytes, $utf8, $bytes );
-is_deeply optargs,
-  { one => $utf8, two => $utf8, opt => $utf8 },
-  'decoded utf8 when I18N::Langinfo::CODESET is invalid';
+$output = qx/$^X $Bin\/single $utf8/;
+
+if ( $output =~ m/\$VAR1/ ) {
+    my $result = eval $output;
+
+    is_deeply $result, { arg1 => $utf8, arg2 => 'optional', },
+      'external argument encoding';
+}
 
 done_testing;
