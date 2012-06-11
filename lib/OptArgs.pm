@@ -316,15 +316,6 @@ sub _optargs {
 
         if ($CODESET) {
             $codeset = langinfo($CODESET);
-        }
-        elsif ( eval { require POSIX; 1; } ) {
-
-            # just a guess really - worse than nothing at all?
-            $codeset = POSIX::setlocale( eval "POSIX::LC_CTYPE" );
-            $codeset =~ s/.*\.//;
-        }
-
-        if ($codeset) {
             @ARGV =
               map { Encode::is_utf8($_) ? $_ : decode( $codeset, $_ ) } @ARGV;
         }

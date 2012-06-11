@@ -11,6 +11,8 @@ use OptArgs ':all';
 
 my $complex = '¥£€$¢₡₢₣₤₥₦₧₨₩₪₫₭₮₯/';
 my $utf8    = decode_utf8($complex);
+binmode( STDERR, ':encoding(UTF-8)' );
+binmode( STDOUT, ':encoding(UTF-8)' );
 
 arg one => (
     isa      => 'Str',
