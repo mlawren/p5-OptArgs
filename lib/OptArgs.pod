@@ -115,12 +115,16 @@ alias with '-' substitutions will be automatically added.
 
 =item ishelp
 
-When true flags this option as a help option, which when given will
-then result in an internal "die usage()" call. This is basically a
-shortcut saving you from doing the following in each (sub)command:
+When true flags this option as a help option, which when given on the
+command line results in a usage message printed to I<stdout> followed
+by an exit with a status of 2.  This flag is basically a shortcut to
+save you from doing the following in each (sub) command:
 
     my $opts = optargs;
-    die usage('help requested') if $opts->{help};
+    if ( $opts->{help} ) {
+        print usage('help requested');
+        exit 2;
+    }
 
 =back
 
