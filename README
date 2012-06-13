@@ -92,12 +92,16 @@ DESCRIPTION
 
         ishelp
             When true flags this option as a help option, which when given
-            will then result in an internal "die usage()" call. This is
-            basically a shortcut saving you from doing the following in each
-            (sub)command:
+            on the command line results in a usage message printed to
+            *stdout* followed by an exit with a status of 2. This flag is
+            basically a shortcut to save you from doing the following in
+            each (sub) command:
 
                 my $opts = optargs;
-                die usage('help requested') if $opts->{help};
+                if ( $opts->{help} ) {
+                    print usage('help requested');
+                    exit 2;
+                }
 
     arg name => ( %parameters )
         Define a Command Argument with the following parameters:
