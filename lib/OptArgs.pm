@@ -2,7 +2,7 @@ package OptArgs;
 use strict;
 use warnings;
 use Carp qw/croak carp/;
-use Encode qw/decode decode_utf8/;
+use Encode qw/decode decode_utf8 encode_utf8/;
 use Exporter::Tidy
   default => [qw/opt arg optargs usage subcmd/],
   other   => [qw/dispatch/];
@@ -321,7 +321,9 @@ sub _optargs {
         }
         else {
             for ( 0 .. $#ARGV ) {
-                my $utf8 = eval { decode_utf8( $ARGV[$_], Encode::FB_CROAK ) };
+                my $utf8 = eval {
+                    decode_utf8( encode_utf8( $ARGV[$_] ), Encode::FB_CROAK );
+                };
                 $ARGV[$_] = $utf8 unless $@;
             }
         }
