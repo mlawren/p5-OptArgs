@@ -321,6 +321,22 @@ sub _optargs {
         }
         else {
             for ( 0 .. $#ARGV ) {
+                binmode STDERR, ':encoding(UTF-8)';
+                use Data::Dumper;
+
+                warn 'OSNAME ' . $^O;
+                warn 'plain ' . $ARGV[$_];
+                warn Dumper( $ARGV[$_] );
+
+                warn 'encode ' . encode_utf8( $ARGV[$_] );
+                warn Dumper( encode_utf8( $ARGV[$_] ) );
+
+                warn 'decode ' . decode_utf8( $ARGV[$_] );
+                warn Dumper( decode_utf8( $ARGV[$_] ) );
+
+                warn 'decode.encode ' . decode_utf8( encode_utf8( $ARGV[$_] ) );
+                warn Dumper( decode_utf8( encode_utf8( $ARGV[$_] ) ) );
+
                 my $utf8 = eval {
                     decode_utf8( encode_utf8( $ARGV[$_] ), Encode::FB_CROAK );
                 };

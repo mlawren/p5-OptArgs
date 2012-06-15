@@ -6,6 +6,15 @@ use Encode qw/is_utf8 decode_utf8/;
 use Test::More;
 use OptArgs ':all';
 
+# Make our test output utf8 pretty
+binmode STDOUT, ':encoding(UTF-8)';
+binmode STDERR, ':encoding(UTF-8)';
+
+my $builder = Test::More->builder;
+binmode $builder->output,         ':encoding(UTF-8)';
+binmode $builder->failure_output, ':encoding(UTF-8)';
+binmode $builder->todo_output,    ':encoding(UTF-8)';
+
 my $utf8   = '¥';
 my $output = qx/$^X $Bin\/single $utf8/;
 
