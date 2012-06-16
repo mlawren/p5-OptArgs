@@ -368,11 +368,34 @@ sub _optargs {
         elsif ( $try->{type} eq 'arg' ) {
             if (@$source) {
                 if ( $try->{greedy} ) {
-                    $result = "@$source";
+                    my @later;
+                    if ( @config and @$source > @config ) {
+                        push( @later, pop @$source ) for @config;
+                    }
+
+                    if ( $try->{isa} eq 'ArrayRef' ) {
+                        $result = [@$source];
+                    }
+                    elsif ( $try->{isa} eq 'HashRef' ) {
+                        $result = { map { split /=/, $_ } @$source };
+                    }
+                    else {
+                        $result = "@$source";
+                    }
+
                     shift @$source while @$source;
+                    push( @$source, @later );
                 }
                 else {
-                    $result = shift @$source;
+                    if ( $try->{isa} eq 'ArrayRef' ) {
+                        $result = [ shift @$source ];
+                    }
+                    elsif ( $try->{isa} eq 'HashRef' ) {
+                        $result = { split /=/, shift @$source };
+                    }
+                    else {
+                        $result = shift @$source;
+                    }
                 }
 
                 # TODO: type check using Param::Utils?
