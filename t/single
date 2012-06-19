@@ -35,5 +35,14 @@ arg arg2 => (
 #die usage();
 
 my $opts = optargs;
+
+use Encode qw/encode_utf8 decode_utf8/;
+$opts->{osname}          = $^O;
+$opts->{plain}           = $opts->{arg1};
+$opts->{is_utf8}         = utf8::is_utf8( $opts->{arg1} );
+$opts->{encode}          = encode_utf8( $opts->{arg1} );
+$opts->{decode}          = decode_utf8( $opts->{arg1} );
+$opts->{'decode.encode'} = decode_utf8( encode_utf8( $opts->{arg1} ) );
+
 print Dumper($opts);
 
