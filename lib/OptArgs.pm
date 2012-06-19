@@ -436,8 +436,7 @@ sub _optargs {
     }
 
     if ($ishelp) {
-        print _usage( $package, "[help request]" );
-        exit 2;
+        die _usage( $package, "[help request]" );
     }
     elsif ($missing_required) {
         die _usage($package);
