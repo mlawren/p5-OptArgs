@@ -20,7 +20,8 @@ binmode $builder->failure_output, ':encoding(UTF-8)';
 binmode $builder->todo_output,    ':encoding(UTF-8)';
 
 my $utf8   = '¥';
-my $result = qx/$^X $Bin\/single $utf8/;
+my $bytes  = encode_utf8($utf8);
+my $result = qx/$^X $Bin\/single $bytes/;
 
 use Encode qw/encode_utf8 decode_utf8/;
 my $opts = { arg1 => $utf8, arg2 => 'optional', };
