@@ -1,7 +1,7 @@
 use inc::Module::Install;
 
 name 'OptArgs';
-version '0.0.1_15';
+version '0.0.1_16';
 all_from 'lib/OptArgs.pm';
 readme_from 'lib/OptArgs.pod';
 
@@ -15,6 +15,7 @@ requires 'Scalar::Util'   => 0;
 test_requires 'Test::More';
 test_requires 'Test::Fatal';
 test_requires 'Test::Output';
+test_requires 'utf8::all';
 
 author_tests 'xt';
 
