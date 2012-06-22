@@ -345,6 +345,9 @@ sub _optargs {
         }
         elsif ( $try->{type} eq 'arg' ) {
             if (@$source) {
+                die _usage( $package, "unknown option: " . $source->[0] )
+                  if ( $source->[0] =~ m/^(-\S)|(--\S+)$/ );
+
                 if ( $try->{greedy} ) {
                     my @later;
                     if ( @config and @$source > @config ) {
@@ -384,9 +387,6 @@ sub _optargs {
             }
 
             if ( $try->{isa} eq 'SubCmd' and $result ) {
-                die _usage( $package, "unknown option: " . $result )
-                  if ( $result =~ m/^-/ );
-
                 my $newpackage = $package . '::' . $result;
                 $newpackage =~ s/-/_/;
 
