@@ -1,13 +1,21 @@
 use strict;
 use warnings;
-use utf8;
-use utf8::all;
 use Data::Dumper;
 
 BEGIN {
     if (@ARGV) {
         require Test::More;
-        Test::More::diag( "\nRecevied: "
+        Test::More::diag( "\npre utf8::all: "
+              . Dumper( { utf8 => $ARGV[0], bytes => $ARGV[1] } ) );
+    }
+}
+
+use utf8;
+use utf8::all;
+
+BEGIN {
+    if (@ARGV) {
+        Test::More::diag( "\npost utf8::all: "
               . Dumper( { utf8 => $ARGV[0], bytes => $ARGV[1] } ) );
         exit;
     }
