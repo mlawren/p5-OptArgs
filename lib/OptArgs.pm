@@ -394,7 +394,7 @@ sub _optargs {
                     $package = $newpackage;
                     push( @config, @{ $opts{$package} }, @{ $args{$package} } );
                 }
-                elsif ( !$try->{fallback} ) {
+                elsif ( !$try->{fallback} and !$ishelp ) {
                     die _usage( $package,
                         "unknown " . uc( $try->{name} ) . ': ' . $result );
                 }
