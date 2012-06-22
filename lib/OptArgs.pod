@@ -241,7 +241,7 @@ L<Getopt::Long>, L<Exporter::Tidy>
 
 This distribution is managed via github:
 
-    http://github.com/mlawren/p5-OptArgs
+    https://github.com/mlawren/p5-OptArgs/tree/devel
 
 This distribution follows the semantic versioning model:
 
