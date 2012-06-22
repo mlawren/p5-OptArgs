@@ -17,7 +17,7 @@ optargs - print an OptArgs program command summary
 
 =head1 SYNOPSIS
 
-    optargs CLASS [COMMAND]
+    optargs CLASS [NAME]
 
 =head1 DESCRIPTION
 
@@ -31,7 +31,7 @@ program.  The following arguments and options are accepted:
 
 OptArgs-based module to map. Required.
 
-=item COMMAND
+=item NAME
 
 Name of the command. If not specified then CLASS will be used as the
 command name.

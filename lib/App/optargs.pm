@@ -11,7 +11,7 @@ arg class => (
     comment  => 'OptArgs-based module to map',
 );
 
-arg command => (
+arg name => (
     isa     => 'Str',
     comment => 'Name of the command',
     default => sub { return shift->{class}; }
@@ -52,7 +52,7 @@ sub run {
         my $space = $indent x $length;
 
         my $usage = OptArgs::_usage($cmd);
-        $usage =~ s/^usage: optargs/usage: $opts->{command}/;
+        $usage =~ s/^usage: \S+/usage: $opts->{name}/;
 
         unless ( $opts->{full} ) {
             $usage =~ m/usage: (.*?)$/m;
@@ -76,7 +76,7 @@ __END__
 
 =head1 NAME
 
-App::optargs - print an OptArgs program command summary
+App::optargs - implementation of the optargs(1) command
 
 =head1 VERSION
 
@@ -89,20 +89,8 @@ App::optargs - print an OptArgs program command summary
 
 =head1 DESCRIPTION
 
-This is the implementation of the L<optargs> command which has the
-following usage:
-
-    usage: optargs CLASS [COMMAND]
-
-        CLASS             OptArgs-based module to map
-        COMMAND           Name of the command
-
-        --indent, -i      Number of spaces to indent sub-commands
-        --spacer, -s      Character to use for indent spaces
-        --full,   -f      Print the full usage messages
-
-It has a single function which expects to be called by L<OptArgs>
-C<dispatch()>:
+This is the implementation of the L<optargs>(1) command. It contains a
+single function which expects to be called by  C<OptArgs::dispatch()>:
 
 =over
 
@@ -114,7 +102,7 @@ Run with options as defined by \%opts.
 
 =head1 SEE ALSO
 
-L<optargs>, L<OptArgs>
+L<OptArgs>
 
 =head1 AUTHOR
 
