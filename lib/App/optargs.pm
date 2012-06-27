@@ -5,6 +5,8 @@ use OptArgs;
 use lib 'lib';
 our $VERSION = '0.0.1';
 
+$OptArgs::COLOUR = 1;
+
 arg class => (
     isa      => 'Str',
     required => 1,
@@ -51,14 +53,15 @@ sub run {
         my $length = scalar split( /::/, $cmd ) - $initial;
         my $space = $indent x $length;
 
-        my $usage = OptArgs::_usage($cmd);
-        $usage =~ s/^usage: \S+/usage: $opts->{name}/;
-
         unless ( $opts->{full} ) {
-            $usage =~ m/usage: (.*?)$/m;
-            print $space . $1 . "\n";
+            my $usage = OptArgs::_synopsis($cmd);
+            $usage =~ s/^usage: \S+/$space$opts->{name}/;
+            print $usage;
             next;
         }
+
+        my $usage = OptArgs::_usage($cmd);
+        $usage =~ s/^usage: \S+/usage: $opts->{name}/;
 
         my $n = 79 - length $space;
         print $space, '#' x $n, "\n";
