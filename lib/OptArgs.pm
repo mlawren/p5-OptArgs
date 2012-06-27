@@ -234,6 +234,7 @@ sub _usage {
     my $parent   = $caller;
     my @args     = @{ $args{$caller} };
     my @opts     = @{ $opts{$caller} };
+    my @parents;
     my @usage;
     my @uargs;
     my @uopts;
@@ -247,9 +248,11 @@ sub _usage {
     while ( $parent =~ s/(.*)::(.*)/$1/ ) {
         last unless $seen{$parent};
         ( my $name = $2 ) =~ s/_/-/g;
-        $me .= ' ' . $name;
-        unshift( @opts, @{ $opts{$parent} } );
+        unshift( @parents, $name );
+        unshift( @opts,    @{ $opts{$parent} } );
     }
+
+    $me .= ' ' . join( ' ', @parents ) if @parents;
 
     if ( my $last = $args[$#args] ) {
         if ( $last->{isa} eq 'SubCmd' ) {
