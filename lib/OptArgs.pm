@@ -402,7 +402,7 @@ sub _optargs {
       unless exists $opts{$package}
           or exists $args{$package};
 
-    Getopt::Long::Configure(qw/pass_through no_auto_abbrev/);
+    Getopt::Long::Configure(qw/pass_through no_auto_abbrev no_ignore_case/);
 
     my @config = ( @{ $opts{$package} }, @{ $args{$package} } );
 
