@@ -14,3 +14,4 @@ old/
 xt/
 ^OptArgs
 ^cover_db
+extlib/
