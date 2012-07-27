@@ -1,64 +1,122 @@
 NAME
-    OptArgs - integrated argument and option processing for Perl
+    OptArgs - integrated argument and option processing
 
 VERSION
     0.0.1 Development release.
 
 SYNOPSIS
+        #!/usr/bin/env perl
         use OptArgs;
 
         opt quiet => (
             isa     => 'Bool',
             alias   => 'q',
-            comment => 'be quiet please',
+            comment => 'output nothing while working',
         );
 
         arg item => (
-            isa     => 'Str',
-            default => 1,
-            comment => 'try this many times',
+            isa      => 'Str',
+            required => 1,
+            comment  => 'the item to paint',
         );
 
         my $ref = optargs;
-        print "Working on: $ref->{item}\n" unless $ref->{quiet};
+
+        print "Painting $ref->{item}\n" unless $ref->{quiet};
 
 DESCRIPTION
-    OptArgs provides command-line option and argument processing for Perl
-    scripts. It is designed to be a very simple way to write programs using
-    a declarative style. Getopt::Long is used for the underlying parsing.
+    OptArgs processes command-line *options* and *arguments* for Perl
+    scripts. This is in contrast to anything anything in the Getopt::*
+    namespace that deals with command options only.
 
-    How exactly does one define a command line application? OptArgs assumes
-    a fairly common (but by no means universal) approach:
+    The following model is assumed by OptArgs for command-line applications:
 
     Command
         The program name - i.e. the filename be executed by the shell.
 
     Options
         Options are parameters that affect the way a command runs. They are
-        generally not required to be present, but that is configurable.
-        Options are prefixed with '-' for single letter option names or '--'
-        for long option names.
+        generally not required to be present, but that is configurable. All
+        options have a long form prefixed by '--', and may have a single
+        letter alias prefixed by '-'.
 
     Arguments
         Arguments are positional parameters that that a command needs know
-        in order to do its work. Some arguments may be optional.
+        in order to do its work. Confusingly, arguments can be optional. The
+        last argument defined may be *greedy*: it can consume everything
+        else left on the command line.
 
     Sub-commands
-        A command may also have sub-commands with their own options and
-        arguments. From the users point of view sub-commands and their
-        options are indisinguishable from options and arguments to the main
-        command, but from an implementation perspective they could (perhaps
-        should) be separate, stand-alone programs, with possibly their own
-        set of sub-commands.
+        From a users point of view sub-command arguments and options are
+        indistinguishable from arguments and options to the Command.
+        Subcommand options and arguments are defined in the same place as
+        Command arguments and options. However from a code perspective they
+        are implemented as separate, stand-alone programs to be called by a
+        dispatcher.
 
-  Declaring Options and Arguments
-    OptArgs exports the following functions for defining Options and
-    Arguments. The order in which they are defined also determines the order
-    they appear in usage messages, and the order in which they are
-    processed.
+  Simple Scripts
+    To demonstrate lets put the code from the synopsis in a file called
+    "paint" and observe the following interactions from the shell:
 
-    opt name => ( %parameters )
-        Define a Command Option with the following parameters:
+        $ ./paint
+        usage: paint ITEM
+
+          arguments:
+            ITEM          the item to paint
+
+          options:
+            --quiet, -q   output nothing while working
+
+    As you can see a usage message is generated automatically. The
+    "optargs()" function parses the command line according to the
+    declarations and returns a single HASH reference, easily interpolated
+    inside strings.
+
+        $ ./paint house
+        Painting house
+
+    Because OptArgs knows about arguments it can detect more errors than an
+    option-only processing module:
+
+        $ ./paint house car
+        error: unexpected option or argument: car
+
+    The usage message is constructed based on option and argument
+    attributes. If we add another argument:
+
+        arg colour => (
+            isa     => 'Str',
+            default => 'blue',
+            comment => 'the colour to use',
+        );
+
+    And then check the usage again:
+
+        $ ./paint
+        usage: paint ITEM [COLOUR]
+
+          arguments:
+            ITEM          the item to paint
+            COLOUR        the colour to use
+
+          options:
+            --quiet, -q   output nothing while working
+
+    It can be seen that the non-required argument "colour" appears inside
+    square brackets indicating its optional nature. Three dots (...) are
+    postfixed to greedy arguments. The order in which options and arguments
+    (and also sub-commands: see below) are defined is the order in which
+    they appear in usage messsages.
+
+  Sub-Command Scripts
+FUNCTIONS
+    The following functions are exported (by default except for "dispatch")
+    using Exporter::Tidy.
+
+    opt( $name, %parameters )
+        Define a Command Option. If $name contains underscores then aliases
+        with the underscores replaced by dashes (-) will be created. The
+        following parameters are accepted:
 
         isa Required. Is mapped to a Getopt::Long type according to the
             following table:
@@ -85,25 +143,20 @@ DESCRIPTION
             any changes to the hashref are ignored.
 
         alias
-            Can be single characters or words separated by '|' if more than
-            one alias is desired. If the option name contains underscores
-            ('_') then an alias with '-' substitutions will be automatically
-            added.
+            A single character alias.
 
         ishelp
             When true flags this option as a help option, which when given
-            on the command line results in a usage message printed to
-            *stdout* followed by an exit with a status of 2. This flag is
-            basically a shortcut to save you from doing the following in
-            each (sub) command:
+            on the command line results in a usage message exception. This
+            flag is basically a cleaner way of doing the following in each
+            (sub) command:
 
                 my $opts = optargs;
                 if ( $opts->{help} ) {
-                    print usage('help requested');
-                    exit 2;
+                    die usage('help requested');
                 }
 
-    arg name => ( %parameters )
+    arg( $name, %parameters )
         Define a Command Argument with the following parameters:
 
         isa Required. Is mapped to a Getopt::Long type according to the
@@ -147,10 +200,6 @@ DESCRIPTION
             and "comment" key/value pairs, which are only used in usage
             messages.
 
-  Parsing and Retrieving Values
-    OptArgs exports the following functions for parsing and retriving option
-    and argument values:
-
     optargs( [ @argv ] ) -> HashRef
         Parse @ARGV by default (or @argv when given) and returns a hashref
         containing key/value pairs for options and arguments *combined*. An
@@ -160,20 +209,17 @@ DESCRIPTION
         Note that @ARGV will be decoded into UTF-8 (if necessary) from
         whatever I18N::Langinfo says your environment encoding is.
 
-  Utility Functions
-    usage([$message]) -> Str
-        Returns a usage string based on the defined opts and args, prefixed
-        with $message if given.
+    usage( [$message] ) -> Str
+        Returns a usage string prefixed with $message if given.
 
-  Writing Sub-Commands
-    OptArgs exports the following functions for defining and running
-    subcommands.
+    subcmd( @cmd, $description )
+        Create a sub-command. After this function is called further calls to
+        "opt" and "arg" define options and arguments respectively for the
+        sub-command.
 
-    subcmd(@cmd, $description)
-        TBD.
-
-    dispatch($method, $rootclass, [ @argv ])
-        TBD.
+    dispatch( $method, $rootclass, [ @argv ] )
+        Parse @ARGV (or @argv if given) and dispatch to the method $method
+        in the appropriate package name constructed from $rootclass.
 
 SEE ALSO
     Getopt::Long, Exporter::Tidy
@@ -190,16 +236,6 @@ SUPPORT & DEVELOPMENT
     Code is tidied up on Git commit using githook-perltidy:
 
         http://github.com/mlawren/githook-perltidy
-
-    Test coverage according to Devel::Cover is as follows:
-
-        --------------------------------------------------------------
-        File                  stmt  bran  cond   sub   pod  time total
-        --------------------------------------------------------------
-        blib/lib/optargs.pm   98.8  89.7 100.0 100.0 100.0  91.1  97.0
-        lib/optargs.pod      100.0   n/a   n/a 100.0   n/a   8.9 100.0
-        Total                 98.9  89.7 100.0 100.0 100.0 100.0  97.0
-        --------------------------------------------------------------
 
 AUTHOR
     Mark Lawrence <nomad@null.net>
