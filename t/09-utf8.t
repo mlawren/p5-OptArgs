@@ -8,6 +8,9 @@ use FindBin qw/$Bin/;
 use OptArgs ':all';
 use Test::More;
 
+$ENV{LANG}   = 'en_US.UTF-8';
+$ENV{LC_ALL} = 'en_US.UTF-8';
+
 my $builder = Test::More->builder;
 binmode STDOUT, ':encoding(UTF-8)';
 binmode STDERR, ':encoding(UTF-8)';
