@@ -385,14 +385,20 @@ sub _optargs {
     my $package = $caller;
 
     if ( !@_ and @ARGV ) {
+        require Test::More;
+        use Data::Dumper;
+        Test::More::diag(
+            Dumper(
+                [ @ARGV, 'codeset:', $CODESET, eval { langinfo($CODESET) } ]
+            )
+        );
 
         if ($CODESET) {
             my $codeset = langinfo($CODESET);
-            @ARGV =
-              map { utf8::is_utf8($_) ? $_ : decode( $codeset, $_ ) } @ARGV;
+            $_ = decode( $codeset, $_ ) for @ARGV;
         }
         else {
-            @ARGV = map { utf8::is_utf8($_) ? $_ : decode_utf8($_) } @ARGV;
+            $_ = decode( 'UTF-8', $_ ) for @ARGV;
         }
 
         $source = \@ARGV;
@@ -400,7 +406,7 @@ sub _optargs {
 
     croak "no option or argument defined for $caller"
       unless exists $opts{$package}
-          or exists $args{$package};
+      or exists $args{$package};
 
     Getopt::Long::Configure(qw/pass_through no_auto_abbrev no_ignore_case/);
 
