@@ -226,11 +226,12 @@ sub arg {
 sub _usage {
     my $caller   = shift;
     my $error    = shift;
+    my $ishelp   = shift;
     my $terminal = -t STDOUT;
-    my $red      = $terminal ? '[0;31m' : '';
-    my $yellow   = $COLOUR && $terminal ? '[0;33m' : '';
-    my $grey     = $COLOUR && $terminal ? '[1;30m' : '';
-    my $reset    = $COLOUR && $terminal ? '[0m' : '';
+    my $red      = ( $COLOUR && $terminal ) ? "\e[0;31m" : '';
+    my $yellow   = ( $COLOUR && $terminal ) ? "\e[0;33m" : '';
+    my $grey     = ( $COLOUR && $terminal ) ? "\e[1;30m" : '';
+    my $reset    = ( $COLOUR && $terminal ) ? "\e[0m" : '';
     my $parent   = $caller;
     my @args     = @{ $args{$caller} };
     my @opts     = @{ $opts{$caller} };
@@ -338,6 +339,10 @@ sub _usage {
         $tmp .= "\n   " if @usage;
         return $tmp . ' ' . $error . "\n\n" . $usage . "\n";
     }
+    elsif ($ishelp) {
+        return "[help requested]\n\n" . $usage . "\n";
+    }
+
     return $usage . "\n";
 }
 
@@ -493,7 +498,7 @@ sub _optargs {
     }
 
     if ($ishelp) {
-        die _usage( $package, "[help request]" );
+        die _usage( $package, undef, 1 );
     }
     elsif ($missing_required) {
         die _usage($package);

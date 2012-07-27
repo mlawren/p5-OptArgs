@@ -6,6 +6,8 @@ use lib "$Bin/../lib";
 use Data::Dumper;
 use OptArgs;
 
+$OptArgs::COLOUR = 1;
+
 opt help => (
     isa     => 'Bool',
     alias   => 'h',
