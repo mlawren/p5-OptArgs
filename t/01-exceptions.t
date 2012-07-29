@@ -64,6 +64,10 @@ like exception {
     opt no_isa => ( isa => 'NoType', comment => 'comment' );
 }, qr/unknown type/, 'unknown type';
 
+like exception {
+    opt no_bool => ( isa => 'Str', comment => 'comment', ishelp => 1 );
+}, qr/applied to Bool/, 'ishelp only on bools';
+
 opt str => ( isa => 'Str', comment => 'comment' );
 
 like exception {
