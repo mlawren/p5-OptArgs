@@ -12,10 +12,10 @@ requires 'Getopt::Long'   => 2.37;
 requires 'I18N::Langinfo' => 0;
 requires 'Scalar::Util'   => 0;
 
+test_requires 'POSIX';
 test_requires 'Test::More';
 test_requires 'Test::Fatal';
 test_requires 'Test::Output';
-test_requires 'utf8::all';
 
 author_tests 'xt';
 

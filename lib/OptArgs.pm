@@ -13,7 +13,6 @@ use List::Util qw/max/;
 our $VERSION = '0.0.1';
 our $COLOUR  = 0;
 
-my $CODESET = eval { I18N::Langinfo::CODESET() };
 my %seen;           # hash of hashes keyed by 'caller', then opt/arg name
 my %opts;           # option configuration keyed by 'caller'
 my %args;           # argument configuration keyed by 'caller'
@@ -390,13 +389,7 @@ sub _optargs {
     my $package = $caller;
 
     if ( !@_ and @ARGV ) {
-        require Test::More;
-        use Data::Dumper;
-        Test::More::diag(
-            Dumper(
-                [ @ARGV, 'codeset:', $CODESET, eval { langinfo($CODESET) } ]
-            )
-        );
+        my $CODESET = eval { I18N::Langinfo::CODESET() };
 
         if ($CODESET) {
             my $codeset = langinfo($CODESET);
