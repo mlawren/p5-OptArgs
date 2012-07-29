@@ -1,0 +1,36 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use lib 'lib';
+use OptArgs;
+
+opt quiet => (
+    isa     => 'Bool',
+    alias   => 'q',
+    comment => 'output nothing while working',
+);
+
+arg item => (
+    isa      => 'Str',
+    required => 1,
+    comment  => 'the item to paint',
+);
+
+arg colour => (
+    isa     => 'Str',
+    default => 'blue',
+    comment => 'the colour to use',
+);
+
+arg message => (
+    isa     => 'Str',
+    comment => 'the message to paint on the item',
+    greedy  => 1,
+);
+
+my $ref = optargs;
+
+printf( "Painting in %s on %s: \"%s\"\n",
+    $ref->{colour}, $ref->{item}, $ref->{message} )
+  unless $ref->{quiet};
+
