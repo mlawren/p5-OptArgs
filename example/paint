@@ -10,6 +10,13 @@ opt quiet => (
     comment => 'output nothing while working',
 );
 
+opt hidden => (
+    isa     => 'Bool',
+    alias   => 'q',
+    comment => 'you will never see this comment',
+    hidden  => 1,
+);
+
 arg item => (
     isa      => 'Str',
     required => 1,

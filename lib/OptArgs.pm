@@ -83,6 +83,7 @@ my %opt_params = (
     default => undef,
     alias   => '',
     ishelp  => undef,
+    hidden  => undef,
 );
 
 my @opt_required = (qw/isa comment/);
@@ -291,6 +292,8 @@ sub _usage {
     }
 
     foreach my $opt (@opts) {
+        next if $opt->{hidden};
+
         ( my $name = $opt->{name} ) =~ s/_/-/g;
         $name .= ',' if $opt->{alias};
         push(
