@@ -160,7 +160,7 @@ you build your application with the following structure:
 
 The Command Class defines the options and arguments for your I<entire>
 application. The module is written the same way as a simple script but
-additionally specifies a 'SubCmd' argument:
+additionally specifies an argument of type 'SubCmd':
 
     package My::Cmd;
     use OptArgs;
@@ -242,7 +242,8 @@ every sub command.
 =item Command Script
 
 The command script is what the user runs, and does nothing more
-than dispatch to a call to your the Dispatcher Class:
+than dispatch to your Command Class, and eventually a Sub-Command
+Class.
 
     #!/usr/bin/perl
     use OptArgs qw/dispatch/;

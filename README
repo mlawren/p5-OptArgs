@@ -143,7 +143,7 @@ DESCRIPTION
     Command Class
         The Command Class defines the options and arguments for your
         *entire* application. The module is written the same way as a simple
-        script but additionally specifies a 'SubCmd' argument:
+        script but additionally specifies an argument of type 'SubCmd':
 
             package My::Cmd;
             use OptArgs;
