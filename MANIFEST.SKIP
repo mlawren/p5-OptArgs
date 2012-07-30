@@ -15,3 +15,4 @@ xt/
 ^OptArgs
 ^cover_db
 extlib/
+make-getopt-args
