@@ -292,7 +292,7 @@ sub _usage {
     }
 
     foreach my $opt (@opts) {
-        next if $opt->{hidden};
+        next if $opt->{hidden} and !$ishelp;
 
         ( my $name = $opt->{name} ) =~ s/_/-/g;
         $name .= ',' if $opt->{alias};

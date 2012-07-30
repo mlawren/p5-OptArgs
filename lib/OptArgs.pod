@@ -331,10 +331,12 @@ basically a cleaner way of doing the following in each (sub) command:
 
 =item hidden
 
-When true this option will be accepted as normal but will not appear in
-any usage messages. This is handy if you have developer-only options,
-or options that are very rarely used that you don't want cluttering up
-your usage message.
+When true this option will will not appear in usage messages unless the
+usage message is a help request.
+
+This is handy if you have developer-only options, or options that are
+very rarely used that you don't want cluttering up your normal usage
+message.
 
 =back
 
