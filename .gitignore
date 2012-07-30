@@ -12,6 +12,6 @@ blib/
 inc/
 cover_db/
 old/
-.*
 OptArgs-*
 extlib/
+.tests
