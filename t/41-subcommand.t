@@ -6,14 +6,15 @@ use Test::Fatal;
 use lib 't/lib';
 use OptArgs qw/dispatch/;
 
-is exception { dispatch(qw/run app::multi/) }, 'usage: 41-subcommand.t COMMAND
+$OptArgs::COLOUR = 0;
 
-    COMMAND            (required) valid values include:
-        init           do the y thing
-        new            do the z thing
+is exception { dispatch(qw/run app::multi/) }, 'usage:
+    41-subcommand.t init   do the y thing
+    41-subcommand.t new    do the z thing
 
-    --dry-run, -n      do nothing
-    --verbose, -v      do it loudly
+  options:
+    --dry-run, -n          do nothing
+    --verbose, -v          do it loudly
 
 ', 'no arguments';
 
@@ -24,13 +25,14 @@ stdout_is(
 );
 
 is exception { dispatch(qw/run app::multi init -q/) },
-  'unexpected option or argument: -q
+  'error: unexpected option or argument: -q
 
-usage: 41-subcommand.t init 
+usage: 41-subcommand.t init
 
-    --dry-run, -n      do nothing
-    --verbose, -v      do it loudly
-    --opty             do nothing
+  options:
+    --dry-run, -n   do nothing
+    --verbose, -v   do it loudly
+    --opty          do nothing
 
 ', 'unexpected option';
 

@@ -3,6 +3,8 @@ use strict;
 use warnings;
 use OptArgs;
 
+$OptArgs::COLOUR = 1;
+
 arg command => (
     isa      => 'SubCmd',
     required => 1,
