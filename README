@@ -225,7 +225,7 @@ DESCRIPTION
 
     Command Script
         The command script is what the user runs, and does nothing more than
-        dispatch to a call to your the Dispatcher Class:
+        dispatch to your Command Class, and eventually a Sub-Command Class.
 
             #!/usr/bin/perl
             use OptArgs qw/dispatch/;
@@ -296,6 +296,12 @@ FUNCTIONS
                 if ( $opts->{help} ) {
                     die usage('help requested');
                 }
+
+        hidden
+            When true this option will be accepted as normal but will not
+            appear in any usage messages. This is handy if you have
+            developer-only options, or options that are very rarely used
+            that you don't want cluttering up your usage message.
 
     arg( $name, %parameters )
         Define a Command Argument with the following parameters:
