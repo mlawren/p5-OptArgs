@@ -10,7 +10,7 @@ use Getopt::Long qw/GetOptionsFromArray/;
 use I18N::Langinfo qw/langinfo/;
 use List::Util qw/max/;
 
-our $VERSION = '0.0.1';
+our $VERSION = '0.0.2';
 our $COLOUR  = 0;
 
 my %seen;           # hash of hashes keyed by 'caller', then opt/arg name

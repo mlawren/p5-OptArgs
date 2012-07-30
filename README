@@ -2,7 +2,7 @@ NAME
     OptArgs - integrated argument and option processing
 
 VERSION
-    0.0.1 Development release.
+    0.0.2 Development release.
 
 SYNOPSIS
         #!/usr/bin/env perl

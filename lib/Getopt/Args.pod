@@ -4,7 +4,7 @@ Getopt::Args - integrated argument and option processing
 
 =head1 VERSION
 
-0.0.1 Development release.
+0.0.2 Development release.
 
 =head1 SYNOPSIS
 
