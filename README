@@ -26,9 +26,11 @@ SYNOPSIS
 
 DESCRIPTION
     OptArgs processes Perl script *options* and *arguments*. This is in
-    contrast with modules in the Getopt::* namespace, which deal with
-    options only. The following model is assumed by OptArgs for command-line
-    applications:
+    contrast with most modules in the Getopt::* namespace, which deal with
+    options only. This module is duplicated as Getopt::Args, to cover both
+    its original name and yet still be found in the mess that is Getopt::*.
+
+    The following model is assumed by OptArgs for command-line applications:
 
     Command
         The program name - i.e. the filename be executed by the shell.
@@ -41,17 +43,14 @@ DESCRIPTION
 
     Arguments
         Arguments are positional parameters that that a command needs know
-        in order to do its work. Confusingly, arguments can be optional. The
-        last argument defined may be *greedy*: it can consume everything
-        else left on the command line.
+        in order to do its work. Confusingly, arguments can be optional.
 
     Sub-commands
-        From a users point of view sub-command arguments and options are
-        indistinguishable from arguments and options to the main Command.
-        Sub-command options and arguments are defined in the same place as
-        Command arguments and options. However from a code perspective they
-        are implemented as separate, stand-alone programs to be called by a
-        dispatcher.
+        From a users point of view a sub-command is simply one or more
+        arguments given to a Command that result in a particular action.
+        However from a code perspective they are implemented as separate,
+        stand-alone programs which are called by a dispatcher when the
+        appropriate arguments are given.
 
   Simple Scripts
     To demonstrate lets put the code from the synopsis in a file called
@@ -71,8 +70,8 @@ DESCRIPTION
     command is not called correctly then an exception is thrown with an
     automatically generated usage message as shown above.
 
-    Because OptArgs knows about arguments it can detect more errors than an
-    option-only processing module:
+    Because OptArgs knows about arguments it can detect errors relating to
+    them:
 
         $ ./paint house red
         error: unexpected option or argument: red
@@ -298,10 +297,12 @@ FUNCTIONS
                 }
 
         hidden
-            When true this option will be accepted as normal but will not
-            appear in any usage messages. This is handy if you have
-            developer-only options, or options that are very rarely used
-            that you don't want cluttering up your usage message.
+            When true this option will will not appear in usage messages
+            unless the usage message is a help request.
+
+            This is handy if you have developer-only options, or options
+            that are very rarely used that you don't want cluttering up your
+            normal usage message.
 
     arg( $name, %parameters )
         Define a Command Argument with the following parameters:

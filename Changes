@@ -8,6 +8,7 @@
 
     Enhancements:
         - Make hidden options visible when when help is requested.
+        - Duplicate OptArgs as Getopt::Args
 
     Bug Fixes:
         - None.

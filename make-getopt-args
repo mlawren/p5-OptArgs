@@ -1,0 +1,13 @@
+#!/bin/bash
+set -e
+
+sed \
+    -e 's/OptArgs/Getopt::Args/g' \
+    lib/OptArgs.pm > lib/Getopt/Args.pm
+
+sed \
+    -e 's/Getopt::Args/GETOPT::ARGS/g' \
+    -e 's/OptArgs/Getopt::Args/g' \
+    -e 's/p5-Getopt::Args/p5-OptArgs/g' \
+    -e 's/GETOPT::ARGS/OptArgs/g' \
+    lib/OptArgs.pod > lib/Getopt/Args.pod

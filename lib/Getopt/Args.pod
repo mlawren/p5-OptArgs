@@ -1,6 +1,6 @@
 =head1 NAME
 
-OptArgs - integrated argument and option processing
+Getopt::Args - integrated argument and option processing
 
 =head1 VERSION
 
@@ -9,7 +9,7 @@ OptArgs - integrated argument and option processing
 =head1 SYNOPSIS
 
     #!/usr/bin/env perl
-    use OptArgs;
+    use Getopt::Args;
 
     opt quiet => (
         isa     => 'Bool',
@@ -29,13 +29,13 @@ OptArgs - integrated argument and option processing
 
 =head1 DESCRIPTION
 
-B<OptArgs> processes Perl script I<options> and I<arguments>.  This is
-in contrast with most modules in the Getopt::* namespace, which deal
-with options only. This module is duplicated as L<Getopt::Args>, to
+B<Getopt::Args> processes Perl script I<options> and I<arguments>. 
+This is in contrast with most modules in the Getopt::* namespace, which
+deal with options only. This module is duplicated as L<OptArgs>, to
 cover both its original name and yet still be found in the mess that is
 Getopt::*.
 
-The following model is assumed by B<OptArgs> for command-line
+The following model is assumed by B<Getopt::Args> for command-line
 applications:
 
 =over
@@ -85,8 +85,8 @@ the C<opt> and C<arg> declarations and returns a single HASH reference.
 If the command is not called correctly then an exception is thrown with
 an automatically generated usage message as shown above.
 
-Because B<OptArgs> knows about arguments it can detect errors relating
-to them:
+Because B<Getopt::Args> knows about arguments it can detect errors
+relating to them:
 
     $ ./paint house red
     error: unexpected option or argument: red
@@ -164,7 +164,7 @@ application. The module is written the same way as a simple script but
 additionally specifies an argument of type 'SubCmd':
 
     package My::Cmd;
-    use OptArgs;
+    use Getopt::Args;
 
     arg command => (
         isa     => 'SubCmd',
@@ -209,12 +209,12 @@ and descriptions, and separate each sub-commands arguments and options:
         comment => 'stop the machine by pulling the plug',
     );
 
-One nice thing about B<OptArgs> is that options are I<inherited>. You
-only need to specify something like a C<dry-run> option once at the top
-level, and all sub-commands will see it if it has been set.
+One nice thing about B<Getopt::Args> is that options are I<inherited>.
+You only need to specify something like a C<dry-run> option once at the
+top level, and all sub-commands will see it if it has been set.
 
-Additionally, and this is the main reason why I wrote B<OptArgs>, you
-do not have to load a whole bunch of slow-to-start modules ( I'm
+Additionally, and this is the main reason why I wrote B<Getopt::Args>,
+you do not have to load a whole bunch of slow-to-start modules ( I'm
 looking at you, L<Moose>) just to get a help message.
 
 =item Sub-Command Classes
@@ -246,7 +246,7 @@ The command script is what the user runs, and does nothing more than
 dispatch to your Command Class, and eventually a Sub-Command Class.
 
     #!/usr/bin/perl
-    use OptArgs qw/dispatch/;
+    use Getopt::Args qw/dispatch/;
     dispatch(qw/ run Your::Cmd /);
 
 
@@ -256,7 +256,7 @@ against your various Sub-Command Classes as follows:
 
     use Test::More;
     use Test::Output;
-    use OptArgs qw/dispatch/;
+    use Getopt::Args qw/dispatch/;
 
     stdout_is(
         sub { dispatch( qw/ run My::Cmd start A / ) },
