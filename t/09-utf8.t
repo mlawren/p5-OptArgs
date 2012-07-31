@@ -8,13 +8,16 @@ use OptArgs ':all';
 use POSIX qw/setlocale LC_ALL/;
 use Test::More;
 
-unless ( setlocale( LC_ALL, 'en_US.UTF-8' ) ) {
-    plan skip_all => 'Cannot set locale en_US.UTF-8';
+my $en_US = 'en_US.UTF-8';
+my $loc = setlocale( LC_ALL, $en_US );
+
+unless ( $loc =~ m/$en_US/ ) {
+    plan skip_all => "Cannot set locale $en_US";
     exit;
 }
 
-$ENV{LANG}   = 'en_US.UTF-8';
-$ENV{LC_ALL} = 'en_US.UTF-8';
+$ENV{LANG}   = $en_US;
+$ENV{LC_ALL} = $en_US;
 
 my $utf8 = '¥';
 
