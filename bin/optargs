@@ -23,7 +23,12 @@ optargs - print an OptArgs program command summary
 
 B<optargs> is a utility for developers writing Perl scripts with
 L<OptArgs>. It prints out the synopsis for every sub-command in a
-program.  The following arguments and options are accepted:
+program.
+
+Note that B<optargs> does a C<use lib 'lib'> to allow your
+in-development class to be loaded in preference to installed versions.
+
+=head1 ARGUMENTS
 
 =over
 
@@ -33,8 +38,14 @@ OptArgs-based module to map. Required.
 
 =item NAME
 
-Name of the command. If not specified then CLASS will be used as the
-command name.
+Name of the command. If not specified then the last token of CLASS will
+be used as the command name.
+
+=back
+
+=head1 OPTIONS
+
+=over
 
 =item --indent, -i Int
 
@@ -50,9 +61,6 @@ character ' '.
 Print out the entire usage message instead of just the synopsis.
 
 =back
-
-Note that B<optargs> does a C<use lib 'lib'> to allow your
-in-development class to be loaded in preference to installed versions.
 
 =head1 SEE ALSO
 

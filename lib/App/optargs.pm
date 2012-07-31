@@ -16,7 +16,7 @@ arg class => (
 arg name => (
     isa     => 'Str',
     comment => 'Name of the command',
-    default => sub { return shift->{class}; }
+    default => sub { ( my $x = shift->{class} ) =~ s/.*://; $x; }
 );
 
 opt indent => (
