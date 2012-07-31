@@ -11,3 +11,5 @@ sed \
     -e 's/p5-Getopt::Args/p5-OptArgs/g' \
     -e 's/GETOPT::ARGS/OptArgs/g' \
     lib/OptArgs.pod > lib/Getopt/Args.pod
+
+podtidy --inplace --nobackup `cat .podtidy-opts` lib/Getopt/Args.pod
