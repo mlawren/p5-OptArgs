@@ -126,7 +126,7 @@ sub opt {
     $params->{package} = $package;
     $params->{name}    = $name;
     $params->{length}  = length $name;
-    $params->{acount}  = scalar split( '|', $params->{alias} );
+    $params->{acount}  = do { my @tmp = split( '|', $params->{alias} ) };
     $params->{type}    = 'opt';
     $params->{ISA}     = $params->{name};
 
