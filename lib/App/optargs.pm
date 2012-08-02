@@ -44,13 +44,14 @@ sub run {
 
     die $@ unless eval "require $opts->{class};";
 
-    my $initial = scalar split( /::/, $opts->{class} );
+    my $initial = do { my @tmp = split( /::/, $opts->{class} ) };
     my $indent = $opts->{spacer} x $opts->{indent};
 
     binmode( STDOUT, ':encoding(utf8)' );
 
     foreach my $cmd ( OptArgs::_cmdlist( $opts->{class} ) ) {
-        my $length = scalar split( /::/, $cmd ) - $initial;
+        my $length = do { my @tmp = split( /::/, $cmd ) }
+          - $initial;
         my $space = $indent x $length;
 
         unless ( $opts->{full} ) {
