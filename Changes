@@ -1,4 +1,4 @@
-0.0.x (2012-07-31)
+0.0.3_3 (2012-08-03)
 
     API Changes:
         - None.
@@ -7,7 +7,7 @@
         - None.
 
     Enhancements:
-        - Better check for utf8 test environment
+        - Better check for utf8 aware environment in tests
 
     Bug Fixes:
         - None.
