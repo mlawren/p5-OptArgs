@@ -13,6 +13,7 @@ is exception { dispatch(qw/run app::multi/) }, 'usage:
     41-subcommand.t new    do the z thing
 
   options:
+    --help,    -h          print a help message and exit
     --dry-run, -n          do nothing
     --verbose, -v          do it loudly
 
@@ -30,6 +31,7 @@ is exception { dispatch(qw/run app::multi init -q/) },
 usage: 41-subcommand.t init
 
   options:
+    --help,    -h   print a help message and exit
     --dry-run, -n   do nothing
     --verbose, -v   do it loudly
     --opty          do nothing

@@ -11,6 +11,13 @@ arg command => (
     comment  => '(required) valid values include:',
 );
 
+opt help => (
+    isa     => 'Bool',
+    alias   => 'h',
+    ishelp  => 1,
+    comment => 'print a help message and exit',
+);
+
 opt dry_run => (
     isa     => 'Bool',
     alias   => 'n',
@@ -46,7 +53,7 @@ arg thread => (
 
 subcmd(
     cmd     => [qw/new project/],
-    comment => 'do the new project thing'
+    comment => 'do the new project thing',
 );
 
 opt popt => (
@@ -56,7 +63,8 @@ opt popt => (
 
 subcmd(
     cmd     => [qw/new issue/],
-    comment => 'create a new issue'
+    comment => 'create a new issue',
+    hidden  => 1,
 );
 
 opt iopt => (
@@ -66,7 +74,7 @@ opt iopt => (
 
 subcmd(
     cmd     => [qw/new task/],
-    comment => 'create a new task thread'
+    comment => 'create a new task thread',
 );
 
 opt topt => (
@@ -82,7 +90,7 @@ arg targ => (
 
 subcmd(
     cmd     => [qw/new task pretty/],
-    comment => 'create a new task prettier than before'
+    comment => 'create a new task prettier than before',
 );
 
 opt optz => (
@@ -92,7 +100,7 @@ opt optz => (
 
 subcmd(
     cmd     => [qw/new task noopts/],
-    comment => 'create a new task with no opts or args'
+    comment => 'create a new task with no opts or args',
 );
 
 1;

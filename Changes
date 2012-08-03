@@ -4,7 +4,7 @@
         - "subcmd" now requires a HASH like "opt" and "arg"
 
     New Features:
-        - None.
+        - New "hidden" parameter for subcmd()
 
     Enhancements:
         - Better check for utf8 aware environment in tests

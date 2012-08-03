@@ -337,7 +337,7 @@ basically a cleaner way of doing the following in each (sub) command:
 
 =item hidden
 
-When true this option will will not appear in usage messages unless the
+When true this option will not appear in usage messages unless the
 usage message is a help request.
 
 This is handy if you have developer-only options, or options that are
@@ -431,6 +431,14 @@ command name.
 =item comment
 
 Required. Used to generate the usage/help message.
+
+=item hidden
+
+When true this sub command will not appear in usage messages unless the
+usage message is a help request.
+
+This is handy if you have developer-only or rarely-used commands that
+you don't want cluttering up your normal usage message.
 
 =back
 

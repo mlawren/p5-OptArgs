@@ -19,6 +19,7 @@ my %args;           # argument configuration keyed by 'caller'
 my %caller;         # current 'caller' keyed by real caller
 my %desc;           # sub-command descriptions
 my %dispatching;    # track optargs() calls from dispatch classes
+my %hidden;         # subcmd hiding by default
 
 # internal method for App::optargs
 sub _cmdlist {
@@ -50,10 +51,10 @@ sub _cmdlist {
 my %subcmd_params = (
     cmd     => undef,
     comment => undef,
+    hidden  => undef,
 
     #    alias   => '',
     #    ishelp  => undef,
-    #    hidden  => undef,
 );
 
 my @subcmd_required = (qw/cmd comment/);
@@ -91,11 +92,12 @@ sub subcmd {
 
     croak "sub command already defined: @cmd $name" if $seen{$package};
 
-    $caller{$caller} = $package;
-    $desc{$package}  = $params->{comment};
-    $seen{$package}  = {};
-    $opts{$package}  = [];
-    $args{$package}  = [];
+    $caller{$caller}  = $package;
+    $desc{$package}   = $params->{comment};
+    $seen{$package}   = {};
+    $opts{$package}   = [];
+    $args{$package}   = [];
+    $hidden{$package} = $params->{hidden};
 
     my $parent_arg = ( grep { $_->{isa} eq 'SubCmd' } @{ $args{$parent} } )[0];
     push( @{ $parent_arg->{subcommands} }, $name );
@@ -289,6 +291,7 @@ sub _usage {
             foreach my $subcommand ( @{ $last->{subcommands} } ) {
                 my $pkg = $last->{package} . '::' . $subcommand;
                 $pkg =~ s/-/_/g;
+                next if $hidden{$pkg} and !$ishelp;
                 push( @usage, [ $me . ' ' . $subcommand, $desc{$pkg} ] );
             }
 
