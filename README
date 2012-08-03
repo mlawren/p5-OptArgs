@@ -167,7 +167,10 @@ DESCRIPTION
         and descriptions, and separate each sub-commands arguments and
         options:
 
-            subcmd( 'start', 'start a machine' );
+            subcmd(
+                cmd     => 'start',
+                comment => 'start a machine'
+            );
 
             arg machine => (
                 isa     => 'Str',
@@ -179,7 +182,10 @@ DESCRIPTION
                 comment => 'start the machine quickly',
             );
 
-            subcmd( 'stop', 'start the machine' );
+            subcmd(
+                cmd     => 'stop',
+                comment => 'start the machine'
+            );
 
             arg machine => (
                 isa     => 'Str',
@@ -297,8 +303,8 @@ FUNCTIONS
                 }
 
         hidden
-            When true this option will will not appear in usage messages
-            unless the usage message is a help request.
+            When true this option will not appear in usage messages unless
+            the usage message is a help request.
 
             This is handy if you have developer-only options, or options
             that are very rarely used that you don't want cluttering up your
@@ -360,10 +366,23 @@ FUNCTIONS
     usage( [$message] ) -> Str
         Returns a usage string prefixed with $message if given.
 
-    subcmd( @cmd, $description )
+    subcmd( %parameters )
         Create a sub-command. After this function is called further calls to
         "opt" and "arg" define options and arguments respectively for the
-        sub-command.
+        sub-command. The following parameters are accepted:
+
+        cmd Required. Either a scalar or an ARRAY reference containing the
+            sub command name.
+
+        comment
+            Required. Used to generate the usage/help message.
+
+        hidden
+            When true this sub command will not appear in usage messages
+            unless the usage message is a help request.
+
+            This is handy if you have developer-only or rarely-used commands
+            that you don't want cluttering up your normal usage message.
 
     dispatch( $function, $rootclass, [ @argv ] )
         Parse @ARGV (or @argv if given) and dispatch to $function in the
