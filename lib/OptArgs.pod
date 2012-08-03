@@ -4,7 +4,7 @@ OptArgs - integrated argument and option processing
 
 =head1 VERSION
 
-0.0.3 (2012-08-04) development release.
+0.0.4 (2012-08-04) development release.
 
 =head1 SYNOPSIS
 
