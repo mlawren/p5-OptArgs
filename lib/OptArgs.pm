@@ -43,27 +43,56 @@ sub _cmdlist {
 }
 
 # ------------------------------------------------------------------------
-# Sub-commands work by faking caller context in opt() and arg()
+# Sub-command definition
+#
+# This works by faking caller context in opt() and arg()
 # ------------------------------------------------------------------------
+my %subcmd_params = (
+    cmd     => undef,
+    comment => undef,
+
+    #    alias   => '',
+    #    ishelp  => undef,
+    #    hidden  => undef,
+);
+
+my @subcmd_required = (qw/cmd comment/);
+
 sub subcmd {
+    my $params = {@_};
     my $caller = caller;
-    croak 'subcmd(@cmd,$description)' unless @_ >= 2;
 
-    my $desc = pop;
-    my $name = pop;
+    if ( my @missing = grep { !exists $params->{$_} } @subcmd_required ) {
+        croak "missing required parameter(s): @missing";
+    }
 
-    my $parent = join( '::', $caller, @_ );
+    if ( my @invalid = grep { !exists $subcmd_params{$_} } keys %$params ) {
+        my @valid = keys %subcmd_params;
+        croak "invalid parameter(s): @invalid (valid: @valid)";
+    }
+
+    #    croak "'ishelp' can only be applied to Bool opts"
+    #      if $params->{ishelp} and $params->{isa} ne 'Bool';
+
+    my @cmd =
+      ref $params->{cmd} eq 'ARRAY'
+      ? @{ $params->{cmd} }
+      : ( $params->{cmd} );
+    croak 'missing cmd elements' unless @cmd;
+
+    my $name = pop @cmd;
+    my $parent = join( '::', $caller, @cmd );
     $parent =~ s/-/_/g;
 
-    croak "parent command not found: @_" unless $seen{$parent};
+    croak "parent command not found: @cmd" unless $seen{$parent};
 
     my $package = $parent . '::' . $name;
     $package =~ s/-/_/g;
 
-    croak "sub command already defined: @_ $name" if $seen{$package};
+    croak "sub command already defined: @cmd $name" if $seen{$package};
 
     $caller{$caller} = $package;
-    $desc{$package}  = $desc;
+    $desc{$package}  = $params->{comment};
     $seen{$package}  = {};
     $opts{$package}  = [];
     $args{$package}  = [];

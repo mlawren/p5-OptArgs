@@ -11,11 +11,11 @@ use OptArgs qw/:all/;
 like exception {
     subcmd;
 },
-  qr/subcmd/,
+  qr/missing required/,
   'subcmd usage';
 
 like exception {
-    subcmd( 'cmd', 'description' );
+    subcmd( cmd => 'cmd', comment => 'description' );
 }, qr/parent command not found/, 'subcmd before opt/arg';
 
 #------------------------------------------------------------------------
@@ -193,10 +193,10 @@ like exception {
 # subcmd()
 #------------------------------------------------------------------------
 
-subcmd( 'cmd', 'description' );
+subcmd( cmd => 'cmd', comment => 'description' );
 
 like exception {
-    subcmd( 'cmd', 'description' );
+    subcmd( cmd => 'cmd', comment => 'description' );
 }, qr/already defined/, 'subcmd already defined';
 
 #------------------------------------------------------------------------

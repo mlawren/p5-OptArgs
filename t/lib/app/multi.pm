@@ -23,14 +23,20 @@ opt verbose => (
     comment => 'do it loudly',
 );
 
-subcmd( 'init', 'do the y thing' );
+subcmd(
+    cmd     => 'init',
+    comment => 'do the y thing',
+);
 
 opt opty => (
     isa     => 'Bool',
     comment => 'do nothing',
 );
 
-subcmd( 'new', 'do the z thing' );
+subcmd(
+    cmd     => 'new',
+    comment => 'do the z thing',
+);
 
 arg thread => (
     isa      => 'SubCmd',
@@ -38,21 +44,30 @@ arg thread => (
     comment  => '',
 );
 
-subcmd( qw/new project/, 'do the new project thing' );
+subcmd(
+    cmd     => [qw/new project/],
+    comment => 'do the new project thing'
+);
 
 opt popt => (
     isa     => 'Bool',
     comment => 'do nothing',
 );
 
-subcmd( qw/new issue/, 'create a new issue' );
+subcmd(
+    cmd     => [qw/new issue/],
+    comment => 'create a new issue'
+);
 
 opt iopt => (
     isa     => 'Bool',
     comment => 'do nothing',
 );
 
-subcmd( qw/new task/, 'create a new task thread' );
+subcmd(
+    cmd     => [qw/new task/],
+    comment => 'create a new task thread'
+);
 
 opt topt => (
     isa     => 'Bool',
@@ -65,13 +80,19 @@ arg targ => (
     comment  => '',
 );
 
-subcmd( qw/new task pretty/, 'create a new task prettier than before' );
+subcmd(
+    cmd     => [qw/new task pretty/],
+    comment => 'create a new task prettier than before'
+);
 
 opt optz => (
     isa     => 'Bool',
     comment => 'do nothing',
 );
 
-subcmd( qw/new task noopts/, 'create a new task with no opts or args' );
+subcmd(
+    cmd     => [qw/new task noopts/],
+    comment => 'create a new task with no opts or args'
+);
 
 1;

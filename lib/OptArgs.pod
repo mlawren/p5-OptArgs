@@ -185,7 +185,10 @@ additionally specifies an argument of type 'SubCmd':
 The C<subcmd> function call is then used to define sub-command names
 and descriptions, and separate each sub-commands arguments and options:
 
-    subcmd( 'start', 'start a machine' );
+    subcmd(
+        cmd     => 'start',
+        comment => 'start a machine'
+    );
 
     arg machine => (
         isa     => 'Str',
@@ -197,7 +200,10 @@ and descriptions, and separate each sub-commands arguments and options:
         comment => 'start the machine quickly',
     );
 
-    subcmd( 'stop', 'start the machine' );
+    subcmd(
+        cmd     => 'stop',
+        comment => 'start the machine'
+    );
 
     arg machine => (
         isa     => 'Str',
@@ -409,11 +415,24 @@ whatever L<I18N::Langinfo> says your current locale codeset is.
 
 Returns a usage string prefixed with $message if given.
 
-=item subcmd( @cmd, $description )
+=item subcmd( %parameters )
 
 Create a sub-command. After this function is called further calls to
 C<opt> and C<arg> define options and arguments respectively for the
-sub-command.
+sub-command.  The following parameters are accepted:
+
+=over
+
+=item cmd
+
+Required. Either a scalar or an ARRAY reference containing the sub
+command name.
+
+=item comment
+
+Required. Used to generate the usage/help message.
+
+=back
 
 =item dispatch( $function, $rootclass, [ @argv ] )
 

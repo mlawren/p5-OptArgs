@@ -1,7 +1,7 @@
 0.0.3_3 (2012-08-03)
 
     API Changes:
-        - None.
+        - "subcmd" now requires a HASH like "opt" and "arg"
 
     New Features:
         - None.
