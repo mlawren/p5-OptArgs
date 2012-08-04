@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+mkdir lib/Getopt
+
 sed \
     -e 's/OptArgs/Getopt::Args/g' \
     lib/OptArgs.pm > lib/Getopt/Args.pm
