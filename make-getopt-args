@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-mkdir lib/Getopt
+mkdir -p lib/Getopt
 
 sed \
     -e 's/OptArgs/Getopt::Args/g' \
