@@ -506,9 +506,17 @@ sub _optargs {
                     $package = $newpackage;
                     push( @config, @{ $opts{$package} }, @{ $args{$package} } );
                 }
-                elsif ( !$try->{fallback} and !$ishelp ) {
-                    die _usage( $package,
-                        "invalid " . $try->{name} . ': ' . $result );
+                elsif ( !$ishelp ) {
+                    if ( $try->{fallback} ) {
+                        unshift @$source, $result;
+                        $try->{fallback}->{type} = 'arg';
+                        push( @config, $try->{fallback} );
+                        next;
+                    }
+                    else {
+                        die _usage( $package,
+                            "invalid " . $try->{name} . ': ' . $result );
+                    }
                 }
             }
 

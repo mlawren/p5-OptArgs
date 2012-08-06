@@ -8,7 +8,8 @@ arg subcmd => (
     isa      => 'SubCmd',
     comment  => 'first',
     fallback => {
-        name => 'other',
+        name    => 'other',
+        isa     => 'Str',
         comment => 'comment',
     },
 );
@@ -17,6 +18,6 @@ arg subcmd => (
 is_deeply optargs, {}, 'no argument';
 
 @ARGV = (qw/unknown/);
-is_deeply optargs, { subcmd => 'unknown' }, 'arg fell through';
+is_deeply optargs, { other => 'unknown' }, 'arg fell through';
 
 done_testing;

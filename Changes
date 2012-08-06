@@ -1,3 +1,17 @@
+0.0.4 (2012-08-04)
+
+    API Changes:
+        - None
+
+    New Features:
+        - None.
+
+    Enhancements:
+        - Greater flexibility for "fallback" sub-commands.
+
+    Bug Fixes:
+        - None.
+
 0.0.3 (2012-08-04)
 
     API Changes:
