@@ -8,6 +8,7 @@
 
     Enhancements:
         - Greater flexibility for "fallback" sub-commands.
+        - Stop adding sub-command key/values to the optargs hashref
 
     Bug Fixes:
         - None.

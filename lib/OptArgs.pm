@@ -518,6 +518,8 @@ sub _optargs {
                             "invalid " . $try->{name} . ': ' . $result );
                     }
                 }
+
+                $result = undef;
             }
 
         }
