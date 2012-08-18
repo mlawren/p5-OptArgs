@@ -9,6 +9,7 @@
     Enhancements:
         - Greater flexibility for "fallback" sub-commands.
         - Stop adding sub-command key/values to the optargs hashref
+        - Convert HASHrefs to options in dispatch()
 
     Bug Fixes:
         - None.

@@ -571,7 +571,27 @@ sub dispatch {
     croak 'dispatch($method, $class, [@argv])' unless $method and $class;
     croak $@ unless eval "require $class;1;";
 
-    my ( $package, $optargs ) = _optargs( $class, @_ );
+    my ( $package, $optargs );
+
+    if (@_) {
+        my @args;
+
+        foreach my $element (@_) {
+            if ( ref $element eq 'HASH' ) {
+                push( @args,
+                    '--' . $_, defined $element->{$_} ? $element->{$_} : () )
+                  for keys %$element;
+            }
+            else {
+                push( @args, $element );
+            }
+        }
+
+        ( $package, $optargs ) = _optargs( $class, @args );
+    }
+    else {
+        ( $package, $optargs ) = _optargs($class);
+    }
 
     my $sub = $package->can($method);
     if ( !$sub ) {
