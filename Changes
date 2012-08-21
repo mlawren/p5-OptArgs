@@ -1,18 +1,16 @@
-0.0.4 (2012-08-04)
+0.0.4 (2012-08-21)
 
     API Changes:
         - None
 
     New Features:
-        - None.
+        - Convert HASHrefs to options in dispatch()
 
     Enhancements:
         - Greater flexibility for "fallback" sub-commands.
-        - Stop adding sub-command key/values to the optargs hashref
-        - Convert HASHrefs to options in dispatch()
 
     Bug Fixes:
-        - None.
+        - Stop adding sub-command key/values to the optargs hashref
 
 0.0.3 (2012-08-04)
 

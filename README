@@ -394,6 +394,10 @@ FUNCTIONS
         Parse @ARGV (or @argv if given) and dispatch to $function in the
         appropriate package name constructed from $rootclass.
 
+        As an aid for testing, if the passed in argument @argv (not @ARGV)
+        contains a HASH reference, the key/value combinations of the hash
+        will be added as options. An undefined value means a boolean option.
+
 SEE ALSO
     Getopt::Long, Exporter::Tidy
 
