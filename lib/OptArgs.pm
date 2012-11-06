@@ -9,6 +9,7 @@ use Exporter::Tidy
 use Getopt::Long qw/GetOptionsFromArray/;
 use I18N::Langinfo qw/langinfo/;
 use List::Util qw/max/;
+use Text::Abbrev qw/abbrev/;
 
 our $VERSION = '0.0.4';
 our $COLOUR  = 0;
@@ -499,6 +500,15 @@ sub _optargs {
             }
 
             if ( $try->{isa} eq 'SubCmd' and $result ) {
+
+                # look up abbreviated words
+                my %words =
+                  map { m/^$package\:\:(\w+)$/; $1 => 1 }
+                  grep { m/^$package\:\:(\w+)$/ }
+                  keys %seen;
+                my %abbrev = abbrev keys %words;
+                $result = $abbrev{$result} if defined $abbrev{$result};
+
                 my $newpackage = $package . '::' . $result;
                 $newpackage =~ s/-/_/;
 
