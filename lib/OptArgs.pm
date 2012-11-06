@@ -13,6 +13,7 @@ use Text::Abbrev qw/abbrev/;
 
 our $VERSION = '0.0.4';
 our $COLOUR  = 0;
+our $ABBREV  = 0;
 
 my %seen;           # hash of hashes keyed by 'caller', then opt/arg name
 my %opts;           # option configuration keyed by 'caller'
@@ -502,12 +503,14 @@ sub _optargs {
             if ( $try->{isa} eq 'SubCmd' and $result ) {
 
                 # look up abbreviated words
-                my %words =
-                  map { m/^$package\:\:(\w+)$/; $1 => 1 }
-                  grep { m/^$package\:\:(\w+)$/ }
-                  keys %seen;
-                my %abbrev = abbrev keys %words;
-                $result = $abbrev{$result} if defined $abbrev{$result};
+                if( $ABBREV ) {
+                    my %words =
+                      map { m/^$package\:\:(\w+)$/; $1 => 1 }
+                      grep { m/^$package\:\:(\w+)$/ }
+                      keys %seen;
+                    my %abbrev = abbrev keys %words;
+                    $result = $abbrev{$result} if defined $abbrev{$result};
+                }
 
                 my $newpackage = $package . '::' . $result;
                 $newpackage =~ s/-/_/;
