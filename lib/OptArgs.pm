@@ -12,6 +12,7 @@ use List::Util qw/max/;
 
 our $VERSION = '0.0.4';
 our $COLOUR  = 0;
+our $SORT    = 0;
 
 my %seen;           # hash of hashes keyed by 'caller', then opt/arg name
 my %opts;           # option configuration keyed by 'caller'
@@ -288,7 +289,9 @@ sub _usage {
 
     if ( my $last = $args[$#args] ) {
         if ( $last->{isa} eq 'SubCmd' ) {
-            foreach my $subcommand ( @{ $last->{subcommands} } ) {
+            my @subcommands = @{ $last->{subcommands} };
+            @subcommands = sort @subcommands if $SORT;
+            foreach my $subcommand ( @subcommands ) {
                 my $pkg = $last->{package} . '::' . $subcommand;
                 $pkg =~ s/-/_/g;
                 next if $hidden{$pkg} and !$ishelp;
