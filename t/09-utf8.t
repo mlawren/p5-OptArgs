@@ -21,13 +21,14 @@ unless ( $loc eq $en_US ) {
 $ENV{LANG}   = $en_US;
 $ENV{LC_ALL} = $en_US;
 
+my $VAR1;
 my $utf8 = '¥';
 
 open( my $fh, '-|', $^X, "$Bin\/single", $utf8 ) || die "open: $!";
-my $result = join( '', <$fh> );
+eval join( '', <$fh> );
 close $fh;
 
-is $result, Dumper( { arg1 => $utf8, arg2 => 'optional', } ),
+is_deeply $VAR1, { arg1 => $utf8, arg2 => 'optional', },
   'external argument encoding given utf8';
 
 done_testing;
