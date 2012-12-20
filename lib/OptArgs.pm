@@ -458,7 +458,14 @@ sub _optargs {
         elsif ( $try->{type} eq 'arg' ) {
             if (@$source) {
                 die _usage( $package, "unknown option: " . $source->[0] )
-                  if ( $source->[0] =~ m/^(-\S)|(--\S+)$/ );
+                  if $source->[0] =~ m/^--\S/;
+
+                die _usage( $package, "unknown option: " . $source->[0] )
+                  if $source->[0] =~ m/^-\S/
+                  and !(
+                    $source->[0] =~ m/^-\d/ and ( $try->{isa} ne 'Num'
+                        or $try->{isa} ne 'Int' )
+                  );
 
                 if ( $try->{greedy} ) {
                     my @later;

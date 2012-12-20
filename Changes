@@ -11,6 +11,7 @@
 
     Bug Fixes:
         - Do not assume consistent hash key order in tests
+        - Do not count negative Int/Num arguments as unknown options
 
 0.0.4 (2012-08-21)
 
