@@ -7,7 +7,7 @@
         - None
 
     Enhancements:
-        - None
+        - Document colourized output behaviour
 
     Bug Fixes:
         - Do not assume consistent hash key order in tests

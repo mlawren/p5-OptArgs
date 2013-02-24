@@ -458,6 +458,21 @@ be added as options. An undefined value means a boolean option.
 
 =back
 
+=head1 OPTIONAL BEHAVIOUR
+
+Certain B<OptArgs> behaviour and/or output can be changed by setting
+the following package-level variables:
+
+=over
+
+=item $OptArgs::COLOUR
+
+If C<$OptArgs::COLOUR> is a true value and C<STDOUT> is connected to a
+terminal then usage and error messages will be colourized using
+terminal escape codes.
+
+=back
+
 =head1 SEE ALSO
 
 L<Getopt::Long>, L<Exporter::Tidy>
