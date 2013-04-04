@@ -290,9 +290,12 @@ sub _usage {
 
     if ( my $last = $args[$#args] ) {
         if ( $last->{isa} eq 'SubCmd' ) {
-            my @subcommands = @{ $last->{subcommands} };
-            @subcommands = sort @subcommands if $SORT;
-            foreach my $subcommand ( @subcommands ) {
+            my @subcommands =
+              $SORT
+              ? sort @{ $last->{subcommands} }
+              : @{ $last->{subcommands} };
+
+            foreach my $subcommand (@subcommands) {
                 my $pkg = $last->{package} . '::' . $subcommand;
                 $pkg =~ s/-/_/g;
                 next if $hidden{$pkg} and !$ishelp;
