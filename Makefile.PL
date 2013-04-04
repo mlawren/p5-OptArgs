@@ -21,6 +21,6 @@ author_tests 'xt';
 
 install_script 'bin/optargs';
 
-repository 'https://github.com/mlawren/optargs';
+repository 'https://github.com/mlawren/p5-OptArgs';
 
 WriteAll;
