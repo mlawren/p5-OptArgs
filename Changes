@@ -6,6 +6,8 @@
     New Features:
         - Sub-commands can now be optionally abbreviated by setting
           $OptArgs::ABBREV (Thanks to Robbin Bonthond)
+        - Sub-commands can now be optionally sorted by setting
+          $OptArgs::SORT (Thanks to Robbin Bonthond)
 
     Enhancements:
         - Document colourized output behaviour
