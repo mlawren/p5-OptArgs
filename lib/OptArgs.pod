@@ -476,6 +476,12 @@ If C<$OptArgs::COLOUR> is a true value and C<STDOUT> is connected to a
 terminal then usage and error messages will be colourized using
 terminal escape codes.
 
+=item $OptArgs::SORT
+
+If C<$OptArgs::SORT> is a true value then sub-commands will be listed
+in usage messages alphabetically instead of in the order they were
+defined.
+
 =back
 
 =head1 SEE ALSO

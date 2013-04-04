@@ -63,4 +63,38 @@ stdout_is(
 ', 'abbrev ne p'
 );
 
+# sorting
+
+$OptArgs::SORT = 0;
+
+is exception { dispatch(qw/run app::multi new -h/) }, '[help requested]
+
+usage:
+    41-subcommand.t new project   do the new project thing
+    41-subcommand.t new issue     create a new issue
+    41-subcommand.t new task      create a new task thread
+
+  options:
+    --help,    -h                 print a help message and exit
+    --dry-run, -n                 do nothing
+    --verbose, -v                 do it loudly
+
+', 'ordered';
+
+$OptArgs::SORT = 1;
+
+is exception { dispatch(qw/run app::multi new -h/) }, '[help requested]
+
+usage:
+    41-subcommand.t new issue     create a new issue
+    41-subcommand.t new project   do the new project thing
+    41-subcommand.t new task      create a new task thread
+
+  options:
+    --help,    -h                 print a help message and exit
+    --dry-run, -n                 do nothing
+    --verbose, -v                 do it loudly
+
+', 'sorted';
+
 done_testing();
