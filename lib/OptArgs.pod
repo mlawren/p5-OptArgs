@@ -465,6 +465,11 @@ the following package-level variables:
 
 =over
 
+=item $OptArgs::ABBREV
+
+If C<$OptArgs::ABBREV> is a true value then sub-commands can be
+abbreviated, up to their shortest, unique values.
+
 =item $OptArgs::COLOUR
 
 If C<$OptArgs::COLOUR> is a true value and C<STDOUT> is connected to a

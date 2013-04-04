@@ -38,4 +38,29 @@ usage: 41-subcommand.t init
 
 ', 'unexpected option';
 
+# abbreviations
+
+like exception { dispatch(qw/run app::multi in/) }, qr/error/,
+  'No abbreviation';
+
+$OptArgs::ABBREV++;
+
+stdout_is(
+    sub { dispatch(qw/run app::multi i/) },
+    'you are in init, thanks
+', 'abbrev i'
+);
+
+stdout_is(
+    sub { dispatch(qw/run app::multi ini/) },
+    'you are in init, thanks
+', 'abbrev ini'
+);
+
+stdout_is(
+    sub { dispatch(qw/run app::multi ne p/) },
+    'you are in new project, thanks
+', 'abbrev ne p'
+);
+
 done_testing();
