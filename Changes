@@ -4,7 +4,8 @@
         - None
 
     New Features:
-        - None
+        - Sub-commands can now be optionally abbreviated by setting
+          $OptArgs::ABBREV (Thanks to Robbin Bonthond)
 
     Enhancements:
         - Document colourized output behaviour
