@@ -290,11 +290,23 @@ sub _usage {
 
     if ( my $last = $args[$#args] ) {
         if ( $last->{isa} eq 'SubCmd' ) {
+            $usage .= ' ' . $me;
+            foreach my $def (@args) {
+                $usage .= ' ';
+                $usage .= '[' unless $def->{required};
+                $usage .= uc $def->{name};
+                $usage .= '...' if $def->{greedy};
+                $usage .= ']' unless $def->{required};
+                push( @uargs, [ uc $def->{name}, $def->{comment} ] );
+            }
+
             my @subcommands =
               $SORT
               ? sort @{ $last->{subcommands} }
               : @{ $last->{subcommands} };
 
+            $usage = "\n" . $last->{comment} . "\n\n" . $usage
+              if $last->{comment};
             foreach my $subcommand (@subcommands) {
                 my $pkg = $last->{package} . '::' . $subcommand;
                 $pkg =~ s/-/_/g;
@@ -330,6 +342,10 @@ sub _usage {
         $usage .= ' ' . $me . "\n";
     }
 
+    #    $usage .= "\n" . $desc{$caller}. "\n\n" if $desc{$caller};
+    $usage .= "\n  ${grey}synopsis:$reset\n    " . $desc{$caller} . "\n"
+      if $desc{$caller};
+
     foreach my $opt (@opts) {
         next if $opt->{hidden} and !$ishelp;
 
@@ -358,6 +374,7 @@ sub _usage {
     my $format = '    %-' . $w1 . "s   %s\n";
 
     if (@usage) {
+        $usage .= "\n  ${grey}commands:$reset\n";
         foreach my $row (@usage) {
             $usage .= sprintf( $format, @$row );
         }
@@ -381,7 +398,7 @@ sub _usage {
         return $tmp . ' ' . $error . "\n\n" . $usage . "\n";
     }
     elsif ($ishelp) {
-        return "[help requested]\n\n" . $usage . "\n";
+        return $usage . "\n";
     }
 
     return $usage . "\n";
