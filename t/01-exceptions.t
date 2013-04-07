@@ -167,7 +167,7 @@ like exception {
 
 like exception {
     optargs;
-}, qr/unexpected option or argument/, 'unexpected option or argument';
+}, qr/unexpected option or argument/i, 'unexpected option or argument';
 
 arg int => (
     isa     => 'Int',

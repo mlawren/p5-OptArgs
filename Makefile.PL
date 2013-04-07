@@ -13,6 +13,7 @@ requires 'I18N::Langinfo' => 0;
 requires 'List::Util'     => 0;
 requires 'Text::Abbrev'   => 0;
 
+test_requires 'IO::Capture::Stdout';
 test_requires 'POSIX';
 test_requires 'Test::More';
 test_requires 'Test::Fatal';

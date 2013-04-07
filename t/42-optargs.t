@@ -1,10 +1,10 @@
 use strict;
 use warnings;
+use lib 't/lib';
+use OptArgs qw/dispatch/;
 use Test::More;
 use Test::Output;
 use Test::Fatal;
-use lib 't/lib';
-use OptArgs qw/dispatch/;
 
 stdout_is(
     sub { dispatch(qw/run App::optargs app::multi/) },

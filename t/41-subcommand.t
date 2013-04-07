@@ -1,100 +1,80 @@
 use strict;
 use warnings;
+use lib 't/lib';
+use IO::Capture::Stdout;
+use OptArgs qw/dispatch/;
 use Test::More;
 use Test::Output;
 use Test::Fatal;
-use lib 't/lib';
-use OptArgs qw/dispatch/;
 
 $OptArgs::COLOUR = 0;
 
-is exception { dispatch(qw/run app::multi/) }, 'usage:
-    41-subcommand.t init   do the y thing
-    41-subcommand.t new    do the z thing
+sub eval_output_is (&$$) {
+    my $sub = shift;
+    my $ref = shift;
+    my $msg = shift;
 
-  options:
-    --help,    -h          print a help message and exit
-    --dry-run, -n          do nothing
-    --verbose, -v          do it loudly
+    my $capture = IO::Capture::Stdout->new();
 
-', 'no arguments';
+    $capture->start();
+    $sub->();
+    $capture->stop();
 
-stdout_is(
-    sub { dispatch(qw/run app::multi init/) },
-    'you are in init, thanks
-', 'init'
-);
+    my $VAR1;
+    my $str = $capture->read;
+    eval $str;
 
-is exception { dispatch(qw/run app::multi init -q/) },
-  'error: unexpected option or argument: -q
+    is_deeply $VAR1, $ref, $msg;
+}
 
-usage: 41-subcommand.t init
+like exception { dispatch(qw/run app::multi/) }, qr/usage:.* init .* new /s,
+  'no arguments';
 
-  options:
-    --help,    -h   print a help message and exit
-    --dry-run, -n   do nothing
-    --verbose, -v   do it loudly
-    --opty          do nothing
+eval_output_is sub { dispatch(qw/run app::multi init/) },
+  { _caller => 'app::multi::init' }, 'init';
 
-', 'unexpected option';
+like exception { dispatch(qw/run app::multi init -q/) },
+  qr/error:.*unexpected .*-q/si, 'unexpected option';
 
 # abbreviations
 
-like exception { dispatch(qw/run app::multi in/) }, qr/error/,
+$OptArgs::ABBREV = 0;
+
+like exception { dispatch(qw/run app::multi in/) }, qr/error/i,
   'No abbreviation';
 
-$OptArgs::ABBREV++;
+$OptArgs::ABBREV = 1;
 
-stdout_is(
+eval_output_is(
     sub { dispatch(qw/run app::multi i/) },
-    'you are in init, thanks
-', 'abbrev i'
+    { _caller => 'app::multi::init' },
+    'abbrev i'
 );
 
-stdout_is(
+eval_output_is(
     sub { dispatch(qw/run app::multi ini/) },
-    'you are in init, thanks
-', 'abbrev ini'
+    { '_caller' => 'app::multi::init' },
+    'abbrev ini'
 );
 
-stdout_is(
+eval_output_is(
     sub { dispatch(qw/run app::multi ne p/) },
-    'you are in new project, thanks
-', 'abbrev ne p'
+    { _caller => 'app::multi::new::project' },
+    'abbrev ne p'
 );
 
 # sorting
 
 $OptArgs::SORT = 0;
 
-is exception { dispatch(qw/run app::multi new -h/) }, '[help requested]
-
-usage:
-    41-subcommand.t new project   do the new project thing
-    41-subcommand.t new issue     create a new issue
-    41-subcommand.t new task      create a new task thread
-
-  options:
-    --help,    -h                 print a help message and exit
-    --dry-run, -n                 do nothing
-    --verbose, -v                 do it loudly
-
-', 'ordered';
+like exception { dispatch(qw/run app::multi new -h/) },
+  qr/help.* project .* issue /s,
+  'unordered';
 
 $OptArgs::SORT = 1;
 
-is exception { dispatch(qw/run app::multi new -h/) }, '[help requested]
-
-usage:
-    41-subcommand.t new issue     create a new issue
-    41-subcommand.t new project   do the new project thing
-    41-subcommand.t new task      create a new task thread
-
-  options:
-    --help,    -h                 print a help message and exit
-    --dry-run, -n                 do nothing
-    --verbose, -v                 do it loudly
-
-', 'sorted';
+like exception { dispatch(qw/run app::multi new -h/) },
+  qr/help.* issue .* project /s,
+  'sorted';
 
 done_testing();
