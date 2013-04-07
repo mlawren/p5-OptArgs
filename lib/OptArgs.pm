@@ -275,6 +275,8 @@ sub _usage {
     require File::Basename;
     my $me = File::Basename::basename($0);
 
+    $usage .= "\n" . $desc{$caller}. "\n\n" if $desc{$caller};
+
     $usage .= $yellow . 'usage:' . $reset;
 
     while ( $parent =~ s/(.*)::(.*)/$1/ ) {
@@ -288,6 +290,7 @@ sub _usage {
 
     if ( my $last = $args[$#args] ) {
         if ( $last->{isa} eq 'SubCmd' ) {
+            $usage = "\n" . $last->{comment} . "\n\n" . $usage if $last->{comment};
             foreach my $subcommand ( @{ $last->{subcommands} } ) {
                 my $pkg = $last->{package} . '::' . $subcommand;
                 $pkg =~ s/-/_/g;
@@ -351,6 +354,7 @@ sub _usage {
     my $format = '    %-' . $w1 . "s   %s\n";
 
     if (@usage) {
+        $usage .= "\n  ${grey}commands:$reset\n";
         foreach my $row (@usage) {
             $usage .= sprintf( $format, @$row );
         }
@@ -374,7 +378,7 @@ sub _usage {
         return $tmp . ' ' . $error . "\n\n" . $usage . "\n";
     }
     elsif ($ishelp) {
-        return "[help requested]\n\n" . $usage . "\n";
+        return $usage . "\n";
     }
 
     return $usage . "\n";
