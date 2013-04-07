@@ -1,4 +1,4 @@
-0.0.5
+0.1.1
 
     API Changes:
         - None
@@ -8,6 +8,7 @@
           $OptArgs::ABBREV (Thanks to Robbin Bonthond)
         - Sub-commands can now be optionally sorted by setting
           $OptArgs::SORT (Thanks to Robbin Bonthond)
+        - (The above require a minor version number upgrade)
 
     Enhancements:
         - Document colourized output behaviour
