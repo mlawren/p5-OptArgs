@@ -307,10 +307,6 @@ sub _usage {
     }
 
     $usage .= "\n";
-    if ($error) {
-        $usage .= "\n  ${red}Error:$reset $error\n";
-    }
-
     $usage .= "\n  ${grey}Synopsis:$reset\n    $desc{$caller}\n"
       if $ishelp and $desc{$caller};
 
@@ -379,6 +375,9 @@ sub _usage {
         foreach my $row (@uopts) {
             $usage .= sprintf( $format, @$row );
         }
+    }
+    if ($error) {
+        $usage .= "\n${red}error:$reset $error";
     }
 
     #    if ($error) {
