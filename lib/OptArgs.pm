@@ -263,7 +263,6 @@ sub _usage {
     my $terminal = -t STDOUT;
     my $red      = ( $COLOUR && $terminal ) ? "\e[0;31m" : '';
     my $yellow   = ( $COLOUR && $terminal ) ? "\e[0;33m" : '';
-    my $grey     = ( $COLOUR && $terminal ) ? "\e[1;30m" : '';
     my $reset    = ( $COLOUR && $terminal ) ? "\e[0m" : '';
     my $parent   = $caller;
     my @args     = @{ $args{$caller} };
@@ -307,11 +306,11 @@ sub _usage {
     }
 
     $usage .= "\n";
-    $usage .= "\n  ${grey}Synopsis:$reset\n    $desc{$caller}\n"
+    $usage .= "\n  Synopsis:\n    $desc{$caller}\n"
       if $ishelp and $desc{$caller};
 
     if ( $last && $last->{isa} eq 'SubCmd' ) {
-        $usage .= "\n  ${grey}" . uc( $last->{name} ) . ":$reset\n";
+        $usage .= "\n  " . uc( $last->{name} ) . ":\n";
 
         my @subcommands =
           $SORT
@@ -364,27 +363,24 @@ sub _usage {
             $usage .= sprintf( $format, @$row );
         }
     }
+
     if ( @uargs and $last->{isa} ne 'SubCmd' ) {
-        $usage .= "\n  ${grey}Arguments:$reset\n";
+        $usage .= "\n  Arguments:\n";
         foreach my $row (@uargs) {
             $usage .= sprintf( $format, @$row );
         }
     }
+
     if (@uopts) {
-        $usage .= "\n  ${grey}Options:$reset\n";
+        $usage .= "\n  Options:\n";
         foreach my $row (@uopts) {
             $usage .= sprintf( $format, @$row );
         }
     }
+
     if ($error) {
         $usage .= "\n${red}error:$reset $error";
     }
-
-    #    if ($error) {
-    #        my $tmp = $red . "error:" . $reset;
-    #        $tmp .= "\n   " if @usage;
-    #        return $tmp . ' ' . $error . "\n" . $usage . "\n";
-    #    }
 
     return $usage . "\n";
 }
