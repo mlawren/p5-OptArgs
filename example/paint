@@ -2,11 +2,12 @@
 
 use strict;
 use warnings;
-
 use FindBin;
 use lib "$FindBin::Bin/../lib";
-
+use Data::Dumper;
 use OptArgs;
+
+$OptArgs::COLOUR++;
 
 opt quiet => (
     isa     => 'Bool',
@@ -36,12 +37,9 @@ arg colour => (
 arg message => (
     isa     => 'Str',
     comment => 'the message to paint on the item',
+    default => 'a boring message',
     greedy  => 1,
 );
 
-my $ref = optargs;
-
-printf( "Painting in %s on %s: \"%s\"\n",
-    $ref->{colour}, $ref->{item}, $ref->{message} )
-  unless $ref->{quiet};
+print Dumper(optargs);
 
