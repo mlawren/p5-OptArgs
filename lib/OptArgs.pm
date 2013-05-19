@@ -262,11 +262,12 @@ sub _usage {
     my $ishelp   = shift;
     my $terminal = -t STDOUT;
     my $red      = ( $COLOUR && $terminal ) ? "\e[0;31m" : '';
-    my $yellow   = ( $COLOUR && $terminal ) ? "\e[0;33m" : '';
-    my $reset    = ( $COLOUR && $terminal ) ? "\e[0m" : '';
-    my $parent   = $caller;
-    my @args     = @{ $args{$caller} };
-    my @opts     = @{ $opts{$caller} };
+    my $yellow = '';    #( $COLOUR && $terminal ) ? "\e[0;33m" : '';
+    my $grey   = '';    #( $COLOUR && $terminal ) ? "\e[1;30m" : '';
+    my $reset  = ( $COLOUR && $terminal ) ? "\e[0m" : '';
+    my $parent = $caller;
+    my @args   = @{ $args{$caller} };
+    my @opts   = @{ $opts{$caller} };
     my @parents;
     my @usage;
     my @uargs;
@@ -276,6 +277,9 @@ sub _usage {
     require File::Basename;
     my $me = File::Basename::basename($0);
 
+    if ($error) {
+        $usage .= "${red}error:$reset $error\n\n";
+    }
     if ($ishelp) {
         $usage .= $yellow . 'usage [help]:' . $reset . ' ' . $me;
     }
@@ -306,11 +310,11 @@ sub _usage {
     }
 
     $usage .= "\n";
-    $usage .= "\n  Synopsis:\n    $desc{$caller}\n"
+    $usage .= "\n  ${grey}Synopsis:$reset\n    $desc{$caller}\n"
       if $ishelp and $desc{$caller};
 
     if ( $last && $last->{isa} eq 'SubCmd' ) {
-        $usage .= "\n  " . uc( $last->{name} ) . ":\n";
+        $usage .= "\n  ${grey}" . uc( $last->{name} ) . ":$reset\n";
 
         my @subcommands =
           $SORT
@@ -363,23 +367,17 @@ sub _usage {
             $usage .= sprintf( $format, @$row );
         }
     }
-
     if ( @uargs and $last->{isa} ne 'SubCmd' ) {
-        $usage .= "\n  Arguments:\n";
+        $usage .= "\n  ${grey}Arguments:$reset\n";
         foreach my $row (@uargs) {
             $usage .= sprintf( $format, @$row );
         }
     }
-
     if (@uopts) {
-        $usage .= "\n  Options:\n";
+        $usage .= "\n  ${grey}Options:$reset\n";
         foreach my $row (@uopts) {
             $usage .= sprintf( $format, @$row );
         }
-    }
-
-    if ($error) {
-        $usage .= "\n${red}error:$reset $error";
     }
 
     return $usage . "\n";
