@@ -2,12 +2,12 @@ package app::multi::new::project;
 use strict;
 use warnings;
 use OptArgs;
+use Data::Dumper;
 
 sub run {
-    use Data::Show;
-
-    #    show(optargs);
-    print "you are in new project, thanks\n";
+    my $opt = shift;
+    $opt->{_caller} = __PACKAGE__;
+    print Dumper($opt);
 }
 
 1;

@@ -10,8 +10,10 @@ use Getopt::Long qw/GetOptionsFromArray/;
 use I18N::Langinfo qw/langinfo/;
 use List::Util qw/max/;
 
-our $VERSION = '0.0.4';
+our $VERSION = '0.1.2';
 our $COLOUR  = 0;
+our $ABBREV  = 0;
+our $SORT    = 0;
 
 my %seen;           # hash of hashes keyed by 'caller', then opt/arg name
 my %opts;           # option configuration keyed by 'caller'
@@ -260,12 +262,12 @@ sub _usage {
     my $ishelp   = shift;
     my $terminal = -t STDOUT;
     my $red      = ( $COLOUR && $terminal ) ? "\e[0;31m" : '';
-    my $yellow   = ( $COLOUR && $terminal ) ? "\e[0;33m" : '';
-    my $grey     = ( $COLOUR && $terminal ) ? "\e[1;30m" : '';
-    my $reset    = ( $COLOUR && $terminal ) ? "\e[0m" : '';
-    my $parent   = $caller;
-    my @args     = @{ $args{$caller} };
-    my @opts     = @{ $opts{$caller} };
+    my $yellow = '';    #( $COLOUR && $terminal ) ? "\e[0;33m" : '';
+    my $grey   = '';    #( $COLOUR && $terminal ) ? "\e[1;30m" : '';
+    my $reset  = ( $COLOUR && $terminal ) ? "\e[0m" : '';
+    my $parent = $caller;
+    my @args   = @{ $args{$caller} };
+    my @opts   = @{ $opts{$caller} };
     my @parents;
     my @usage;
     my @uargs;
@@ -275,7 +277,15 @@ sub _usage {
     require File::Basename;
     my $me = File::Basename::basename($0);
 
-    $usage .= $yellow . 'usage:' . $reset;
+    if ($error) {
+        $usage .= "${red}error:$reset $error\n\n";
+    }
+    if ($ishelp) {
+        $usage .= $yellow . 'usage [help]:' . $reset . ' ' . $me;
+    }
+    else {
+        $usage .= $yellow . 'usage:' . $reset . ' ' . $me;
+    }
 
     while ( $parent =~ s/(.*)::(.*)/$1/ ) {
         last unless $seen{$parent};
@@ -284,43 +294,45 @@ sub _usage {
         unshift( @opts,    @{ $opts{$parent} } );
     }
 
-    $me .= ' ' . join( ' ', @parents ) if @parents;
+    $usage .= ' ' . join( ' ', @parents ) if @parents;
 
-    if ( my $last = $args[$#args] ) {
-        if ( $last->{isa} eq 'SubCmd' ) {
-            foreach my $subcommand ( @{ $last->{subcommands} } ) {
-                my $pkg = $last->{package} . '::' . $subcommand;
-                $pkg =~ s/-/_/g;
-                next if $hidden{$pkg} and !$ishelp;
-                push( @usage, [ $me . ' ' . $subcommand, $desc{$pkg} ] );
-            }
+    my $last = $args[$#args];
 
-            if ( $last->{fallback} ) {
-                push(
-                    @usage,
-                    [
-                        $me . ' ' . uc $last->{fallback}->{name},
-                        $last->{fallback}->{comment}
-                    ]
-                );
-            }
-            $usage .= "\n";
-        }
-        else {
-            $usage .= ' ' . $me;
-            foreach my $def (@args) {
-                $usage .= ' ';
-                $usage .= '[' unless $def->{required};
-                $usage .= uc $def->{name};
-                $usage .= '...' if $def->{greedy};
-                $usage .= ']' unless $def->{required};
-                push( @uargs, [ uc $def->{name}, $def->{comment} ] );
-            }
-            $usage .= "\n";
+    if ($last) {
+        foreach my $def (@args) {
+            $usage .= ' ';
+            $usage .= '[' unless $def->{required};
+            $usage .= uc $def->{name};
+            $usage .= '...' if $def->{greedy};
+            $usage .= ']' unless $def->{required};
+            push( @uargs, [ uc $def->{name}, $def->{comment} ] );
         }
     }
-    else {
-        $usage .= ' ' . $me . "\n";
+
+    $usage .= "\n";
+    $usage .= "\n  ${grey}Synopsis:$reset\n    $desc{$caller}\n"
+      if $ishelp and $desc{$caller};
+
+    if ( $last && $last->{isa} eq 'SubCmd' ) {
+        $usage .= "\n  ${grey}" . uc( $last->{name} ) . ":$reset\n";
+
+        my @subcommands =
+          $SORT
+          ? sort @{ $last->{subcommands} }
+          : @{ $last->{subcommands} };
+
+        foreach my $subcommand (@subcommands) {
+            my $pkg = $last->{package} . '::' . $subcommand;
+            $pkg =~ s/-/_/g;
+            next if $hidden{$pkg} and !$ishelp;
+            push( @usage, [ $subcommand, $desc{$pkg} ] );
+        }
+
+        if ( $last->{fallback} ) {
+            push( @usage,
+                [ uc $last->{fallback}->{name}, $last->{fallback}->{comment} ]
+            );
+        }
     }
 
     foreach my $opt (@opts) {
@@ -355,26 +367,17 @@ sub _usage {
             $usage .= sprintf( $format, @$row );
         }
     }
-    if (@uargs) {
-        $usage .= "\n  ${grey}arguments:$reset\n";
+    if ( @uargs and $last->{isa} ne 'SubCmd' ) {
+        $usage .= "\n  ${grey}Arguments:$reset\n";
         foreach my $row (@uargs) {
             $usage .= sprintf( $format, @$row );
         }
     }
     if (@uopts) {
-        $usage .= "\n  ${grey}options:$reset\n";
+        $usage .= "\n  ${grey}Options:$reset\n";
         foreach my $row (@uopts) {
             $usage .= sprintf( $format, @$row );
         }
-    }
-
-    if ($error) {
-        my $tmp = $red . "error:" . $reset;
-        $tmp .= "\n   " if @usage;
-        return $tmp . ' ' . $error . "\n\n" . $usage . "\n";
-    }
-    elsif ($ishelp) {
-        return "[help requested]\n\n" . $usage . "\n";
     }
 
     return $usage . "\n";
@@ -457,8 +460,15 @@ sub _optargs {
         }
         elsif ( $try->{type} eq 'arg' ) {
             if (@$source) {
-                die _usage( $package, "unknown option: " . $source->[0] )
-                  if ( $source->[0] =~ m/^(-\S)|(--\S+)$/ );
+                die _usage( $package, qq{Unknown option "$source->[0]"} )
+                  if $source->[0] =~ m/^--\S/;
+
+                die _usage( $package, qq{Unknown option "$source->[0]"} )
+                  if $source->[0] =~ m/^-\S/
+                  and !(
+                    $source->[0] =~ m/^-\d/ and ( $try->{isa} ne 'Num'
+                        or $try->{isa} ne 'Int' )
+                  );
 
                 if ( $try->{greedy} ) {
                     my @later;
@@ -499,6 +509,18 @@ sub _optargs {
             }
 
             if ( $try->{isa} eq 'SubCmd' and $result ) {
+
+                # look up abbreviated words
+                if ($ABBREV) {
+                    require Text::Abbrev;
+                    my %words =
+                      map { m/^$package\:\:(\w+)$/; $1 => 1 }
+                      grep { m/^$package\:\:(\w+)$/ }
+                      keys %seen;
+                    my %abbrev = Text::Abbrev::abbrev( keys %words );
+                    $result = $abbrev{$result} if defined $abbrev{$result};
+                }
+
                 my $newpackage = $package . '::' . $result;
                 $newpackage =~ s/-/_/;
 
@@ -515,7 +537,7 @@ sub _optargs {
                     }
                     else {
                         die _usage( $package,
-                            "invalid " . $try->{name} . ': ' . $result );
+                            "Unknown " . uc( $try->{name} ) . qq{ "$result"} );
                     }
                 }
 
@@ -543,7 +565,7 @@ sub _optargs {
     }
     elsif (@$source) {
         die _usage( $package,
-            "unexpected option or argument: " . shift @$source );
+            qq{Unexpected option or argument "} . ( shift @$source ) . '"' );
     }
 
     # Re-calculate the default if it was a subref

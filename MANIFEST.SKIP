@@ -1,3 +1,5 @@
+MYMETA*
+MANIFEST.SKIP
 MANIFEST.bak
 build-stamp
 install-stamp

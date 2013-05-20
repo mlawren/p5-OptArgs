@@ -102,17 +102,14 @@ is_deeply optargs, { argint => 1, argstr => 'k' }, 'str reset on new arg';
 
 @ARGV = (qw/k 1 3.14 1 one=1/);
 
-TODO: {
-    local $TODO = 'arg types not implemented';
-    is_deeply optargs,
-      {
-        argstr      => 'k',
-        argint      => 1,
-        argnum      => 3.14,
-        argarrayref => [1],
-        arghashref  => { one => 1 },
-      },
-      'deep match';
-}
+is_deeply optargs,
+  {
+    argstr      => 'k',
+    argint      => 1,
+    argnum      => 3.14,
+    argarrayref => [1],
+    arghashref  => { one => 1 },
+  },
+  'deep match';
 
 done_testing;

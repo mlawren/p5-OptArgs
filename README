@@ -2,7 +2,7 @@ NAME
     OptArgs - integrated argument and option processing
 
 VERSION
-    0.0.4 (2012-08-04) development release.
+    0.1.2 development release.
 
 SYNOPSIS
         #!/usr/bin/env perl
@@ -398,6 +398,24 @@ FUNCTIONS
         contains a HASH reference, the key/value combinations of the hash
         will be added as options. An undefined value means a boolean option.
 
+OPTIONAL BEHAVIOUR
+    Certain OptArgs behaviour and/or output can be changed by setting the
+    following package-level variables:
+
+    $OptArgs::ABBREV
+        If $OptArgs::ABBREV is a true value then sub-commands can be
+        abbreviated, up to their shortest, unique values.
+
+    $OptArgs::COLOUR
+        If $OptArgs::COLOUR is a true value and "STDOUT" is connected to a
+        terminal then usage and error messages will be colourized using
+        terminal escape codes.
+
+    $OptArgs::SORT
+        If $OptArgs::SORT is a true value then sub-commands will be listed
+        in usage messages alphabetically instead of in the order they were
+        defined.
+
 SEE ALSO
     Getopt::Long, Exporter::Tidy
 
@@ -418,7 +436,7 @@ AUTHOR
     Mark Lawrence <nomad@null.net>
 
 LICENSE
-    Copyright 2012 Mark Lawrence <nomad@null.net>
+    Copyright 2012-2013 Mark Lawrence <nomad@null.net>
 
     This program is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the

@@ -2,9 +2,12 @@ package app::multi::new;
 use strict;
 use warnings;
 use OptArgs;
+use Data::Dumper;
 
 sub run {
-    print "you are in new, thanks\n";
+    my $opt = shift;
+    $opt->{_caller} = __PACKAGE__;
+    print Dumper($opt);
 }
 
 1;

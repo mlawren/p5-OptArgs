@@ -1,3 +1,24 @@
+0.1.2
+
+    API Changes:
+        - None
+
+    New Features:
+        - Sub-commands can now be optionally abbreviated by setting
+          $OptArgs::ABBREV (Thanks to Robbin Bonthond)
+        - Sub-commands can now be optionally sorted by setting
+          $OptArgs::SORT (Thanks to Robbin Bonthond)
+        - (The above require a minor version number upgrade)
+
+    Enhancements:
+        - Document colourized output behaviour
+        - Improved usage output: simpler colour scheme, more info
+        - Improved tests
+
+    Bug Fixes:
+        - Do not assume consistent hash key order in tests
+        - Do not count negative Int/Num arguments as unknown options
+
 0.0.4 (2012-08-21)
 
     API Changes:

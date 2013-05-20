@@ -1,41 +1,80 @@
 use strict;
 use warnings;
+use lib 't/lib';
+use IO::Capture::Stdout;
+use OptArgs qw/dispatch/;
 use Test::More;
 use Test::Output;
 use Test::Fatal;
-use lib 't/lib';
-use OptArgs qw/dispatch/;
 
 $OptArgs::COLOUR = 0;
 
-is exception { dispatch(qw/run app::multi/) }, 'usage:
-    41-subcommand.t init   do the y thing
-    41-subcommand.t new    do the z thing
+sub eval_output_is (&$$) {
+    my $sub = shift;
+    my $ref = shift;
+    my $msg = shift;
 
-  options:
-    --help,    -h          print a help message and exit
-    --dry-run, -n          do nothing
-    --verbose, -v          do it loudly
+    my $capture = IO::Capture::Stdout->new();
 
-', 'no arguments';
+    $capture->start();
+    $sub->();
+    $capture->stop();
 
-stdout_is(
-    sub { dispatch(qw/run app::multi init/) },
-    'you are in init, thanks
-', 'init'
+    my $VAR1;
+    my $str = $capture->read;
+    eval $str;
+
+    is_deeply $VAR1, $ref, $msg;
+}
+
+like exception { dispatch(qw/run app::multi/) }, qr/usage:.* init .* new /s,
+  'no arguments';
+
+eval_output_is sub { dispatch(qw/run app::multi init/) },
+  { _caller => 'app::multi::init' }, 'init';
+
+like exception { dispatch(qw/run app::multi init -q/) },
+  qr/error:.*unexpected .*-q/si, 'unexpected option';
+
+# abbreviations
+
+$OptArgs::ABBREV = 0;
+
+like exception { dispatch(qw/run app::multi in/) }, qr/error/i,
+  'No abbreviation';
+
+$OptArgs::ABBREV = 1;
+
+eval_output_is(
+    sub { dispatch(qw/run app::multi i/) },
+    { _caller => 'app::multi::init' },
+    'abbrev i'
 );
 
-is exception { dispatch(qw/run app::multi init -q/) },
-  'error: unexpected option or argument: -q
+eval_output_is(
+    sub { dispatch(qw/run app::multi ini/) },
+    { '_caller' => 'app::multi::init' },
+    'abbrev ini'
+);
 
-usage: 41-subcommand.t init
+eval_output_is(
+    sub { dispatch(qw/run app::multi ne p/) },
+    { _caller => 'app::multi::new::project' },
+    'abbrev ne p'
+);
 
-  options:
-    --help,    -h   print a help message and exit
-    --dry-run, -n   do nothing
-    --verbose, -v   do it loudly
-    --opty          do nothing
+# sorting
 
-', 'unexpected option';
+$OptArgs::SORT = 0;
+
+like exception { dispatch(qw/run app::multi new -h/) },
+  qr/help.* project .* issue /s,
+  'unordered';
+
+$OptArgs::SORT = 1;
+
+like exception { dispatch(qw/run app::multi new -h/) },
+  qr/help.* issue .* project /s,
+  'sorted';
 
 done_testing();
