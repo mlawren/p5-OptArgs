@@ -281,7 +281,8 @@ sub _usage {
         $usage .= "${red}error:$reset $error\n\n";
     }
     if ($ishelp) {
-        $usage .= $yellow . 'usage [help]:' . $reset . ' ' . $me;
+        $usage .=
+          "[help requested]\n\n" . $yellow . 'usage:' . $reset . ' ' . $me;
     }
     else {
         $usage .= $yellow . 'usage:' . $reset . ' ' . $me;
