@@ -1,3 +1,17 @@
+0.1.3_1 (2013-06-11)
+
+    API Changes:
+        - None
+
+    New Features:
+        - None
+
+    Enhancements:
+        - Add "[OPTIONS]" to usage line when options exist
+
+    Bug Fixes:
+        - None
+
 0.1.2 (2013-05-20)
 
     API Changes:
