@@ -310,12 +310,14 @@ sub _usage {
         }
     }
 
+    $usage .= ' [OPTIONS...]' if @opts;
+
     $usage .= "\n";
     $usage .= "\n  ${grey}Synopsis:$reset\n    $desc{$caller}\n"
       if $ishelp and $desc{$caller};
 
     if ( $last && $last->{isa} eq 'SubCmd' ) {
-        $usage .= "\n  ${grey}" . uc( $last->{name} ) . ":$reset\n";
+        $usage .= "\n  ${grey}" . ucfirst( $last->{name} ) . ":$reset\n";
 
         my @subcommands =
           $SORT
