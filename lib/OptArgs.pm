@@ -383,7 +383,8 @@ sub _usage {
         }
     }
 
-    return $usage . "\n";
+    $usage .= "\n";
+    return bless( \$usage, 'OptArgs::Usage' );
 }
 
 sub _synopsis {
@@ -632,5 +633,11 @@ sub dispatch {
     return @results if wantarray;
     return $results[0];
 }
+
+package OptArgs::Usage;
+use overload
+  bool     => sub { 1 },
+  '""'     => sub { ${ $_[0] } },
+  fallback => 1;
 
 1;
