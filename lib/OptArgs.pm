@@ -275,7 +275,7 @@ sub _usage {
     my $usage;
 
     require File::Basename;
-    my $me = File::Basename::basename($0);
+    my $me = File::Basename::basename( defined &static::list ? $^X : $0 );
 
     if ($error) {
         $usage .= "${red}error:$reset $error\n\n";
