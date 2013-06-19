@@ -254,6 +254,7 @@ sub arg {
         $p =~ s/-/_/;
         $opts{$p} = [];
         $args{$p} = [];
+        $desc{$p} = $params->{fallback}->{comment};
     }
 
     return;
@@ -326,23 +327,17 @@ sub _usage {
     if ( $last && $last->{isa} eq 'SubCmd' ) {
         $usage .= "\n  ${grey}" . ucfirst( $last->{name} ) . ":$reset\n";
 
-        my @subcommands =
-          $SORT
-          ? sort @{ $last->{subcommands} }
-          : @{ $last->{subcommands} };
+        my @subcommands = @{ $last->{subcommands} };
+        push( @subcommands, uc $last->{fallback}->{name} )
+          if ( $last->{fallback} );
 
-        foreach my $subcommand (@subcommands) {
+        foreach my $subcommand ( $SORT ? sort @subcommands : @subcommands ) {
             my $pkg = $last->{package} . '::' . $subcommand;
             $pkg =~ s/-/_/g;
             next if $hidden{$pkg} and !$ishelp;
             push( @usage, [ $subcommand, $desc{$pkg} ] );
         }
 
-        if ( $last->{fallback} ) {
-            push( @usage,
-                [ uc $last->{fallback}->{name}, $last->{fallback}->{comment} ]
-            );
-        }
     }
 
     foreach my $opt (@opts) {
