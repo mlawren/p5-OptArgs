@@ -38,8 +38,15 @@ sub _cmdlist {
             map { exists $_->{fallback} ? [ uc $_->{fallback}->{name} ] : () }
               @{ $args{$package} } );
 
-        foreach my $subcmd ( map { @$_ } @subcmd ) {
-            push( @list, _cmdlist( $package . '::' . $subcmd ) );
+        if ($SORT) {
+            foreach my $subcmd ( sort map { @$_ } @subcmd ) {
+                push( @list, _cmdlist( $package . '::' . $subcmd ) );
+            }
+        }
+        else {
+            foreach my $subcmd ( map { @$_ } @subcmd ) {
+                push( @list, _cmdlist( $package . '::' . $subcmd ) );
+            }
         }
     }
     return @list;

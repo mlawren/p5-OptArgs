@@ -23,7 +23,8 @@ optargs - print an OptArgs program command summary
 
 B<optargs> is a utility for developers writing Perl scripts with
 L<OptArgs>. It prints out the synopsis for every sub-command in a
-program.
+program. The results are ordered according to the setting of the
+C<$OptArgs::SORT> variable as set by CLASS.
 
 Note that B<optargs> does a C<use lib 'lib'> to allow your
 in-development class to be loaded in preference to installed versions.

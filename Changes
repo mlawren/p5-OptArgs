@@ -10,7 +10,7 @@
         - Add "[OPTIONS]" to usage line when options exist
 
     Bug Fixes:
-        - None
+        - Make App::optargs respect the value of $OptArgs::SORT
 
 0.1.2 (2013-05-20)
 
