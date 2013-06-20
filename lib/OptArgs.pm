@@ -328,8 +328,13 @@ sub _usage {
         $usage .= "\n  ${grey}" . ucfirst( $last->{name} ) . ":$reset\n";
 
         my @subcommands = @{ $last->{subcommands} };
+
         push( @subcommands, uc $last->{fallback}->{name} )
-          if ( $last->{fallback} );
+          if (
+            exists $last->{fallback}
+            && ( $ishelp
+                or !$last->{fallback}->{hidden} )
+          );
 
         foreach my $subcommand ( $SORT ? sort @subcommands : @subcommands ) {
             my $pkg = $last->{package} . '::' . $subcommand;

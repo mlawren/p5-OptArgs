@@ -8,6 +8,7 @@
 
     Enhancements:
         - Add "[OPTIONS]" to usage line when options exist
+        - Allow fallbacks to be hidden
 
     Bug Fixes:
         - Make App::optargs respect the value of $OptArgs::SORT
