@@ -11,8 +11,9 @@
         - Allow fallbacks to be hidden
 
     Bug Fixes:
-        - Make App::optargs respect the value of $OptArgs::SORT
+        - Make App::optargs respect the value of $SORT
         - Ensure a fallback subcommand is also sorted according to $SORT
+        - Sort option list according to $SORT
 
 0.1.2 (2013-05-20)
 

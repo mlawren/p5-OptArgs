@@ -336,7 +336,9 @@ sub _usage {
                 or !$last->{fallback}->{hidden} )
           );
 
-        foreach my $subcommand ( $SORT ? sort @subcommands : @subcommands ) {
+        @subcommands = sort @subcommands if $SORT;
+
+        foreach my $subcommand (@subcommands) {
             my $pkg = $last->{package} . '::' . $subcommand;
             $pkg =~ s/-/_/g;
             next if $hidden{$pkg} and !$ishelp;
@@ -344,6 +346,8 @@ sub _usage {
         }
 
     }
+
+    @opts = sort { $a->{name} cmp $b->{name} } @opts if $SORT;
 
     foreach my $opt (@opts) {
         next if $opt->{hidden} and !$ishelp;
