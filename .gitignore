@@ -16,3 +16,4 @@ OptArgs-*
 extlib/
 .tests
 lib/Getopt
+README
