@@ -1,7 +1,7 @@
 use inc::Module::Install;
 
 name 'OptArgs';
-version '0.1.3_1';
+version '0.1.4';
 all_from 'lib/OptArgs.pm';
 readme_from 'lib/OptArgs.pod';
 

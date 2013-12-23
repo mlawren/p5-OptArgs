@@ -10,7 +10,7 @@ use Getopt::Long qw/GetOptionsFromArray/;
 use I18N::Langinfo qw/langinfo/;
 use List::Util qw/max/;
 
-our $VERSION = '0.1.3_1';
+our $VERSION = '0.1.4';
 our $COLOUR  = 0;
 our $ABBREV  = 0;
 our $SORT    = 0;
