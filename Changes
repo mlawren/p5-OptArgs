@@ -10,7 +10,7 @@
         - None
 
     Bug Fixes:
-        - None
+        - Don't index Getop::Args::Usage
 
 0.1.4 (2013-12-23)
 

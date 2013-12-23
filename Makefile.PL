@@ -24,6 +24,7 @@ author_tests 'xt';
 install_script 'bin/optargs';
 
 no_index package => 'OptArgs::Usage';
+no_index package => 'Getopt::Args::Usage';
 
 repository 'https://github.com/mlawren/p5-OptArgs';
 
