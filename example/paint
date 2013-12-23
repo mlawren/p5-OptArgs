@@ -9,6 +9,13 @@ use OptArgs;
 
 $OptArgs::COLOUR++;
 
+opt help => (
+    isa     => 'Bool',
+    comment => 'print a help message and exit',
+    alias   => 'h',
+    ishelp  => 1,
+);
+
 opt quiet => (
     isa     => 'Bool',
     alias   => 'q',

@@ -10,7 +10,7 @@ use Getopt::Long qw/GetOptionsFromArray/;
 use I18N::Langinfo qw/langinfo/;
 use List::Util qw/max/;
 
-our $VERSION = '0.1.2';
+our $VERSION = '0.1.4';
 our $COLOUR  = 0;
 our $ABBREV  = 0;
 our $SORT    = 0;
@@ -38,8 +38,15 @@ sub _cmdlist {
             map { exists $_->{fallback} ? [ uc $_->{fallback}->{name} ] : () }
               @{ $args{$package} } );
 
-        foreach my $subcmd ( map { @$_ } @subcmd ) {
-            push( @list, _cmdlist( $package . '::' . $subcmd ) );
+        if ($SORT) {
+            foreach my $subcmd ( sort map { @$_ } @subcmd ) {
+                push( @list, _cmdlist( $package . '::' . $subcmd ) );
+            }
+        }
+        else {
+            foreach my $subcmd ( map { @$_ } @subcmd ) {
+                push( @list, _cmdlist( $package . '::' . $subcmd ) );
+            }
         }
     }
     return @list;
@@ -247,6 +254,7 @@ sub arg {
         $p =~ s/-/_/;
         $opts{$p} = [];
         $args{$p} = [];
+        $desc{$p} = $params->{fallback}->{comment};
     }
 
     return;
@@ -275,13 +283,14 @@ sub _usage {
     my $usage;
 
     require File::Basename;
-    my $me = File::Basename::basename($0);
+    my $me = File::Basename::basename( defined &static::list ? $^X : $0 );
 
     if ($error) {
         $usage .= "${red}error:$reset $error\n\n";
     }
     if ($ishelp) {
-        $usage .= $yellow . 'usage [help]:' . $reset . ' ' . $me;
+        $usage .=
+          "[help requested]\n\n" . $yellow . 'usage:' . $reset . ' ' . $me;
     }
     else {
         $usage .= $yellow . 'usage:' . $reset . ' ' . $me;
@@ -309,17 +318,25 @@ sub _usage {
         }
     }
 
+    $usage .= ' [OPTIONS...]' if @opts;
+
     $usage .= "\n";
     $usage .= "\n  ${grey}Synopsis:$reset\n    $desc{$caller}\n"
       if $ishelp and $desc{$caller};
 
     if ( $last && $last->{isa} eq 'SubCmd' ) {
-        $usage .= "\n  ${grey}" . uc( $last->{name} ) . ":$reset\n";
+        $usage .= "\n  ${grey}" . ucfirst( $last->{name} ) . ":$reset\n";
 
-        my @subcommands =
-          $SORT
-          ? sort @{ $last->{subcommands} }
-          : @{ $last->{subcommands} };
+        my @subcommands = @{ $last->{subcommands} };
+
+        push( @subcommands, uc $last->{fallback}->{name} )
+          if (
+            exists $last->{fallback}
+            && ( $ishelp
+                or !$last->{fallback}->{hidden} )
+          );
+
+        @subcommands = sort @subcommands if $SORT;
 
         foreach my $subcommand (@subcommands) {
             my $pkg = $last->{package} . '::' . $subcommand;
@@ -328,12 +345,9 @@ sub _usage {
             push( @usage, [ $subcommand, $desc{$pkg} ] );
         }
 
-        if ( $last->{fallback} ) {
-            push( @usage,
-                [ uc $last->{fallback}->{name}, $last->{fallback}->{comment} ]
-            );
-        }
     }
+
+    @opts = sort { $a->{name} cmp $b->{name} } @opts if $SORT;
 
     foreach my $opt (@opts) {
         next if $opt->{hidden} and !$ishelp;
@@ -380,7 +394,8 @@ sub _usage {
         }
     }
 
-    return $usage . "\n";
+    $usage .= "\n";
+    return bless( \$usage, 'OptArgs::Usage' );
 }
 
 sub _synopsis {
@@ -629,5 +644,11 @@ sub dispatch {
     return @results if wantarray;
     return $results[0];
 }
+
+package OptArgs::Usage;
+use overload
+  bool     => sub { 1 },
+  '""'     => sub { ${ $_[0] } },
+  fallback => 1;
 
 1;

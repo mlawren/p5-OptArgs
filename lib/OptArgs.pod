@@ -4,7 +4,7 @@ OptArgs - integrated argument and option processing
 
 =head1 VERSION
 
-0.1.2 development release.
+0.1.4 development release.
 
 =head1 SYNOPSIS
 
@@ -82,8 +82,9 @@ C<paint> and observe the following interactions from the shell:
 
 The C<optargs()> function parses the commands arguments according to
 the C<opt> and C<arg> declarations and returns a single HASH reference.
-If the command is not called correctly then an exception is thrown with
-an automatically generated usage message as shown above.
+If the command is not called correctly then an exception is thrown (an
+C<OptArgs::Usage> object) with an automatically generated usage message
+as shown above.
 
 Because B<OptArgs> knows about arguments it can detect errors relating
 to them:
@@ -269,6 +270,9 @@ against your various Sub-Command Classes as follows:
         "Starting A\n", 'start'
     );
 
+    eval { dispatch(qw/run My::Cmd --invalid-option/) };
+    isa_ok $@, 'OptArgs::Usage';
+
     done_testing();
 
 It is much easier to catch and measure exceptions when the code is
@@ -410,8 +414,8 @@ don't easily fall into the OptArgs sub-command model.
 
 Parse @ARGV by default (or @argv when given) and returns a hashref
 containing key/value pairs for options and arguments I<combined>.  An
-error / usage exception is thrown if an invalid combination of options
-and arguments is given.
+error / usage exception object (C<OptArgs::Usage>) is thrown if an
+invalid combination of options and arguments is given.
 
 Note that C<@ARGV> will be decoded into UTF-8 (if necessary) from
 whatever L<I18N::Langinfo> says your current locale codeset is.
