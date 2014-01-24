@@ -7,7 +7,7 @@
         - None
 
     Enhancements:
-        - None
+        - Program VERSION is displayed for help at top level
 
     Bug Fixes:
         - Don't index Getop::Args::Usage

@@ -288,13 +288,8 @@ sub _usage {
     if ($error) {
         $usage .= "${red}error:$reset $error\n\n";
     }
-    if ($ishelp) {
-        $usage .=
-          "[help requested]\n\n" . $yellow . 'usage:' . $reset . ' ' . $me;
-    }
-    else {
-        $usage .= $yellow . 'usage:' . $reset . ' ' . $me;
-    }
+
+    $usage .= $yellow . ( $ishelp ? 'help:' : 'usage:' ) . $reset . ' ' . $me;
 
     while ( $parent =~ s/(.*)::(.*)/$1/ ) {
         last unless $seen{$parent};
@@ -321,8 +316,13 @@ sub _usage {
     $usage .= ' [OPTIONS...]' if @opts;
 
     $usage .= "\n";
+
     $usage .= "\n  ${grey}Synopsis:$reset\n    $desc{$caller}\n"
       if $ishelp and $desc{$caller};
+
+    if ( $ishelp and my $version = $caller->VERSION ) {
+        $usage .= "\n  ${grey}Version:$reset\n    $version\n";
+    }
 
     if ( $last && $last->{isa} eq 'SubCmd' ) {
         $usage .= "\n  ${grey}" . ucfirst( $last->{name} ) . ":$reset\n";
