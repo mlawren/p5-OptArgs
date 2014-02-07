@@ -588,7 +588,6 @@ sub _optargs {
 
     # Re-calculate the default if it was a subref
     foreach my $key (@coderef_default_keys) {
-        my $coderef = $optargs->{$key};
         $optargs->{$key} = $optargs->{$key}->( {%$optargs} );
     }
 
