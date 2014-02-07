@@ -466,6 +466,7 @@ sub _optargs {
     my $ishelp;
     my $missing_required;
     my $optargs = {};
+    my @coderef_default_keys;
 
     while ( my $try = shift @config ) {
         my $result;
@@ -565,6 +566,8 @@ sub _optargs {
             $optargs->{ $try->{name} } = $result;
         }
         elsif ( defined $try->{default} ) {
+            push( @coderef_default_keys, $try->{name} )
+              if ref $try->{default} eq 'CODE';
             $optargs->{ $try->{name} } = $result = $try->{default};
         }
 
@@ -584,8 +587,9 @@ sub _optargs {
     }
 
     # Re-calculate the default if it was a subref
-    while ( my ( $key, $val ) = each %$optargs ) {
-        $optargs->{$key} = $val->( {%$optargs} ) if ref $val eq 'CODE';
+    foreach my $key (@coderef_default_keys) {
+        my $coderef = $optargs->{$key};
+        $optargs->{$key} = $optargs->{$key}->( {%$optargs} );
     }
 
     return ( $package, $optargs );

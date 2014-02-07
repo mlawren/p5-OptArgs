@@ -11,6 +11,8 @@
 
     Bug Fixes:
         - Don't index Getop::Args::Usage
+        - Ensure default CODE refs are executed in arg/opt definition
+          order. Closes https://github.com/mlawren/p5-OptArgs/issues/7.
 
 0.1.4 (2013-12-23)
 
