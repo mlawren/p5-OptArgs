@@ -10,7 +10,7 @@ use Getopt::Long qw/GetOptionsFromArray/;
 use I18N::Langinfo qw/langinfo/;
 use List::Util qw/max/;
 
-our $VERSION = '0.1.4';
+our $VERSION = '0.1.6';
 our $COLOUR  = 0;
 our $ABBREV  = 0;
 our $SORT    = 0;
@@ -288,13 +288,8 @@ sub _usage {
     if ($error) {
         $usage .= "${red}error:$reset $error\n\n";
     }
-    if ($ishelp) {
-        $usage .=
-          "[help requested]\n\n" . $yellow . 'usage:' . $reset . ' ' . $me;
-    }
-    else {
-        $usage .= $yellow . 'usage:' . $reset . ' ' . $me;
-    }
+
+    $usage .= $yellow . ( $ishelp ? 'help:' : 'usage:' ) . $reset . ' ' . $me;
 
     while ( $parent =~ s/(.*)::(.*)/$1/ ) {
         last unless $seen{$parent};
@@ -321,8 +316,13 @@ sub _usage {
     $usage .= ' [OPTIONS...]' if @opts;
 
     $usage .= "\n";
+
     $usage .= "\n  ${grey}Synopsis:$reset\n    $desc{$caller}\n"
       if $ishelp and $desc{$caller};
+
+    if ( $ishelp and my $version = $caller->VERSION ) {
+        $usage .= "\n  ${grey}Version:$reset\n    $version\n";
+    }
 
     if ( $last && $last->{isa} eq 'SubCmd' ) {
         $usage .= "\n  ${grey}" . ucfirst( $last->{name} ) . ":$reset\n";
@@ -466,6 +466,7 @@ sub _optargs {
     my $ishelp;
     my $missing_required;
     my $optargs = {};
+    my @coderef_default_keys;
 
     while ( my $try = shift @config ) {
         my $result;
@@ -565,6 +566,8 @@ sub _optargs {
             $optargs->{ $try->{name} } = $result;
         }
         elsif ( defined $try->{default} ) {
+            push( @coderef_default_keys, $try->{name} )
+              if ref $try->{default} eq 'CODE';
             $optargs->{ $try->{name} } = $result = $try->{default};
         }
 
@@ -584,8 +587,8 @@ sub _optargs {
     }
 
     # Re-calculate the default if it was a subref
-    while ( my ( $key, $val ) = each %$optargs ) {
-        $optargs->{$key} = $val->( {%$optargs} ) if ref $val eq 'CODE';
+    foreach my $key (@coderef_default_keys) {
+        $optargs->{$key} = $optargs->{$key}->( {%$optargs} );
     }
 
     return ( $package, $optargs );

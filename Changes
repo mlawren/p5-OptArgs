@@ -1,3 +1,19 @@
+0.1.6 (2014-02-13)
+
+    API Changes:
+        - None
+
+    New Features:
+        - None
+
+    Enhancements:
+        - Program VERSION is displayed for help at top level
+
+    Bug Fixes:
+        - Don't index Getop::Args::Usage
+        - Ensure default CODE refs are executed in arg/opt definition
+          order. Closes https://github.com/mlawren/p5-OptArgs/issues/7.
+
 0.1.4 (2013-12-23)
 
     API Changes:
