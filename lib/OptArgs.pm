@@ -251,7 +251,7 @@ sub arg {
 
     if ( $params->{fallback} ) {
         my $p = $package . '::' . uc $params->{fallback}->{name};
-        $p =~ s/-/_/;
+        $p =~ s/-/_/g;
         $opts{$p} = [];
         $args{$p} = [];
         $desc{$p} = $params->{fallback}->{comment};
@@ -538,7 +538,7 @@ sub _optargs {
                 }
 
                 my $newpackage = $package . '::' . $result;
-                $newpackage =~ s/-/_/;
+                $newpackage =~ s/-/_/g;
 
                 if ( exists $seen{$newpackage} ) {
                     $package = $newpackage;
