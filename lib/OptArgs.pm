@@ -10,7 +10,7 @@ use Getopt::Long qw/GetOptionsFromArray/;
 use I18N::Langinfo qw/langinfo/;
 use List::Util qw/max/;
 
-our $VERSION = '0.1.6';
+our $VERSION = '0.1.8';
 our $COLOUR  = 0;
 our $ABBREV  = 0;
 our $SORT    = 0;
@@ -251,7 +251,7 @@ sub arg {
 
     if ( $params->{fallback} ) {
         my $p = $package . '::' . uc $params->{fallback}->{name};
-        $p =~ s/-/_/;
+        $p =~ s/-/_/g;
         $opts{$p} = [];
         $args{$p} = [];
         $desc{$p} = $params->{fallback}->{comment};
@@ -538,7 +538,7 @@ sub _optargs {
                 }
 
                 my $newpackage = $package . '::' . $result;
-                $newpackage =~ s/-/_/;
+                $newpackage =~ s/-/_/g;
 
                 if ( exists $seen{$newpackage} ) {
                     $package = $newpackage;

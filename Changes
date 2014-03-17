@@ -1,3 +1,20 @@
+0.1.8 (2014-03-17)
+
+    API Changes:
+        - None
+
+    New Features:
+        - None
+
+    Enhancements:
+        - None
+
+    Bug Fixes:
+        - Several "s/-/_/g" regex's were missing the final "g". Without
+          the global replacement, sub commands that had more than one
+          '-' in them would fail to be found during dispatch.  Closes
+          https://github.com/mlawren/p5-OptArgs/issues/8.
+
 0.1.6 (2014-02-13)
 
     API Changes:
