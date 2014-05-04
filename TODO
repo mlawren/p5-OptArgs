@@ -1,3 +1,5 @@
+* Handle/detect where a SubCmd is defined but no sub commands are.
+
 * Convert ishelp parameter into a 'Help' isa type
 
 * display the default in the usage
