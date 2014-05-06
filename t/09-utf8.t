@@ -11,12 +11,12 @@ use Test::More;
 my $en_US = 'en_US.UTF-8';
 my $loc = setlocale( LC_ALL, $en_US );
 
-diag "POSIX::setlocale claims locale is set to $loc";
-
-unless ( $loc eq $en_US ) {
+unless ( $loc && $loc eq $en_US ) {
     plan skip_all => "Cannot set locale $en_US";
     exit;
 }
+
+diag "POSIX::setlocale claims locale is set to $loc";
 
 $ENV{LANG}   = $en_US;
 $ENV{LC_ALL} = $en_US;
