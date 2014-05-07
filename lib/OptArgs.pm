@@ -2,7 +2,7 @@ package OptArgs;
 use strict;
 use warnings;
 use Carp qw/croak carp/;
-use Encode qw/decode decode_utf8/;
+use Encode qw/decode/;
 use Exporter::Tidy
   default => [qw/opt arg optargs usage subcmd/],
   other   => [qw/dispatch/];
