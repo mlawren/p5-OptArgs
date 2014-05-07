@@ -1,0 +1,132 @@
+0.1.10 (2014-05-07)
+
+    API Changes:
+        - None
+
+    New Features:
+        - None
+
+    Enhancements:
+        - Enable build/run/test on MSWin32 environments
+        - Small code cleanups
+
+    Bug Fixes:
+        - None.
+
+0.1.8 (2014-03-17)
+
+    API Changes:
+        - None
+
+    New Features:
+        - None
+
+    Enhancements:
+        - None
+
+    Bug Fixes:
+        - Several "s/-/_/g" regex's were missing the final "g". Without
+          the global replacement, sub commands that had more than one
+          '-' in them would fail to be found during dispatch.  Closes
+          https://github.com/mlawren/p5-OptArgs/issues/8.
+
+0.1.6 (2014-02-13)
+
+    API Changes:
+        - None
+
+    New Features:
+        - None
+
+    Enhancements:
+        - Program VERSION is displayed for help at top level
+
+    Bug Fixes:
+        - Don't index Getop::Args::Usage
+        - Ensure default CODE refs are executed in arg/opt definition
+          order. Closes https://github.com/mlawren/p5-OptArgs/issues/7.
+
+0.1.4 (2013-12-23)
+
+    API Changes:
+        - None
+
+    New Features:
+        - None
+
+    Enhancements:
+        - Add "[OPTIONS]" to usage line when options exist
+        - Allow fallbacks to be hidden
+
+    Bug Fixes:
+        - Make App::optargs respect the value of $SORT
+        - Ensure a fallback subcommand is also sorted according to $SORT
+        - Sort option list according to $SORT
+
+0.1.2 (2013-05-20)
+
+    API Changes:
+        - None
+
+    New Features:
+        - Sub-commands can now be optionally abbreviated by setting
+          $OptArgs::ABBREV (Thanks to Robbin Bonthond)
+        - Sub-commands can now be optionally sorted by setting
+          $OptArgs::SORT (Thanks to Robbin Bonthond)
+        - (The above require a minor version number upgrade)
+
+    Enhancements:
+        - Document colourized output behaviour
+        - Improved usage output: simpler colour scheme, more info
+        - Improved tests
+
+    Bug Fixes:
+        - Do not assume consistent hash key order in tests
+        - Do not count negative Int/Num arguments as unknown options
+
+0.0.4 (2012-08-21)
+
+    API Changes:
+        - None
+
+    New Features:
+        - Convert HASHrefs to options in dispatch()
+
+    Enhancements:
+        - Greater flexibility for "fallback" sub-commands.
+
+    Bug Fixes:
+        - Stop adding sub-command key/values to the optargs hashref
+
+0.0.3 (2012-08-04)
+
+    API Changes:
+        - "subcmd" now requires a HASH like "opt" and "arg"
+
+    New Features:
+        - New "hidden" parameter for subcmd()
+
+    Enhancements:
+        - Better check for utf8 aware environment in tests
+
+    Bug Fixes:
+        - None.
+
+0.0.2 (2012-07-31)
+
+    API Changes:
+        - None.
+
+    New Features:
+        - None.
+
+    Enhancements:
+        - Make hidden options visible when when help is requested.
+        - Duplicate OptArgs as Getopt::Args
+
+    Bug Fixes:
+        - None.
+
+0.0.1 (2012-07-30)
+
+    Initial Release.
