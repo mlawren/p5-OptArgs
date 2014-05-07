@@ -8,6 +8,7 @@
 
     Enhancements:
         - Enable build/run/test on MSWin32 environments
+        - Small code cleanups
 
     Bug Fixes:
         - None.
