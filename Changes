@@ -1,3 +1,17 @@
+0.1.9_1 (2014-05-07)
+
+    API Changes:
+        - None
+
+    New Features:
+        - None
+
+    Enhancements:
+        - Enable build/run/test on MSWin32 environments
+
+    Bug Fixes:
+        - None.
+
 0.1.8 (2014-03-17)
 
     API Changes:

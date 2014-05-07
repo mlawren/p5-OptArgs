@@ -9,7 +9,7 @@ use Exporter::Tidy
 use Getopt::Long qw/GetOptionsFromArray/;
 use List::Util qw/max/;
 
-our $VERSION = '0.1.8';
+our $VERSION = '0.1.9';
 our $COLOUR  = 0;
 our $ABBREV  = 0;
 our $SORT    = 0;
@@ -441,13 +441,14 @@ sub _optargs {
     my $package = $caller;
 
     if ( !@_ and @ARGV ) {
-        my $CODESET = eval { require I18N::Langinfo; I18N::Langinfo::CODESET() };
+        my $CODESET =
+          eval { require I18N::Langinfo; I18N::Langinfo::CODESET() };
 
         if ($CODESET) {
             my $codeset = I18N::Langinfo::langinfo($CODESET);
             $_ = decode( $codeset, $_ ) for @ARGV;
         }
-        elsif( $^O ne 'MSWin32') {
+        elsif ( $^O ne 'MSWin32' ) {
             $_ = decode( 'UTF-8', $_ ) for @ARGV;
         }
 
