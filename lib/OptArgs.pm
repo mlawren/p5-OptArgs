@@ -448,9 +448,6 @@ sub _optargs {
             my $codeset = I18N::Langinfo::langinfo($CODESET);
             $_ = decode( $codeset, $_ ) for @ARGV;
         }
-        elsif ( $^O ne 'MSWin32' ) {
-            $_ = decode( 'UTF-8', $_ ) for @ARGV;
-        }
 
         $source = \@ARGV;
     }
