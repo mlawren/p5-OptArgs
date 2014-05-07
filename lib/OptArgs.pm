@@ -9,7 +9,7 @@ use Exporter::Tidy
 use Getopt::Long qw/GetOptionsFromArray/;
 use List::Util qw/max/;
 
-our $VERSION = '0.1.9';
+our $VERSION = '0.1.10';
 our $COLOUR  = 0;
 our $ABBREV  = 0;
 our $SORT    = 0;
