@@ -3,7 +3,7 @@ use inc::Module::Install;
 name 'OptArgs';
 version '0.1.11_1';
 all_from 'lib/OptArgs.pm';
-readme_from 'lib/OptArgs.pod';
+readme_from 'lib/OptArgs.pm';
 
 requires 'Carp'           => 0;
 requires 'Encode'         => 0;

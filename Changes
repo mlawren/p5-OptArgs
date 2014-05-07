@@ -3,14 +3,14 @@
     API Changes:
        - None.
 
-   New Features:
-      - None.
+    New Features:
+       - None.
 
-   Enhancements:
-      - None.
+    Enhancements:
+       - Put POD back into .pm files; metacpan looks odd when separate.
 
-   Bug Fixes:
-      - None.
+    Bug Fixes:
+       - None.
 
 0.1.10 (yyyy-mm-dd)
 
