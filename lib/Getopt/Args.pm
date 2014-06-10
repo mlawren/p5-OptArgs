@@ -1,4 +1,4 @@
-package OptArgs;
+package Getopt::Args;
 use strict;
 use warnings;
 use Carp qw/croak carp/;
@@ -394,7 +394,7 @@ sub _usage {
     }
 
     $usage .= "\n";
-    return bless( \$usage, 'OptArgs::Usage' );
+    return bless( \$usage, 'Getopt::Args::Usage' );
 }
 
 sub _synopsis {
@@ -645,7 +645,7 @@ sub dispatch {
     return $results[0];
 }
 
-package OptArgs::Usage;
+package Getopt::Args::Usage;
 use overload
   bool     => sub { 1 },
   '""'     => sub { ${ $_[0] } },
@@ -657,7 +657,7 @@ __END__
 
 =head1 NAME
 
-OptArgs - integrated argument and option processing
+Getopt::Args - integrated argument and option processing
 
 =head1 VERSION
 
@@ -666,7 +666,7 @@ OptArgs - integrated argument and option processing
 =head1 SYNOPSIS
 
     #!/usr/bin/env perl
-    use OptArgs;
+    use Getopt::Args;
 
     opt quiet => (
         isa     => 'Bool',
@@ -686,13 +686,13 @@ OptArgs - integrated argument and option processing
 
 =head1 DESCRIPTION
 
-B<OptArgs> processes Perl script I<options> and I<arguments>.  This is
+B<Getopt::Args> processes Perl script I<options> and I<arguments>.  This is
 in contrast with most modules in the Getopt::* namespace, which deal
-with options only. This module is duplicated as L<Getopt::Args>, to
+with options only. This module is duplicated as L<OptArgs>, to
 cover both its original name and yet still be found in the mess that is
 Getopt::*.
 
-The following model is assumed by B<OptArgs> for command-line
+The following model is assumed by B<Getopt::Args> for command-line
 applications:
 
 =over
@@ -740,10 +740,10 @@ C<paint> and observe the following interactions from the shell:
 The C<optargs()> function parses the commands arguments according to
 the C<opt> and C<arg> declarations and returns a single HASH reference.
 If the command is not called correctly then an exception is thrown (an
-C<OptArgs::Usage> object) with an automatically generated usage message
+C<Getopt::Args::Usage> object) with an automatically generated usage message
 as shown above.
 
-Because B<OptArgs> knows about arguments it can detect errors relating
+Because B<Getopt::Args> knows about arguments it can detect errors relating
 to them:
 
     $ ./paint house red
@@ -822,7 +822,7 @@ application. The module is written the same way as a simple script but
 additionally specifies an argument of type 'SubCmd':
 
     package My::Cmd;
-    use OptArgs;
+    use Getopt::Args;
 
     arg command => (
         isa     => 'SubCmd',
@@ -873,11 +873,11 @@ and descriptions, and separate each sub-commands arguments and options:
         comment => 'stop the machine by pulling the plug',
     );
 
-One nice thing about B<OptArgs> is that options are I<inherited>. You
+One nice thing about B<Getopt::Args> is that options are I<inherited>. You
 only need to specify something like a C<dry-run> option once at the top
 level, and all sub-commands will see it if it has been set.
 
-Additionally, and this is the main reason why I wrote B<OptArgs>, you
+Additionally, and this is the main reason why I wrote B<Getopt::Args>, you
 do not have to load a whole bunch of slow-to-start modules ( I'm
 looking at you, L<Moose>) just to get a help message.
 
@@ -910,7 +910,7 @@ The command script is what the user runs, and does nothing more than
 dispatch to your Command Class, and eventually a Sub-Command Class.
 
     #!/usr/bin/perl
-    use OptArgs qw/dispatch/;
+    use Getopt::Args qw/dispatch/;
     dispatch(qw/ run Your::Cmd /);
 
 
@@ -920,7 +920,7 @@ against your various Sub-Command Classes as follows:
 
     use Test::More;
     use Test::Output;
-    use OptArgs qw/dispatch/;
+    use Getopt::Args qw/dispatch/;
 
     stdout_is(
         sub { dispatch( qw/ run My::Cmd start A / ) },
@@ -928,7 +928,7 @@ against your various Sub-Command Classes as follows:
     );
 
     eval { dispatch(qw/run My::Cmd --invalid-option/) };
-    isa_ok $@, 'OptArgs::Usage';
+    isa_ok $@, 'Getopt::Args::Usage';
 
     done_testing();
 
@@ -1063,7 +1063,7 @@ argument integrated into the first argument like a regular sub-command.
 
 This is generally useful when you want to calculate a command alias
 from a configuration file at runtime, or otherwise run commands which
-don't easily fall into the OptArgs sub-command model.
+don't easily fall into the Getopt::Args sub-command model.
 
 =back
 
@@ -1071,7 +1071,7 @@ don't easily fall into the OptArgs sub-command model.
 
 Parse @ARGV by default (or @argv when given) and returns a hashref
 containing key/value pairs for options and arguments I<combined>.  An
-error / usage exception object (C<OptArgs::Usage>) is thrown if an
+error / usage exception object (C<Getopt::Args::Usage>) is thrown if an
 invalid combination of options and arguments is given.
 
 Note that C<@ARGV> will be decoded into UTF-8 (if necessary) from
@@ -1121,25 +1121,25 @@ be added as options. An undefined value means a boolean option.
 
 =head1 OPTIONAL BEHAVIOUR
 
-Certain B<OptArgs> behaviour and/or output can be changed by setting
+Certain B<Getopt::Args> behaviour and/or output can be changed by setting
 the following package-level variables:
 
 =over
 
-=item $OptArgs::ABBREV
+=item $Getopt::Args::ABBREV
 
-If C<$OptArgs::ABBREV> is a true value then sub-commands can be
+If C<$Getopt::Args::ABBREV> is a true value then sub-commands can be
 abbreviated, up to their shortest, unique values.
 
-=item $OptArgs::COLOUR
+=item $Getopt::Args::COLOUR
 
-If C<$OptArgs::COLOUR> is a true value and C<STDOUT> is connected to a
+If C<$Getopt::Args::COLOUR> is a true value and C<STDOUT> is connected to a
 terminal then usage and error messages will be colourized using
 terminal escape codes.
 
-=item $OptArgs::SORT
+=item $Getopt::Args::SORT
 
-If C<$OptArgs::SORT> is a true value then sub-commands will be listed
+If C<$Getopt::Args::SORT> is a true value then sub-commands will be listed
 in usage messages alphabetically instead of in the order they were
 defined.
 

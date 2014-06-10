@@ -1,3 +1,22 @@
+0.1.11_1 (2014-06-10)
+
+    API Changes:
+       - None.
+
+    New Features:
+       - None.
+
+    Enhancements:
+       - Put POD back into .pm files; metacpan looks odd when separate.
+
+    Bug Fixes:
+       - Depend on Encode version 2.24 which should allow OptArgs to
+         work on old versions of Perl on *BSD. Closes
+         https://rt.cpan.org/Ticket/Display.html?id=95888.
+       - Generate Getopt::Args in Makefile.PL instead of in a Git
+         commit hook which will work with the new release method.
+         Closes https://github.com/mlawren/p5-OptArgs/issues/10.
+
 0.1.10 (2014-05-07)
 
     API Changes:
