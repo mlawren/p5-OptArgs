@@ -28,6 +28,7 @@ install_script 'bin/optargs';
 
 no_index package => 'OptArgs::Usage';
 no_index package => 'Getopt::Args::Usage';
+no_index package => 'Getopt::Args::Error';
 
 repository 'https://github.com/mlawren/p5-OptArgs';
 

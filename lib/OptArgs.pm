@@ -394,7 +394,7 @@ sub _usage {
     }
 
     $usage .= "\n";
-    return bless( \$usage, 'OptArgs::Usage' );
+    return OptArgs::Usage->new( '', $usage );
 }
 
 sub _synopsis {
@@ -645,11 +645,31 @@ sub dispatch {
     return $results[0];
 }
 
-package OptArgs::Usage;
+package OptArgs::Error;
 use overload
   bool     => sub { 1 },
   '""'     => sub { ${ $_[0] } },
   fallback => 1;
+
+sub new {
+    my $proto = shift;
+    my $type  = shift // die 'OptArgs::Error->new($TYPE,$str)';
+    my $str   = shift // die 'OptArgs::Error->new($type,$STR)';
+
+    if ($type) {
+        my $class = $proto . '::' . $type;
+        no strict 'refs';
+        @{ $class . '::ISA' } = ($proto);
+        return bless \$str, $class;
+    }
+
+    return bless \$str, $proto;
+}
+
+1;
+
+package OptArgs::Usage;
+our @ISA = ('OptArgs::Error');
 
 1;
 
