@@ -6,7 +6,7 @@ all_from 'lib/OptArgs.pm';
 readme_from 'lib/OptArgs.pm';
 
 requires 'Carp'           => 0;
-requires 'Encode'         => 0;
+requires 'Encode'         => 2.24;
 requires 'Exporter::Tidy' => 0;
 requires 'Getopt::Long'   => 2.37;
 requires 'I18N::Langinfo' => 0 if $^O ne 'MSWin32';

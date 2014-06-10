@@ -10,7 +10,9 @@
        - Put POD back into .pm files; metacpan looks odd when separate.
 
     Bug Fixes:
-       - None.
+       - Depend on Encode version 2.24 which should allow OptArgs to
+         work on old versions of Perl on *BSD. Closes
+         https://rt.cpan.org/Ticket/Display.html?id=95888.
 
 0.1.10 (yyyy-mm-dd)
 
