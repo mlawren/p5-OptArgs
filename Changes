@@ -1,4 +1,4 @@
-0.1.11_1 (2014-05-01)
+0.1.11_1 (yyyy-mm-dd)
 
     API Changes:
        - None.
@@ -17,7 +17,7 @@
          commit hook which will work with the new release method.
          Closes https://github.com/mlawren/p5-OptArgs/issues/10.
 
-0.1.10 (yyyy-mm-dd)
+0.1.10 (2014-05-07)
 
     API Changes:
         - None
