@@ -661,7 +661,7 @@ OptArgs - integrated argument and option processing
 
 =head1 VERSION
 
-0.1.12 (2014-06-11)
+0.1.12 (yyyy-mm-dd)
 
 =head1 SYNOPSIS
 
