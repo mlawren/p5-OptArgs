@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use OptArgs;
 use lib 'lib';
-our $VERSION = '0.1.12';
+our $VERSION = '0.1.13_1';
 
 $OptArgs::COLOUR = 1;
 
@@ -84,7 +84,7 @@ App::optargs - implementation of the optargs(1) command
 
 =head1 VERSION
 
-0.1.12 development release.
+0.1.13_1 development release.
 
 =head1 SYNOPSIS
 
