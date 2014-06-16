@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use OptArgs;
 use lib 'lib';
-our $VERSION = '0.1.12';
+our $VERSION = '0.1.14';
 
 $OptArgs::COLOUR = 1;
 
@@ -84,7 +84,7 @@ App::optargs - implementation of the optargs(1) command
 
 =head1 VERSION
 
-0.1.12 development release.
+0.1.14 development release.
 
 =head1 SYNOPSIS
 
@@ -114,7 +114,7 @@ Mark Lawrence <nomad@null.net>
 
 =head1 LICENSE
 
-Copyright 2012-2013 Mark Lawrence <nomad@null.net>
+Copyright 2012-2014 Mark Lawrence <nomad@null.net>
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the

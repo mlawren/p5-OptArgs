@@ -1,3 +1,17 @@
+0.1.14 (2014-06-16)
+
+    API Changes:
+       - None.
+
+   New Features:
+      - None.
+
+   Enhancements:
+      - None.
+
+   Bug Fixes:
+      - Support "command SUBCMD(with fallback) FALLBACK_ARG"
+
 0.1.12 (2014-06-11)
 
     API Changes:

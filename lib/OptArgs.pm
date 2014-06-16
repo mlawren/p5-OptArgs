@@ -9,7 +9,7 @@ use Exporter::Tidy
 use Getopt::Long qw/GetOptionsFromArray/;
 use List::Util qw/max/;
 
-our $VERSION = '0.1.12';
+our $VERSION = '0.1.14';
 our $COLOUR  = 0;
 our $ABBREV  = 0;
 our $SORT    = 0;
@@ -539,13 +539,14 @@ sub _optargs {
 
                 if ( exists $seen{$newpackage} ) {
                     $package = $newpackage;
+                    @config = grep { $_->{type} eq 'opt' } @config;
                     push( @config, @{ $opts{$package} }, @{ $args{$package} } );
                 }
                 elsif ( !$ishelp ) {
                     if ( $try->{fallback} ) {
                         unshift @$source, $result;
                         $try->{fallback}->{type} = 'arg';
-                        push( @config, $try->{fallback} );
+                        unshift( @config, $try->{fallback} );
                         next;
                     }
                     else {
@@ -661,7 +662,7 @@ OptArgs - integrated argument and option processing
 
 =head1 VERSION
 
-0.1.12 (2014-06-11)
+0.1.14 (2014-06-16)
 
 =head1 SYNOPSIS
 
@@ -1170,7 +1171,7 @@ Mark Lawrence <nomad@null.net>
 
 =head1 LICENSE
 
-Copyright 2012-2013 Mark Lawrence <nomad@null.net>
+Copyright 2012-2014 Mark Lawrence <nomad@null.net>
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the

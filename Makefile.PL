@@ -2,7 +2,7 @@ use inc::Module::Install;
 use File::Spec;
 
 name 'OptArgs';
-version '0.1.12';
+version '0.1.14';
 all_from 'lib/OptArgs.pm';
 readme_from 'lib/OptArgs.pm';
 

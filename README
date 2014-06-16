@@ -2,7 +2,7 @@ NAME
     OptArgs - integrated argument and option processing
 
 VERSION
-    0.1.12 (2014-06-11)
+    0.1.14 (2014-06-16)
 
 SYNOPSIS
         #!/usr/bin/env perl
@@ -440,7 +440,7 @@ AUTHOR
     Mark Lawrence <nomad@null.net>
 
 LICENSE
-    Copyright 2012-2013 Mark Lawrence <nomad@null.net>
+    Copyright 2012-2014 Mark Lawrence <nomad@null.net>
 
     This program is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the
