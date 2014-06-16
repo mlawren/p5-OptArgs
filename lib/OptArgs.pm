@@ -9,7 +9,7 @@ use Exporter::Tidy
 use Getopt::Long qw/GetOptionsFromArray/;
 use List::Util qw/max/;
 
-our $VERSION = '0.1.14';
+our $VERSION = '0.1.15_1';
 our $COLOUR  = 0;
 our $ABBREV  = 0;
 our $SORT    = 0;
@@ -662,7 +662,7 @@ OptArgs - integrated argument and option processing
 
 =head1 VERSION
 
-0.1.14 (2014-06-16)
+0.1.15_1 (yyyy-mm-dd)
 
 =head1 SYNOPSIS
 
