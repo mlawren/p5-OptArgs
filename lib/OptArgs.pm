@@ -539,13 +539,14 @@ sub _optargs {
 
                 if ( exists $seen{$newpackage} ) {
                     $package = $newpackage;
+                    @config = grep { $_->{type} eq 'opt' } @config;
                     push( @config, @{ $opts{$package} }, @{ $args{$package} } );
                 }
                 elsif ( !$ishelp ) {
                     if ( $try->{fallback} ) {
                         unshift @$source, $result;
                         $try->{fallback}->{type} = 'arg';
-                        push( @config, $try->{fallback} );
+                        unshift( @config, $try->{fallback} );
                         next;
                     }
                     else {

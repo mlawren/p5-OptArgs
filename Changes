@@ -1,4 +1,4 @@
-0.1.13_1 (2014-05-01)
+0.1.13_1 (yyyy-mm-dd)
 
     API Changes:
        - None.
@@ -10,9 +10,9 @@
       - None.
 
    Bug Fixes:
-      - None.
+      - Support "command SUBCMD(with fallback) FALLBACK_ARG"
 
-0.1.12 (yyyy-mm-dd)
+0.1.12 (2014-06-11)
 
     API Changes:
        - None.
