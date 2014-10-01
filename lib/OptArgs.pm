@@ -5,7 +5,7 @@ use Carp qw/croak carp/;
 use Encode qw/decode/;
 use Exporter::Tidy
   default => [qw/opt arg optargs usage subcmd/],
-  other   => [qw/dispatch/];
+  other   => [qw/dispatch class_optargs/];
 use Getopt::Long qw/GetOptionsFromArray/;
 use List::Util qw/max/;
 
@@ -452,6 +452,8 @@ sub _optargs {
         $source = \@ARGV;
     }
 
+    map { Carp::croak('_optargs argument undefined!') if !defined $_ } @$source;
+
     croak "no option or argument defined for $caller"
       unless exists $opts{$package}
       or exists $args{$package};
@@ -602,14 +604,16 @@ sub optargs {
     return $optargs;
 }
 
-sub dispatch {
-    my $method = shift;
-    my $class  = shift;
+sub class_optargs {
+    my $caller = shift;
 
-    croak 'dispatch($method, $class, [@argv])' unless $method and $class;
-    croak $@ unless eval "require $class;1;";
+    croak 'dispatch($class, [@argv])' unless $caller;
+    carp "optargs_class() called from dispatch handler"
+      if $dispatching{$caller};
 
-    my ( $package, $optargs );
+    die $@ unless eval "require $caller;";
+
+    my ( $class, $optargs );
 
     if (@_) {
         my @args;
@@ -625,11 +629,26 @@ sub dispatch {
             }
         }
 
-        ( $package, $optargs ) = _optargs( $class, @args );
+        ( $class, $optargs ) = _optargs( $caller, @args );
     }
     else {
-        ( $package, $optargs ) = _optargs($class);
+        ( $class, $optargs ) = _optargs($caller);
     }
+
+    croak $@ unless eval "require $class;1;";
+    return ( $class, $optargs );
+}
+
+sub dispatch {
+    my $method = shift;
+    my $class  = shift;
+
+    croak 'dispatch($method, $class, [@argv])' unless $method and $class;
+    croak $@ unless eval "require $class;1;";
+
+    my ( $package, $optargs ) = class_optargs( $class, @_ );
+
+    croak $@ unless eval "require $package";
 
     my $sub = $package->can($method);
     if ( !$sub ) {
