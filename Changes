@@ -1,3 +1,19 @@
+0.1.15_1 (2014-10-01)
+
+    API Changes:
+        - The dispatch() function has been marked as depreciated,
+          although it will remain in place for a while. The
+          class_optargs() function should be used instead.
+
+    New Features:
+        - New class_optargs() function for more caller flexibility
+
+    Enhancements:
+        - None.
+
+    Bug Fixes:
+        - None.
+
 0.1.14 (2014-06-16)
 
     API Changes:

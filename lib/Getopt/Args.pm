@@ -5,11 +5,11 @@ use Carp qw/croak carp/;
 use Encode qw/decode/;
 use Exporter::Tidy
   default => [qw/opt arg optargs usage subcmd/],
-  other   => [qw/dispatch/];
+  other   => [qw/dispatch class_optargs/];
 use Getopt::Long qw/GetOptionsFromArray/;
 use List::Util qw/max/;
 
-our $VERSION = '0.1.14';
+our $VERSION = '0.1.15_1';
 our $COLOUR  = 0;
 our $ABBREV  = 0;
 our $SORT    = 0;
@@ -452,6 +452,8 @@ sub _optargs {
         $source = \@ARGV;
     }
 
+    map { Carp::croak('_optargs argument undefined!') if !defined $_ } @$source;
+
     croak "no option or argument defined for $caller"
       unless exists $opts{$package}
       or exists $args{$package};
@@ -602,14 +604,16 @@ sub optargs {
     return $optargs;
 }
 
-sub dispatch {
-    my $method = shift;
-    my $class  = shift;
+sub class_optargs {
+    my $caller = shift;
 
-    croak 'dispatch($method, $class, [@argv])' unless $method and $class;
-    croak $@ unless eval "require $class;1;";
+    croak 'dispatch($class, [@argv])' unless $caller;
+    carp "optargs_class() called from dispatch handler"
+      if $dispatching{$caller};
 
-    my ( $package, $optargs );
+    die $@ unless eval "require $caller;";
+
+    my ( $class, $optargs );
 
     if (@_) {
         my @args;
@@ -625,11 +629,26 @@ sub dispatch {
             }
         }
 
-        ( $package, $optargs ) = _optargs( $class, @args );
+        ( $class, $optargs ) = _optargs( $caller, @args );
     }
     else {
-        ( $package, $optargs ) = _optargs($class);
+        ( $class, $optargs ) = _optargs($caller);
     }
+
+    croak $@ unless eval "require $class;1;";
+    return ( $class, $optargs );
+}
+
+sub dispatch {
+    my $method = shift;
+    my $class  = shift;
+
+    croak 'dispatch($method, $class, [@argv])' unless $method and $class;
+    croak $@ unless eval "require $class;1;";
+
+    my ( $package, $optargs ) = class_optargs( $class, @_ );
+
+    croak $@ unless eval "require $package";
 
     my $sub = $package->can($method);
     if ( !$sub ) {
@@ -662,7 +681,7 @@ Getopt::Args - integrated argument and option processing
 
 =head1 VERSION
 
-0.1.14 (2014-06-16)
+0.1.15_1 (2014-10-01)
 
 =head1 SYNOPSIS
 
@@ -884,23 +903,23 @@ looking at you, L<Moose>) just to get a help message.
 
 =item Sub-Command Classes
 
-These classes do the actual work. The entry point is a normal function,
-typically called something like C<run>, which is passed a single
-HASHref containing the option and argument values for the command.
+These classes do the actual work. The usual entry point would be a
+method or a function, typically called something like C<run>, which
+takes a HASHref argument:
 
     package My::Cmd::start;
 
     sub run {
+        my $self = shift;
         my $opts = shift;
         print "Starting $opts->{machine}\n";
     }
 
-The function name can be whatever you like but it must be the same for
-every sub command.
 
     package My::Cmd::stop;
 
     sub run {
+        my $self = shift;
         my $opts = shift;
         print "Stoping $opts->{machine}\n";
     }
@@ -911,9 +930,14 @@ The command script is what the user runs, and does nothing more than
 dispatch to your Command Class, and eventually a Sub-Command Class.
 
     #!/usr/bin/perl
-    use Getopt::Args qw/dispatch/;
-    dispatch(qw/ run Your::Cmd /);
+    use Getopt::Args qw/class_optargs/;
+    my ($class, $opts) = class_optargs('My::Cmd');
 
+    # Run object based sub-command classes
+    $class->new->run($opts);
+
+    # Or function based sub-command classes
+    $class->can('run')->($opts);
 
 One advantage to having a separate Command Class (and not defining
 everything inside a Command script) is that it is easy to run tests
@@ -921,14 +945,17 @@ against your various Sub-Command Classes as follows:
 
     use Test::More;
     use Test::Output;
-    use Getopt::Args qw/dispatch/;
+    use Getopt::Args qw/class_optargs/;
 
     stdout_is(
-        sub { dispatch( qw/ run My::Cmd start A / ) },
+        sub {
+            my ($class,$opts) = class_optargs('My::Cmd','start','A');
+            $class->new->run($opts);
+        },
         "Starting A\n", 'start'
     );
 
-    eval { dispatch(qw/run My::Cmd --invalid-option/) };
+    eval { class_optargs('My::Cmd', '--invalid-option') };
     isa_ok $@, 'Getopt::Args::Usage';
 
     done_testing();
@@ -945,6 +972,101 @@ The following functions are exported (by default except for
 C<dispatch>) using L<Exporter::Tidy>.
 
 =over
+
+=item arg( $name, %parameters )
+
+Define a Command Argument with the following parameters:
+
+=over
+
+=item isa
+
+Required. Is mapped to a L<Getopt::Long> type according to the
+following table:
+
+     optargs         Getopt::Long
+    ------------------------------
+     'Str'           '=s'
+     'Int'           '=i'
+     'Num'           '=f'
+     'ArrayRef'      's@'
+     'HashRef'       's%'
+     'SubCmd'        '=s'
+
+=item comment
+
+Required. Used to generate the usage/help message.
+
+=item required
+
+Set to a true value when the caller must specify this argument.  Can
+not be used if a 'default' is given.
+
+=item default
+
+The value set when the argument is not given. Can not be used if
+'required' is set.
+
+If this is a subroutine reference it will be called with a hashref
+containg all option/argument values after parsing the source has
+finished.  The value to be set must be returned, and any changes to the
+hashref are ignored.
+
+=item greedy
+
+If true the argument swallows the rest of the command line. It doesn't
+make sense to define any more arguments once you have used this as they
+will never be seen.
+
+=item fallback
+
+A hashref containing an argument definition for the event that a
+sub-command match is not found. This parameter is only valid when
+C<isa> is a C<SubCmd>. The hashref must contain "isa", "name" and
+"comment" key/value pairs, and may contain a "greedy" key/value pair.
+The Command Class "run" function will be called with the fallback
+argument integrated into the first argument like a regular sub-command.
+
+This is generally useful when you want to calculate a command alias
+from a configuration file at runtime, or otherwise run commands which
+don't easily fall into the Getopt::Args sub-command model.
+
+=back
+
+=item class_optargs( $rootclass, [ @argv ] ) -> ($class, $opts)
+
+This is a more general version of the C<optargs> function described in
+detail below.  It parses C<@ARGV> (or C<@argv> if given) according to
+the options and arguments as defined in C<$rootclass>, and returns two
+values:
+
+=over
+
+=item $class
+
+The class name of the matching sub-command.
+
+=item $opts
+
+The matching argument and options for the sub-command.
+
+=back
+
+As an aid for testing, if the passed in argument C<@argv> (not @ARGV)
+contains a HASH reference, the key/value combinations of the hash will
+be added as options. An undefined value means a boolean option.
+
+=item dispatch( $function, $rootclass, [ @argv ] )
+
+[ NOTE: This function is badly designed and is depreciated. It will be
+removed at some point before version 1.0.0]
+
+Parse C<@ARGV> (or C<@argv> if given) and dispatch to C<$function> in
+the appropriate package name constructed from C<$rootclass>.
+
+As an aid for testing, if the passed in argument C<@argv> (not @ARGV)
+contains a HASH reference, the key/value combinations of the hash will
+be added as options. An undefined value means a boolean option.
 
 =item opt( $name, %parameters )
 
@@ -1008,79 +1130,16 @@ message.
 
 =back
 
-=item arg( $name, %parameters )
-
-Define a Command Argument with the following parameters:
-
-=over
-
-=item isa
-
-Required. Is mapped to a L<Getopt::Long> type according to the
-following table:
-
-     optargs         Getopt::Long
-    ------------------------------
-     'Str'           '=s'
-     'Int'           '=i'
-     'Num'           '=f'
-     'ArrayRef'      's@'
-     'HashRef'       's%'
-     'SubCmd'        '=s'
-
-=item comment
-
-Required. Used to generate the usage/help message.
-
-=item required
-
-Set to a true value when the caller must specify this argument.  Can
-not be used if a 'default' is given.
-
-=item default
-
-The value set when the argument is not given. Can not be used if
-'required' is set.
-
-If this is a subroutine reference it will be called with a hashref
-containg all option/argument values after parsing the source has
-finished.  The value to be set must be returned, and any changes to the
-hashref are ignored.
-
-=item greedy
-
-If true the argument swallows the rest of the command line. It doesn't
-make sense to define any more arguments once you have used this as they
-will never be seen.
-
-=item fallback
-
-A hashref containing an argument definition for the event that a
-sub-command match is not found. This parameter is only valid when
-C<isa> is a C<SubCmd>. The hashref must contain "isa", "name" and
-"comment" key/value pairs, and may contain a "greedy" key/value pair.
-The Command Class "run" function will be called with the fallback
-argument integrated into the first argument like a regular sub-command.
-
-This is generally useful when you want to calculate a command alias
-from a configuration file at runtime, or otherwise run commands which
-don't easily fall into the Getopt::Args sub-command model.
-
-=back
-
 =item optargs( [ @argv ] ) -> HashRef
 
-Parse @ARGV by default (or @argv when given) and returns a hashref
+Parse @ARGV by default (or @argv when given) for the arguments and
+options defined in the I<current package>, and returns a hashref
 containing key/value pairs for options and arguments I<combined>.  An
 error / usage exception object (C<Getopt::Args::Usage>) is thrown if an
 invalid combination of options and arguments is given.
 
 Note that C<@ARGV> will be decoded into UTF-8 (if necessary) from
 whatever L<I18N::Langinfo> says your current locale codeset is.
-
-=item usage( [$message] ) -> Str
-
-Returns a usage string prefixed with $message if given.
 
 =item subcmd( %parameters )
 
@@ -1109,14 +1168,9 @@ you don't want cluttering up your normal usage message.
 
 =back
 
-=item dispatch( $function, $rootclass, [ @argv ] )
+=item usage( [$message] ) -> Str
 
-Parse C<@ARGV> (or C<@argv> if given) and dispatch to C<$function> in
-the appropriate package name constructed from C<$rootclass>.
-
-As an aid for testing, if the passed in argument C<@argv> (not @ARGV)
-contains a HASH reference, the key/value combinations of the hash will
-be added as options. An undefined value means a boolean option.
+Returns a usage string prefixed with $message if given.
 
 =back
 
