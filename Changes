@@ -1,4 +1,4 @@
-0.1.15_1 (2014-10-01)
+0.1.15_1 (yyyy-mm-dd)
 
     API Changes:
         - The dispatch() function has been marked as depreciated,
