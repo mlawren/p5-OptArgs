@@ -629,14 +629,7 @@ sub dispatch {
 
     my ( $package, $optargs ) = class_optargs( $class, @_ );
 
-    croak $@ unless eval "require $package";
-
     my $sub = $package->can($method);
-    if ( !$sub ) {
-        croak $@ unless eval "require $package;";
-        $sub = $package->can($method);
-    }
-
     die "Can't find method $method via package $package" unless $sub;
 
     $dispatching{$class}++;

@@ -11,6 +11,7 @@
     Enhancements:
         - App::optargs: don't require loaded class and application
           classes to be the same.
+        - Remove some code duplication
 
     Bug Fixes:
         - None.
