@@ -10,13 +10,13 @@ $OptArgs::COLOUR = 1;
 arg class => (
     isa      => 'Str',
     required => 1,
-    comment  => 'OptArgs-based module to map',
+    comment  => 'OptArgs-based module to load',
 );
 
 arg name => (
     isa     => 'Str',
     comment => 'Name of the command',
-    default => sub { ( my $x = shift->{class} ) =~ s/.*://; $x; }
+    default => sub { '<command>' }
 );
 
 opt indent => (
@@ -49,7 +49,7 @@ sub run {
 
     binmode( STDOUT, ':encoding(utf8)' );
 
-    foreach my $cmd ( OptArgs::_cmdlist( $opts->{class} ) ) {
+    foreach my $cmd ( OptArgs::_cmdlist() ) {
         my $length = do { my @tmp = split( /::/, $cmd ) }
           - $initial;
         my $space = $indent x $length;

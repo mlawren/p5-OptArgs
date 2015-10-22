@@ -8,40 +8,40 @@ use Test::Fatal;
 
 stdout_is(
     sub { dispatch(qw/run App::optargs app::multi/) },
-    'multi COMMAND
-    multi init
-    multi new THREAD
-        multi new project
-        multi new issue
-        multi new task TARG
-            multi new task pretty
-            multi new task noopts
+    '<command> COMMAND
+    <command> init
+    <command> new THREAD
+        <command> new issue
+        <command> new project
+        <command> new task TARG
+            <command> new task noopts
+            <command> new task pretty
 ', 'App::optargs on app::multi'
 );
 
 stdout_is(
     sub { dispatch(qw/run App::optargs app::multi -i 2/) },
-    'multi COMMAND
-  multi init
-  multi new THREAD
-    multi new project
-    multi new issue
-    multi new task TARG
-      multi new task pretty
-      multi new task noopts
+    '<command> COMMAND
+  <command> init
+  <command> new THREAD
+    <command> new issue
+    <command> new project
+    <command> new task TARG
+      <command> new task noopts
+      <command> new task pretty
 ', 'App::optargs on app::multi'
 );
 
 stdout_is(
     sub { dispatch(qw/run App::optargs app::multi -i 2 -s x/) },
-    'multi COMMAND
-xxmulti init
-xxmulti new THREAD
-xxxxmulti new project
-xxxxmulti new issue
-xxxxmulti new task TARG
-xxxxxxmulti new task pretty
-xxxxxxmulti new task noopts
+    '<command> COMMAND
+xx<command> init
+xx<command> new THREAD
+xxxx<command> new issue
+xxxx<command> new project
+xxxx<command> new task TARG
+xxxxxx<command> new task noopts
+xxxxxx<command> new task pretty
 '
     , 'App::optargs on app::multi'
 );
@@ -51,11 +51,11 @@ stdout_is(
     'yy COMMAND
 xxyy init
 xxyy new THREAD
-xxxxyy new project
 xxxxyy new issue
+xxxxyy new project
 xxxxyy new task TARG
-xxxxxxyy new task pretty
 xxxxxxyy new task noopts
+xxxxxxyy new task pretty
 ', 'App::optargs on app::multi'
 );
 

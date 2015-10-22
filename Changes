@@ -9,7 +9,8 @@
           the meaning of the "comment" if you use this feature.
 
     Enhancements:
-        - None.
+        - App::optargs: don't require loaded class and application
+          classes to be the same.
 
     Bug Fixes:
         - None.

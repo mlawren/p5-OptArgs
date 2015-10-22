@@ -22,33 +22,9 @@ my %desc;           # sub-command descriptions
 my %dispatching;    # track optargs() calls from dispatch classes
 my %hidden;         # subcmd hiding by default
 
-# internal method for App::optargs
+# internal function for App::optargs
 sub _cmdlist {
-    my $package = shift || croak '_cmdlist($package)';
-    $package =~ s/-/_/g;
-    my @list = ($package);
-
-    if ( exists $args{$package} ) {
-        my @subcmd =
-          map { exists $_->{subcommands} ? $_->{subcommands} : () }
-          @{ $args{$package} };
-
-        push( @subcmd,
-            map { exists $_->{fallback} ? [ uc $_->{fallback}->{name} ] : () }
-              @{ $args{$package} } );
-
-        if ($SORT) {
-            foreach my $subcmd ( sort map { @$_ } @subcmd ) {
-                push( @list, _cmdlist( $package . '::' . $subcmd ) );
-            }
-        }
-        else {
-            foreach my $subcmd ( map { @$_ } @subcmd ) {
-                push( @list, _cmdlist( $package . '::' . $subcmd ) );
-            }
-        }
-    }
-    return @list;
+    return sort grep { $_ ne 'App::optargs' } keys %seen;
 }
 
 # ------------------------------------------------------------------------
