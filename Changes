@@ -4,7 +4,9 @@
         - None.
 
     New Features:
-        - None.
+        - Setting "default" to true on a Bool option causes it to
+          appear as "--no-bool" in the usage. You will want to reverse
+          the meaning of the "comment" if you use this feature.
 
     Enhancements:
         - None.

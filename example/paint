@@ -29,6 +29,12 @@ opt hidden => (
     hidden  => 1,
 );
 
+opt bool => (
+    isa     => 'Bool',
+    comment => 'example of a default-true Boolean option',
+    default => 1,
+);
+
 arg item => (
     isa      => 'Str',
     required => 1,

@@ -352,6 +352,11 @@ sub _usage {
         next if $opt->{hidden} and !$ishelp;
 
         ( my $name = $opt->{name} ) =~ s/_/-/g;
+
+        if ( $opt->{isa} eq 'Bool' and $opt->{default} ) {
+            $name = 'no-' . $name;
+        }
+
         $name .= ',' if $opt->{alias};
         push(
             @uopts,
