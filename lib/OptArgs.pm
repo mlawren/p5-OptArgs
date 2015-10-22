@@ -1109,6 +1109,12 @@ containg all option/argument values after parsing the source has
 finished.  The value to be set must be returned, and any changes to the
 hashref are ignored.
 
+For "Bool" options setting "default" to a true has a special effect:
+the the usage message formats it as "--no-option" instead of
+"--option". If you do use a true default value for Bool options you
+probably want to reverse the normal meaning of your "comment" value as
+well.
+
 =item alias
 
 A single character alias.
