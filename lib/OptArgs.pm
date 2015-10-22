@@ -417,9 +417,10 @@ sub usage {
 # Option/Argument processing
 # ------------------------------------------------------------------------
 sub _optargs {
-    my $caller  = shift;
-    my $source  = \@_;
-    my $package = $caller;
+    my $caller      = shift;
+    my $source      = \@_;
+    my $source_hash = {};
+    my $package     = $caller;
 
     if ( !@_ and @ARGV ) {
         my $CODESET =
@@ -431,6 +432,10 @@ sub _optargs {
         }
 
         $source = \@ARGV;
+    }
+    else {
+        $source_hash = { map { %$_ } grep { ref $_ eq 'HASH' } @$source };
+        $source = [ grep { ref $_ ne 'HASH' } @$source ];
     }
 
     map { Carp::croak('_optargs argument undefined!') if !defined $_ } @$source;
@@ -452,7 +457,12 @@ sub _optargs {
         my $result;
 
         if ( $try->{type} eq 'opt' ) {
-            GetOptionsFromArray( $source, $try->{ISA} => \$result );
+            if ( exists $source_hash->{ $try->{name} } ) {
+                $result = delete $source_hash->{ $try->{name} };
+            }
+            else {
+                GetOptionsFromArray( $source, $try->{ISA} => \$result );
+            }
         }
         elsif ( $try->{type} eq 'arg' ) {
             if (@$source) {
@@ -498,6 +508,9 @@ sub _optargs {
                 }
 
                 # TODO: type check using Param::Utils?
+            }
+            elsif ( exists $source_hash->{ $try->{name} } ) {
+                $result = delete $source_hash->{ $try->{name} };
             }
             elsif ( $try->{required} and !$ishelp ) {
                 $missing_required++;
@@ -563,8 +576,11 @@ sub _optargs {
         die _usage($package);
     }
     elsif (@$source) {
+        die _usage( $package, "Unexpected options or arguments: @$source" );
+    }
+    elsif ( my @unexpected = keys %$source_hash ) {
         die _usage( $package,
-            qq{Unexpected option or argument "} . ( shift @$source ) . '"' );
+            "Unexpected HASH options or arguments: @unexpected" );
     }
 
     # Re-calculate the default if it was a subref
@@ -594,27 +610,7 @@ sub class_optargs {
 
     die $@ unless eval "require $caller;";
 
-    my ( $class, $optargs );
-
-    if (@_) {
-        my @args;
-
-        foreach my $element (@_) {
-            if ( ref $element eq 'HASH' ) {
-                push( @args,
-                    '--' . $_, defined $element->{$_} ? $element->{$_} : () )
-                  for keys %$element;
-            }
-            else {
-                push( @args, $element );
-            }
-        }
-
-        ( $class, $optargs ) = _optargs( $caller, @args );
-    }
-    else {
-        ( $class, $optargs ) = _optargs($caller);
-    }
+    my ( $class, $optargs ) = _optargs( $caller, @_ );
 
     croak $@ unless eval "require $class;1;";
     return ( $class, $optargs );
