@@ -40,4 +40,4 @@ requires:
 resources:
   license: http://opensource.org/licenses/gpl-license.php
   repository: https://github.com/mlawren/p5-OptArgs
-version: 0.1.17_1
+version: 0.1.18
