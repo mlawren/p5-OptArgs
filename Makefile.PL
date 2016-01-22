@@ -22,6 +22,8 @@ test_requires 'Test::More';
 test_requires 'Test::Fatal';
 test_requires 'Test::Output';
 
+perl_version '5.006';
+
 author_tests 'xt';
 
 install_script 'bin/optargs';
