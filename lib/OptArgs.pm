@@ -9,10 +9,11 @@ use Exporter::Tidy
 use Getopt::Long qw/GetOptionsFromArray/;
 use List::Util qw/max/;
 
-our $VERSION = '0.1.19_1';
-our $COLOUR  = 0;
-our $ABBREV  = 0;
-our $SORT    = 0;
+our $VERSION       = '0.1.19_1';
+our $COLOUR        = 0;
+our $ABBREV        = 0;
+our $SORT          = 0;
+our $PRINT_OPT_ARG = 0;
 
 my %seen;           # hash of hashes keyed by 'caller', then opt/arg name
 my %opts;           # option configuration keyed by 'caller'
@@ -93,12 +94,13 @@ sub subcmd {
 # Option definition
 # ------------------------------------------------------------------------
 my %opt_params = (
-    isa     => undef,
-    comment => undef,
-    default => undef,
-    alias   => '',
-    ishelp  => undef,
-    hidden  => undef,
+    isa      => undef,
+    comment  => undef,
+    default  => undef,
+    alias    => '',
+    ishelp   => undef,
+    hidden   => undef,
+    arg_name => undef,
 );
 
 my @opt_required = (qw/isa comment/);
@@ -331,6 +333,24 @@ sub _usage {
 
         if ( $opt->{isa} eq 'Bool' and $opt->{default} ) {
             $name = 'no-' . $name;
+        }
+
+        if ($PRINT_OPT_ARG) {
+            if ( $opt->{arg_name} ) {
+                $name .= '=' . uc $opt->{arg_name};
+            }
+            elsif ($opt->{isa} eq 'Str'
+                || $opt->{isa} eq 'HashRef'
+                || $opt->{isa} eq 'ArrayRef' )
+            {
+                $name .= '=STR';
+            }
+            elsif ( $opt->{isa} eq 'Int' ) {
+                $name .= '=INT';
+            }
+            elsif ( $opt->{isa} eq 'Num' ) {
+                $name .= '=NUM';
+            }
         }
 
         $name .= ',' if $opt->{alias};
@@ -1104,6 +1124,11 @@ This is handy if you have developer-only options, or options that are
 very rarely used that you don't want cluttering up your normal usage
 message.
 
+=item arg_name
+
+When C<$OptArgs::PRINT_OPT_ARG> is set to a true value, this value will
+be printed instead of the generic value from C<isa>.
+
 =back
 
 =item optargs( [ @argv ] ) -> HashRef
@@ -1173,6 +1198,11 @@ terminal escape codes.
 If C<$OptArgs::SORT> is a true value then sub-commands will be listed
 in usage messages alphabetically instead of in the order they were
 defined.
+
+=item $OptArgs::PRINT_OPT_ARG
+
+If C<$OptArgs::PRINT_OPT_ARG> is a true value then usage will print the
+type of argument a options expects.
 
 =back
 
