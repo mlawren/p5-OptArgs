@@ -9,10 +9,11 @@ use Exporter::Tidy
 use Getopt::Long qw/GetOptionsFromArray/;
 use List::Util qw/max/;
 
-our $VERSION = '0.1.19_1';
-our $COLOUR  = 0;
-our $ABBREV  = 0;
-our $SORT    = 0;
+our $VERSION       = '0.1.19_1';
+our $COLOUR        = 0;
+our $ABBREV        = 0;
+our $SORT          = 0;
+our $PRINT_DEFAULT = 0;
 
 my %seen;           # hash of hashes keyed by 'caller', then opt/arg name
 my %opts;           # option configuration keyed by 'caller'
@@ -333,6 +334,18 @@ sub _usage {
             $name = 'no-' . $name;
         }
 
+        my $default = '';
+        if ( $PRINT_DEFAULT && defined $opt->{default} and !$opt->{ishelp} ) {
+            my $value =
+              ref $opt->{default} eq 'CODE'
+              ? $opt->{default}->( {%$opt} )
+              : $opt->{default};
+            if ( $opt->{isa} eq 'Bool' ) {
+                $value = $value ? 'true' : 'false';
+            }
+            $default = " [default: $value]";
+        }
+
         $name .= ',' if $opt->{alias};
         push(
             @uopts,
@@ -341,7 +354,7 @@ sub _usage {
                 $opt->{alias}
                 ? '-' . $opt->{alias}
                 : '',
-                $opt->{comment}
+                $opt->{comment} . $default
             ]
         );
     }
@@ -1173,6 +1186,11 @@ terminal escape codes.
 If C<$OptArgs::SORT> is a true value then sub-commands will be listed
 in usage messages alphabetically instead of in the order they were
 defined.
+
+=item $OptArgs::PRINT_DEFAULT
+
+If C<$OptArgs::PRINT_DEFAULT> is a true value then usage will print the
+default value of all options.
 
 =back
 
