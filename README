@@ -2,7 +2,7 @@ NAME
     OptArgs - integrated argument and option processing
 
 VERSION
-    0.1.18 (2015-11-27)
+    0.1.19_1 (2016-03-03)
 
 SYNOPSIS
         #!/usr/bin/env perl
@@ -366,6 +366,10 @@ FUNCTIONS
                  'ArrayRef'      's@'
                  'HashRef'       's%'
 
+        isa_name
+            When $OptArgs::PRINT_ISA is set to a true value, this value will
+            be printed instead of the generic value from "isa".
+
         comment
             Required. Used to generate the usage/help message.
 
@@ -404,6 +408,10 @@ FUNCTIONS
             This is handy if you have developer-only options, or options
             that are very rarely used that you don't want cluttering up your
             normal usage message.
+
+        arg_name
+            When $OptArgs::PRINT_OPT_ARG is set to a true value, this value
+            will be printed instead of the generic value from "isa".
 
     optargs( [ @argv ] ) -> HashRef
         Parse @ARGV by default (or @argv when given) for the arguments and
@@ -453,6 +461,14 @@ OPTIONAL BEHAVIOUR
         If $OptArgs::SORT is a true value then sub-commands will be listed
         in usage messages alphabetically instead of in the order they were
         defined.
+
+    $OptArgs::PRINT_DEFAULT
+        If $OptArgs::PRINT_DEFAULT is a true value then usage will print the
+        default value of all options.
+
+    $OptArgs::PRINT_ISA
+        If $OptArgs::PRINT_ISA is a true value then usage will print the
+        type of argument a options expects.
 
 SEE ALSO
     Getopt::Long, Exporter::Tidy

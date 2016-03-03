@@ -1,4 +1,4 @@
-0.1.18 (2015-11-27)
+0.1.19_1 (2016-03-03)
 
     API / Behaviour Changes:
         - None.
@@ -7,7 +7,10 @@
         - None.
 
     Enhancements:
-        - None.
+        - New $OptArgs::PRINT_DEFAULT option for displaying default
+          values in usage messages (Mario Domgoergen)
+        - New $OptArgs::PRINT_ISA option for displaying option
+          types in usage messages (Mario Domgoergen)
 
     Bug Fixes:
         - None.
@@ -15,10 +18,7 @@
     Dependencies:
         - None.
 
-0.1.17_1 (2015-10-22)
-
-    API / Behaviour Changes:
-        - None.
+0.1.18 (2015-11-27)
 
     New Features:
         - Setting "default" to true on a Bool option causes it to
@@ -29,9 +29,6 @@
         - App::optargs: don't require loaded class and application
           classes to be the same.
         - Remove some code duplication
-
-    Bug Fixes:
-        - None.
 
 0.1.16 (2014-10-01)
 

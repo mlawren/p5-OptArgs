@@ -9,10 +9,12 @@ use Exporter::Tidy
 use Getopt::Long qw/GetOptionsFromArray/;
 use List::Util qw/max/;
 
-our $VERSION = '0.1.18';
-our $COLOUR  = 0;
-our $ABBREV  = 0;
-our $SORT    = 0;
+our $VERSION       = '0.1.19_1';
+our $COLOUR        = 0;
+our $ABBREV        = 0;
+our $SORT          = 0;
+our $PRINT_DEFAULT = 0;
+our $PRINT_ISA     = 0;
 
 my %seen;           # hash of hashes keyed by 'caller', then opt/arg name
 my %opts;           # option configuration keyed by 'caller'
@@ -93,12 +95,13 @@ sub subcmd {
 # Option definition
 # ------------------------------------------------------------------------
 my %opt_params = (
-    isa     => undef,
-    comment => undef,
-    default => undef,
-    alias   => '',
-    ishelp  => undef,
-    hidden  => undef,
+    isa      => undef,
+    isa_name => undef,
+    comment  => undef,
+    default  => undef,
+    alias    => '',
+    ishelp   => undef,
+    hidden   => undef,
 );
 
 my @opt_required = (qw/isa comment/);
@@ -333,6 +336,36 @@ sub _usage {
             $name = 'no-' . $name;
         }
 
+        my $default = '';
+        if ( $PRINT_DEFAULT && defined $opt->{default} and !$opt->{ishelp} ) {
+            my $value =
+              ref $opt->{default} eq 'CODE'
+              ? $opt->{default}->( {%$opt} )
+              : $opt->{default};
+            if ( $opt->{isa} eq 'Bool' ) {
+                $value = $value ? 'true' : 'false';
+            }
+            $default = " [default: $value]";
+        }
+
+        if ($PRINT_ISA) {
+            if ( $opt->{isa_name} ) {
+                $name .= '=' . uc $opt->{isa_name};
+            }
+            elsif ($opt->{isa} eq 'Str'
+                || $opt->{isa} eq 'HashRef'
+                || $opt->{isa} eq 'ArrayRef' )
+            {
+                $name .= '=STR';
+            }
+            elsif ( $opt->{isa} eq 'Int' ) {
+                $name .= '=INT';
+            }
+            elsif ( $opt->{isa} eq 'Num' ) {
+                $name .= '=NUM';
+            }
+        }
+
         $name .= ',' if $opt->{alias};
         push(
             @uopts,
@@ -341,7 +374,7 @@ sub _usage {
                 $opt->{alias}
                 ? '-' . $opt->{alias}
                 : '',
-                $opt->{comment}
+                $opt->{comment} . $default
             ]
         );
     }
@@ -651,7 +684,7 @@ Getopt::Args - integrated argument and option processing
 
 =head1 VERSION
 
-0.1.18 (2015-11-27)
+0.1.19_1 (2016-03-03)
 
 =head1 SYNOPSIS
 
@@ -1061,6 +1094,11 @@ following table:
      'ArrayRef'      's@'
      'HashRef'       's%'
 
+=item isa_name
+
+When C<$Getopt::Args::PRINT_ISA> is set to a true value, this value will be
+printed instead of the generic value from C<isa>.
+
 =item comment
 
 Required. Used to generate the usage/help message.
@@ -1103,6 +1141,11 @@ usage message is a help request.
 This is handy if you have developer-only options, or options that are
 very rarely used that you don't want cluttering up your normal usage
 message.
+
+=item arg_name
+
+When C<$Getopt::Args::PRINT_OPT_ARG> is set to a true value, this value will
+be printed instead of the generic value from C<isa>.
 
 =back
 
@@ -1173,6 +1216,16 @@ terminal escape codes.
 If C<$Getopt::Args::SORT> is a true value then sub-commands will be listed
 in usage messages alphabetically instead of in the order they were
 defined.
+
+=item $Getopt::Args::PRINT_DEFAULT
+
+If C<$Getopt::Args::PRINT_DEFAULT> is a true value then usage will print the
+default value of all options.
+
+=item $Getopt::Args::PRINT_ISA
+
+If C<$Getopt::Args::PRINT_ISA> is a true value then usage will print the
+type of argument a options expects.
 
 =back
 

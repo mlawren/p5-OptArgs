@@ -2,7 +2,7 @@ use inc::Module::Install;
 use File::Spec;
 
 name 'OptArgs';
-version '0.1.18';
+version '0.1.19_1';
 all_from 'lib/OptArgs.pm';
 readme_from 'lib/OptArgs.pm';
 
@@ -21,6 +21,8 @@ test_requires 'POSIX';
 test_requires 'Test::More';
 test_requires 'Test::Fatal';
 test_requires 'Test::Output';
+
+perl_version '5.006';
 
 author_tests 'xt';
 
