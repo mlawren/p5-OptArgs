@@ -8,6 +8,7 @@ use Data::Dumper;
 use OptArgs;
 
 $OptArgs::COLOUR++;
+$OptArgs::PRINT_DEFAULT++;
 
 opt help => (
     isa     => 'Bool',
@@ -33,6 +34,20 @@ opt bool => (
     isa     => 'Bool',
     comment => 'example of a default-true Boolean option',
     default => 1,
+);
+
+opt iopt => (
+    isa     => 'Int',
+    comment => 'example of a default-true Integer option',
+    alias   => 'i',
+    default => 8,
+);
+
+opt sopt => (
+    isa     => 'ArrayRef',
+    comment => 'example of an arrayref option',
+    alias   => 's',
+    default => 'some text',
 );
 
 arg item => (
