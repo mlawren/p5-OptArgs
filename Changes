@@ -7,7 +7,8 @@
         - None.
 
     Enhancements:
-        - None.
+        - New $OptArgs::PRINT_DEFAULT option for displaying default
+          values in usage messages (Mario Domgoergen)
 
     Bug Fixes:
         - None.
