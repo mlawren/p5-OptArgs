@@ -9,6 +9,8 @@
     Enhancements:
         - New $OptArgs::PRINT_DEFAULT option for displaying default
           values in usage messages (Mario Domgoergen)
+        - New $OptArgs::PRINT_ISA option for displaying option
+          types in usage messages (Mario Domgoergen)
 
     Bug Fixes:
         - None.

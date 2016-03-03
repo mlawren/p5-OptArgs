@@ -14,6 +14,7 @@ our $COLOUR        = 0;
 our $ABBREV        = 0;
 our $SORT          = 0;
 our $PRINT_DEFAULT = 0;
+our $PRINT_ISA     = 0;
 
 my %seen;           # hash of hashes keyed by 'caller', then opt/arg name
 my %opts;           # option configuration keyed by 'caller'
@@ -94,12 +95,13 @@ sub subcmd {
 # Option definition
 # ------------------------------------------------------------------------
 my %opt_params = (
-    isa     => undef,
-    comment => undef,
-    default => undef,
-    alias   => '',
-    ishelp  => undef,
-    hidden  => undef,
+    isa      => undef,
+    isa_name => undef,
+    comment  => undef,
+    default  => undef,
+    alias    => '',
+    ishelp   => undef,
+    hidden   => undef,
 );
 
 my @opt_required = (qw/isa comment/);
@@ -344,6 +346,24 @@ sub _usage {
                 $value = $value ? 'true' : 'false';
             }
             $default = " [default: $value]";
+        }
+
+        if ($PRINT_ISA) {
+            if ( $opt->{isa_name} ) {
+                $name .= '=' . uc $opt->{isa_name};
+            }
+            elsif ($opt->{isa} eq 'Str'
+                || $opt->{isa} eq 'HashRef'
+                || $opt->{isa} eq 'ArrayRef' )
+            {
+                $name .= '=STR';
+            }
+            elsif ( $opt->{isa} eq 'Int' ) {
+                $name .= '=INT';
+            }
+            elsif ( $opt->{isa} eq 'Num' ) {
+                $name .= '=NUM';
+            }
         }
 
         $name .= ',' if $opt->{alias};
@@ -1074,6 +1094,11 @@ following table:
      'ArrayRef'      's@'
      'HashRef'       's%'
 
+=item isa_name
+
+When C<$OptArgs::PRINT_ISA> is set to a true value, this value will be
+printed instead of the generic value from C<isa>.
+
 =item comment
 
 Required. Used to generate the usage/help message.
@@ -1116,6 +1141,11 @@ usage message is a help request.
 This is handy if you have developer-only options, or options that are
 very rarely used that you don't want cluttering up your normal usage
 message.
+
+=item arg_name
+
+When C<$OptArgs::PRINT_OPT_ARG> is set to a true value, this value will
+be printed instead of the generic value from C<isa>.
 
 =back
 
@@ -1191,6 +1221,11 @@ defined.
 
 If C<$OptArgs::PRINT_DEFAULT> is a true value then usage will print the
 default value of all options.
+
+=item $OptArgs::PRINT_ISA
+
+If C<$OptArgs::PRINT_ISA> is a true value then usage will print the
+type of argument a options expects.
 
 =back
 

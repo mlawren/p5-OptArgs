@@ -9,6 +9,7 @@ use OptArgs;
 
 $OptArgs::COLOUR++;
 $OptArgs::PRINT_DEFAULT++;
+$OptArgs::PRINT_ISA++;
 
 opt help => (
     isa     => 'Bool',
@@ -48,6 +49,14 @@ opt sopt => (
     comment => 'example of an arrayref option',
     alias   => 's',
     default => 'some text',
+);
+
+opt xopt => (
+    isa      => 'ArrayRef',
+    isa_name => 'XY',
+    comment  => 'example isa_name',
+    alias    => 'x',
+    default  => 'some text',
 );
 
 arg item => (
