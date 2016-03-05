@@ -9,12 +9,13 @@ use Exporter::Tidy
 use Getopt::Long qw/GetOptionsFromArray/;
 use List::Util qw/max/;
 
-our $VERSION       = '0.1.19_2';
-our $COLOUR        = 0;
-our $ABBREV        = 0;
-our $SORT          = 0;
-our $PRINT_DEFAULT = 0;
-our $PRINT_ISA     = 0;
+our $VERSION        = '0.1.19_2';
+our $COLOUR         = 0;
+our $ABBREV         = 0;
+our $SORT           = 0;
+our $PRINT_DEFAULT  = 0;
+our $PRINT_ISA      = 0;
+our $PRINT_BOOL_ALT = 0;
 
 my %seen;           # hash of hashes keyed by 'caller', then opt/arg name
 my %opts;           # option configuration keyed by 'caller'
@@ -95,13 +96,14 @@ sub subcmd {
 # Option definition
 # ------------------------------------------------------------------------
 my %opt_params = (
-    isa      => undef,
-    isa_name => undef,
-    comment  => undef,
-    default  => undef,
-    alias    => '',
-    ishelp   => undef,
-    hidden   => undef,
+    isa       => undef,
+    isa_name  => undef,
+    comment   => undef,
+    default   => undef,
+    alias     => '',
+    ishelp    => undef,
+    hidden    => undef,
+    print_alt => $PRINT_BOOL_ALT,
 );
 
 my @opt_required = (qw/isa comment/);
@@ -332,8 +334,13 @@ sub _usage {
 
         ( my $name = $opt->{name} ) =~ s/_/-/g;
 
-        if ( $opt->{isa} eq 'Bool' and $opt->{default} ) {
-            $name = 'no-' . $name;
+        if ( !$opt->{ishelp} && $opt->{isa} eq 'Bool' ) {
+            if ( $opt->{print_alt} ) {
+                $name .= "|--no-$name";
+            }
+            elsif ( $opt->{default} ) {
+                $name = 'no-' . $name;
+            }
         }
 
         my $default = '';
@@ -1147,6 +1154,11 @@ message.
 When C<$OptArgs::PRINT_OPT_ARG> is set to a true value, this value will
 be printed instead of the generic value from C<isa>.
 
+=item print_alt
+
+When true, both options for a bool will be printed. This defaults to the
+value of C<$OptArgs::PRINT_BOOL_ALT>.
+
 =back
 
 =item optargs( [ @argv ] ) -> HashRef
@@ -1226,6 +1238,11 @@ default value of all options.
 
 If C<$OptArgs::PRINT_ISA> is a true value then usage will print the
 type of argument a options expects.
+
+=item $OptArgs::PRINT_BOOL_ALT
+
+C<$OptArgs::PRINT_BOOL_ALT> is the default value for the option argument
+C<print_alt>.
 
 =back
 
