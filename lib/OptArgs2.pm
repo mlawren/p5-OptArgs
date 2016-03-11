@@ -14,6 +14,16 @@ no warnings;my$M=__PACKAGE__.'::';*{$M.Object::new}=sub{my$c=shift;my$s=bless{@_
     $INC{'OptArgs2/Mo.pm'} = __FILE__;
 }
 
+package OptArgs2::Usage;
+use overload
+  bool     => sub { 1 },
+  '""'     => sub { ${ $_[0] } },
+  fallback => 1;
+
+1;
+
+sub new { bless \$_[1], ref $_[0] || $_[0]; }
+
 package OptArgs2::Cmd;
 use strict;
 use warnings;
@@ -21,29 +31,29 @@ use Mo qw/build builder default is required/;
 
 sub BUILD {
     my $self = shift;
-    $self->name( $self->class =~ s/.*://r );
+    $self->name( $self->class =~ s/.*://r ) unless $self->name;
 }
+
+has args => (
+    is      => 'ro',
+    default => sub { [] },
+);
 
 has class => (
     is       => 'ro',
     required => 1,
 );
 
-has name => ( is => 'rw', );
-
 has comment => (
     is       => 'ro',
     required => 1,
 );
 
+has name => ( is => 'rw', );
+
 has optargs => (
     is       => 'rw',
     required => 1,
-);
-
-has args => (
-    is      => 'ro',
-    default => sub { [] },
 );
 
 has opts => (
@@ -87,7 +97,7 @@ sub usage {
         }
     }
 
-    return $str;
+    return OptArgs2::Usage->new($str);
 }
 
 package OptArgs2::Arg;
@@ -146,7 +156,7 @@ sub usage {
 package OptArgs2;
 use strict;
 use warnings;
-use Carp ();
+use Carp 'croak';
 use Exporter qw/import/;
 use Mo qw/default builder is required/;
 
@@ -154,10 +164,25 @@ our $VERSION = '0.0.1_1';
 our @EXPORT  = (qw/cmd arg opt optargs/);
 our $COMMAND;
 
+my %command;
+
 sub cmd {
     my $class = shift || Carp::confess('cmd($CLASS,@args)');
+
+    croak "command already defined: $class"
+      if exists $command{$class};
+
     my $cmd = OptArgs2::Cmd->new( class => $class, @_ );
-    die $cmd->usage;
+    $command{$class} = $cmd;
+
+    if ( $class =~ m/:/ ) {
+        my $parent_class = $class =~ s/(.*)::/$1/r;
+        if ( exists $command{$parent_class} ) {
+            $command{$parent_class}->add_cmd($cmd);
+        }
+    }
+
+    return $cmd;
 }
 
 sub arg {
@@ -171,6 +196,10 @@ sub opt {
 }
 
 sub optargs {
+    my $class = shift || croak('optargs($CLASS, [@argv])');
+    my $cmd = $command{$class} || croak( 'command class not found: ' . $class );
+
+    die $cmd->usage;
 }
 
 1;
@@ -850,13 +879,6 @@ sub dispatch {
     return $results[0];
 }
 
-package OptArgs2::Usage;
-use overload
-  bool     => sub { 1 },
-  '""'     => sub { ${ $_[0] } },
-  fallback => 1;
-
-1;
 
 __END__
 
@@ -945,8 +967,8 @@ C<paint> and observe the following interactions from the shell:
 The C<optargs()> function parses the commands arguments according to
 the C<opt> and C<arg> declarations and returns a single HASH reference.
 If the command is not called correctly then an exception is thrown (an
-C<OptArgs2::Usage> object) with an automatically generated usage message
-as shown above.
+C<OptArgs2::Usage> object) with an automatically generated usage
+message as shown above.
 
 Because B<OptArgs2> knows about arguments it can detect errors relating
 to them:
@@ -1326,8 +1348,8 @@ message.
 
 =item arg_name
 
-When C<$OptArgs2::PRINT_OPT_ARG> is set to a true value, this value will
-be printed instead of the generic value from C<isa>.
+When C<$OptArgs2::PRINT_OPT_ARG> is set to a true value, this value
+will be printed instead of the generic value from C<isa>.
 
 =back
 
@@ -1401,8 +1423,8 @@ defined.
 
 =item $OptArgs2::PRINT_DEFAULT
 
-If C<$OptArgs2::PRINT_DEFAULT> is a true value then usage will print the
-default value of all options.
+If C<$OptArgs2::PRINT_DEFAULT> is a true value then usage will print
+the default value of all options.
 
 =item $OptArgs2::PRINT_ISA
 

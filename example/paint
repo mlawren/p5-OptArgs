@@ -7,6 +7,8 @@ use Data::Dumper;
 use OptArgs2;
 
 cmd 'App::paint' => (
+
+    # name    => 'paint', # or File::Basename::basename($0) if you like
     comment => 'this isdf lkjdsf',
     optargs => sub {
         arg item => (
@@ -92,5 +94,5 @@ cmd 'App::paint' => (
     },
 );
 
-print Dumper(optargs);
+print Dumper( optargs('App::paint') );
 
