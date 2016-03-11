@@ -1,9 +1,177 @@
+package OptArgs2::Mo;
+
+BEGIN {
+
+#<<< do not perltidy
+# use Mo qw/required build default is import/;
+#   The following line of code was produced from the previous line by
+#   Mo::Inline version 0.39
+
+no warnings;my$M=__PACKAGE__.'::';*{$M.Object::new}=sub{my$c=shift;my$s=bless{@_},$c;my%n=%{$c.::.':E'};map{$s->{$_}=$n{$_}->()if!exists$s->{$_}}keys%n;$s};*{$M.import}=sub{import warnings;$^H|=1538;my($P,%e,%o)=caller.'::';shift;eval"no Mo::$_",&{$M.$_.::e}($P,\%e,\%o,\@_)for@_;return if$e{M};%e=(extends,sub{eval"no $_[0]()";@{$P.ISA}=$_[0]},has,sub{my$n=shift;my$m=sub{$#_?$_[0]{$n}=$_[1]:$_[0]{$n}};@_=(default,@_)if!($#_%2);$m=$o{$_}->($m,$n,@_)for sort keys%o;*{$P.$n}=$m},%e,);*{$P.$_}=$e{$_}for keys%e;@{$P.ISA}=$M.Object};*{$M.'required::e'}=sub{my($P,$e,$o)=@_;$o->{required}=sub{my($m,$n,%a)=@_;if($a{required}){my$C=*{$P."new"}{CODE}||*{$M.Object::new}{CODE};no warnings 'redefine';*{$P."new"}=sub{my$s=$C->(@_);my%a=@_[1..$#_];if(!exists$a{$n}){require Carp;Carp::croak($n." required")}$s}}$m}};*{$M.'build::e'}=sub{my($P,$e)=@_;$e->{new}=sub{$c=shift;my$s=&{$M.Object::new}($c,@_);my@B;do{@B=($c.::BUILD,@B)}while($c)=@{$c.::ISA};exists&$_&&&$_($s)for@B;$s}};*{$M.'default::e'}=sub{my($P,$e,$o)=@_;$o->{default}=sub{my($m,$n,%a)=@_;exists$a{default}or return$m;my($d,$r)=$a{default};my$g='HASH'eq($r=ref$d)?sub{+{%$d}}:'ARRAY'eq$r?sub{[@$d]}:'CODE'eq$r?$d:sub{$d};my$i=exists$a{lazy}?$a{lazy}:!${$P.':N'};$i or ${$P.':E'}{$n}=$g and return$m;sub{$#_?$m->(@_):!exists$_[0]{$n}?$_[0]{$n}=$g->(@_):$m->(@_)}}};*{$M.'is::e'}=sub{my($P,$e,$o)=@_;$o->{is}=sub{my($m,$n,%a)=@_;$a{is}or return$m;sub{$#_&&$a{is}eq'ro'&&caller ne'Mo::coerce'?die$n.' is ro':$m->(@_)}}};my$i=\&import;*{$M.import}=sub{(@_==2 and not$_[1])?pop@_:@_==1?push@_,grep!/import/,@f:();goto&$i};@f=qw[required build default is import];use strict;use warnings;
+1;
+
+#>>>
+    $INC{'OptArgs2/Mo.pm'} = __FILE__;
+}
+
+package OptArgs2::Cmd;
+use strict;
+use warnings;
+use Mo qw/build builder default is required/;
+
+sub BUILD {
+    my $self = shift;
+    $self->name( $self->class =~ s/.*://r );
+}
+
+has class => (
+    is       => 'ro',
+    required => 1,
+);
+
+has name => ( is => 'rw', );
+
+has comment => (
+    is       => 'ro',
+    required => 1,
+);
+
+has optargs => (
+    is       => 'rw',
+    required => 1,
+);
+
+has args => (
+    is      => 'ro',
+    default => sub { [] },
+);
+
+has opts => (
+    is      => 'ro',
+    default => sub { [] },
+);
+
+sub build_args_opts {
+    my $self = shift;
+    return unless ref $self->optargs eq 'CODE';
+    local $OptArgs2::COMMAND = $self;
+    $self->optargs->();
+    $self->optargs(undef);
+}
+
+sub add_arg {
+    push( @{ $_[0]->args }, $_[1] );
+}
+
+sub add_opt {
+    push( @{ $_[0]->opts }, $_[1] );
+}
+
+sub usage {
+    my $self = shift;
+    $self->build_args_opts;
+    my $str = 'usage: ' . $self->name . "\n";
+    $str .= '  desc: ' . $self->comment . "\n";
+
+    if ( my @args = @{ $self->args } ) {
+        $str .= '  args:' . "\n";
+        foreach my $arg ( @{ $self->args } ) {
+            $str .= '      ' . $arg->usage . "\n";
+        }
+    }
+
+    if ( my @opts = @{ $self->opts } ) {
+        $str .= '  opts:' . "\n";
+        foreach my $opt (@opts) {
+            $str .= '      ' . $opt->usage . "\n";
+        }
+    }
+
+    return $str;
+}
+
+package OptArgs2::Arg;
+use strict;
+use warnings;
+use Mo qw/build builder default is required/;
+use Scalar::Util 'weaken';
+
+sub BUILD {
+    my $self = shift;
+}
+
+has cmd => ( is => 'rw', );
+
+has name => (
+    is       => 'ro',
+    required => 1,
+);
+
+has comment => (
+    is       => 'ro',
+    required => 1,
+);
+
+sub usage {
+    my $self = shift;
+    return $self->name . ' - ' . $self->comment;
+}
+
+package OptArgs2::Opt;
+use strict;
+use warnings;
+use Mo qw/build builder default is required/;
+
+sub BUILD {
+    my $self = shift;
+}
+
+has cmd => ( is => 'rw', );
+
+has name => (
+    is       => 'ro',
+    required => 1,
+);
+
+has comment => (
+    is       => 'ro',
+    required => 1,
+);
+
+sub usage {
+    my $self = shift;
+    return $self->name . ' - ' . $self->comment;
+}
+
 package OptArgs2;
 use strict;
 use warnings;
+use Carp ();
+use Exporter qw/import/;
+use Mo qw/default builder is required/;
 
 our $VERSION = '0.0.1_1';
+our @EXPORT  = (qw/cmd arg opt optargs/);
+our $COMMAND;
 
+sub cmd {
+    my $class = shift || Carp::confess('cmd($CLASS,@args)');
+    my $cmd = OptArgs2::Cmd->new( class => $class, @_ );
+    die $cmd->usage;
+}
+
+sub arg {
+    my $name = shift;
+    $OptArgs2::COMMAND->add_arg( OptArgs2::Arg->new( name => $name, @_ ) );
+}
+
+sub opt {
+    my $name = shift;
+    $OptArgs2::COMMAND->add_opt( OptArgs2::Opt->new( name => $name, @_ ) );
+}
+
+sub optargs {
+}
 
 1;
 
