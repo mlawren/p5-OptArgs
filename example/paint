@@ -15,12 +15,14 @@ opt help => (
     isa     => 'Bool',
     comment => 'print a help message and exit',
     alias   => 'h',
+    default => 0,
     ishelp  => 1,
 );
 
 opt quiet => (
     isa     => 'Bool',
     alias   => 'q',
+    default => 0,
     comment => 'output nothing while working',
 );
 
@@ -33,7 +35,18 @@ opt hidden => (
 
 opt bool => (
     isa     => 'Bool',
-    comment => 'example of a default-true Boolean option',
+    comment => 'example of a no-default Boolean option',
+);
+
+opt bool0 => (
+    isa     => 'Bool',
+    comment => 'default-false Boolean option',
+    default => 0,
+);
+
+opt bool1 => (
+    isa     => 'Bool',
+    comment => 'default-true Boolean option',
     default => 1,
 );
 

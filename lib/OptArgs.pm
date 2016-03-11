@@ -335,6 +335,9 @@ sub _usage {
         if ( $opt->{isa} eq 'Bool' and $opt->{default} ) {
             $name = 'no-' . $name;
         }
+        elsif ( $opt->{isa} eq 'Bool' and not defined $opt->{default} ) {
+            $name = '[no-]' . $name;
+        }
 
         my $default = '';
         if ( $PRINT_DEFAULT && defined $opt->{default} and !$opt->{ishelp} ) {
