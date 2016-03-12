@@ -508,6 +508,44 @@ sub usage {
     return OptArgs2::Result->new( 'Usage', $usage );
 }
 
+sub parent_list {
+    my $self = shift;
+    return unless $self->parent;
+    return ( $self->parent, $self->parent->parent_list );
+}
+
+sub usage_tree {
+    my $self    = shift;
+    my $depth   = shift || '';
+    my @parents = map { $_->name } $self->parent_list;
+
+    my $usage = $depth;
+    $usage .= join( ' ', @parents ) . ' ' if @parents;
+    $usage .= $self->name;
+
+    $self->build_args_opts;
+    my @args = @{ $self->args };
+    my @opts = @{ $self->args };
+
+    foreach my $arg ( @{ $self->args } ) {
+        $usage .= ' ';
+        $usage .= '[' unless $arg->required;
+        $usage .= uc $arg->name;
+        $usage .= '...' if $arg->greedy;
+        $usage .= ']' unless $arg->required;
+    }
+
+    # Options
+    $usage .= ' [OPTIONS...]' if @{ $self->opts };
+    $usage .= "\n";
+
+    foreach my $subcmd ( sort { $a->name cmp $b->name } @{ $self->subcmds } ) {
+        $usage .= $depth . '    ' . $subcmd->usage_tree;
+    }
+
+    return $usage;
+}
+
 package OptArgs2;
 use strict;
 use warnings;
