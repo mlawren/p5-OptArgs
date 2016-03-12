@@ -42,6 +42,11 @@ sub as_string {
     return ref $_[0];
 }
 
+sub OptArgs2::STYLE_ERROR   { 0 }
+sub OptArgs2::STYLE_SUMMARY { 1 }
+sub OptArgs2::STYLE_NORMAL  { 2 }
+sub OptArgs2::STYLE_FULL    { 3 }
+
 package OptArgs2::Arg;
 use strict;
 use warnings;
@@ -91,6 +96,34 @@ sub BUILD {
     my $self = shift;
     $self->fallback( OptArgs2::Fallback->new( @{ $self->fallback } ) )
       if $self->fallback;
+}
+
+sub name_comment {
+    my $self  = shift;
+    my $style = shift;
+
+    return [ uc( $self->name ), $self->comment ]
+      unless $self->isa eq 'SubCmd';
+
+    return (
+        [ uc( $self->name ), $self->comment ],
+
+        map {
+            [
+                '  '
+                  . (
+                    ref $_ eq 'OptArgs2::Fallback'
+                    ? uc( $_->name )
+                    : $_->name
+                  ),
+                '  ' . $_->comment
+            ]
+          }
+          sort { $a->name cmp $b->name }
+          grep { $style == OptArgs2::STYLE_FULL or !$_->hidden }
+          @{ $self->cmd->subcmds },
+        $self->fallback ? $self->fallback : ()
+    );
 }
 
 package OptArgs2::Fallback;
@@ -302,11 +335,6 @@ sub parents {
     return ( $self->parent, $self->parent->parents );
 }
 
-sub ERROR   { 0 }
-sub SUMMARY { 1 }
-sub NORMAL  { 2 }
-sub FULL    { 3 }
-
 sub usage {
     my $self   = shift;
     my $style  = shift;
@@ -330,39 +358,22 @@ sub usage {
         $usage .= uc $arg->name;
         $usage .= '...' if $arg->greedy;
         $usage .= ']' unless $arg->required;
-        push( @uargs, [ uc( $arg->name ), $arg->comment ] );
-
-        if ( $arg->isa eq 'SubCmd' ) {
-            push(
-                @uargs,
-                [
-                    '  '
-                      . (
-                        ref $_ eq 'OptArgs2::Fallback'
-                        ? uc( $_->name )
-                        : $_->name
-                      ),
-                    '  ' . $_->comment
-                ]
-              )
-              for sort { $a->name cmp $b->name }
-              grep { $style == FULL or !$_->hidden } @{ $arg->cmd->subcmds },
-              $arg->fallback ? $arg->fallback : ();
-        }
+        push( @uargs, $arg->name_comment($style) );
     }
 
     my @opts = map { @{ $_->opts } } @parents, $self;
     $usage .= ' [OPTIONS...]' if @opts;
     $usage .= "\n";
 
-    return $usage if $style == SUMMARY;
+    return $usage if $style == OptArgs2::STYLE_SUMMARY;
 
-    $usage .= "\n  Synopsis:\n    " . $self->comment . "\n" if $style == FULL;
+    $usage .= "\n  Synopsis:\n    " . $self->comment . "\n"
+      if $style == OptArgs2::STYLE_FULL;
 
     # Calulate the widths of the columns
     my @sorted_opts = sort { $a->name cmp $b->name } @opts;
     foreach my $opt (@sorted_opts) {
-        next if $style != FULL and $opt->hidden;
+        next if $style != OptArgs2::STYLE_FULL and $opt->hidden;
         push( @uopts, $opt->name_alias_comment );
     }
 
@@ -407,7 +418,7 @@ sub usage_tree {
     my $self = shift;
     my $depth = shift || '';
 
-    my $str = $depth . $self->usage(SUMMARY);
+    my $str = $depth . $self->usage(OptArgs2::STYLE_SUMMARY);
 
     foreach my $subcmd ( sort { $a->name cmp $b->name } @{ $self->subcmds } ) {
         $str .= $subcmd->usage_tree( $depth . '    ' );
@@ -491,7 +502,7 @@ sub class_optargs {
     my $cmd = $command{$class} || croak( 'command class not found: ' . $class );
 
     # for the moment fake
-    print $cmd->usage(OptArgs2::Cmd::FULL);
+    print $cmd->usage(OptArgs2::STYLE_FULL);
     require App::job;
     return ( 'App::job', { usage => 1 } );
 }
