@@ -203,6 +203,7 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 use List::Util qw/max/;
+use Scalar::Util qw/weaken/;
 
 sub BUILD {
     my $self = shift;
@@ -236,6 +237,13 @@ has opts => (
     default => sub { [] },
 );
 
+has parent => ( is => 'rw', );
+
+has subcmds => (
+    is      => 'ro',
+    default => sub { [] },
+);
+
 sub build_args_opts {
     my $self = shift;
     return unless ref $self->optargs eq 'CODE';
@@ -250,6 +258,18 @@ sub add_arg {
 
 sub add_opt {
     push( @{ $_[0]->opts }, $_[1] );
+}
+
+sub add_cmd {
+    my $self   = shift;
+    my $subcmd = shift;
+
+    $subcmd->parent($self);
+
+    # A hack until Mo gets weaken support
+    weaken $subcmd->{parent};
+    push( @{ $self->subcmds }, $subcmd );
+    my $last = $#{ $self->subcmds };
 }
 
 sub usage {
@@ -496,7 +516,7 @@ use Exporter qw/import/;
 use OptArgs2::Mo;
 
 our $VERSION = '0.0.1_1';
-our @EXPORT  = (qw/cmd arg opt optargs/);
+our @EXPORT  = (qw/arg cmd opt optargs subcmd/);
 our $COMMAND;
 
 my %command;
@@ -518,6 +538,26 @@ sub cmd {
     }
 
     return $cmd;
+}
+
+sub subcmd {
+    my $class = shift || Carp::confess('cmd($CLASS,@args)');
+
+    croak "sub-command already defined: $class"
+      if exists $command{$class};
+
+    croak "no '::' in class - must have a parent" unless $class =~ m/::/;
+
+    my $parent_class = $class =~ s/(.*)::.*/$1/r;
+    croak "parent class not found" unless exists $command{$parent_class};
+
+    my $subcmd = OptArgs2::Cmd->new(
+        class => $class,
+        @_
+    );
+
+    $command{$parent_class}->add_cmd($subcmd);
+    return $subcmd;
 }
 
 sub arg {
