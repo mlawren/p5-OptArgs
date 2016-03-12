@@ -261,55 +261,55 @@ sub add_cmd {
     my $self   = shift;
     my $subcmd = shift;
 
+    push( @{ $self->subcmds }, $subcmd );
     $subcmd->parent($self);
 
     # A hack until Mo gets weaken support
     weaken $subcmd->{parent};
-    push( @{ $self->subcmds }, $subcmd );
-    my $last = $#{ $self->subcmds };
 }
+
+sub parents {
+    my $self = shift;
+    return unless $self->parent;
+    return ( $self->parent, $self->parent->parents );
+}
+
+sub ERROR   { 0 }
+sub SUMMARY { 1 }
+sub NORMAL  { 2 }
+sub FULL    { 3 }
 
 sub usage {
     my $self   = shift;
-    my $full   = shift;
+    my $style  = shift;
     my $ishelp = shift;
 
-    my $usage = $self->name;
+    my $usage   = '';
+    my @parents = $self->parents;
 
-    #    while ( $parent =~ s/(.*)::(.*)/$1/ ) {
-    #        last unless $seen{$parent};
-    #        ( my $name = $2 ) =~ s/_/-/g;
-    #        unshift( @parents, $name );
-    #        unshift( @opts,    @{ $opts{$parent} } );
-    #    }
-    #
-    #    $usage .= ' ' . join( ' ', @parents ) if @parents;
+    $usage .= join( ' ', map { $_->name } @parents ) . ' ' if @parents;
+    $usage .= $self->name;
 
     $self->build_args_opts;
+
     my @args = @{ $self->args };
-    my @opts = @{ $self->opts };
-
-    my @usage;
-    my @uargs;
-    my @uopts;
-
-    # Arguments
-    #    my $last = $args[$#args];
-    #    if ($last) {
     foreach my $arg (@args) {
         $usage .= ' ';
         $usage .= '[' unless $arg->required;
         $usage .= uc $arg->name;
         $usage .= '...' if $arg->greedy;
         $usage .= ']' unless $arg->required;
-        push( @uargs, [ $arg->name, $arg->comment ] );
     }
 
-    #    }
-
-    # Options
+    my @opts = map { @{ $_->opts } } @parents, $self;
     $usage .= ' [OPTIONS...]' if @opts;
     $usage .= "\n";
+
+    return $usage if $style == SUMMARY;
+
+    my @usage;
+    my @uargs;
+    my @uopts;
 
     #    $usage .= "\n  ${grey}Synopsis:$reset\n    $desc{$caller}\n"
     #      if $ishelp and $desc{$caller};
@@ -323,7 +323,7 @@ sub usage {
     # Calulate the widths of the columns
     my @sorted_opts = sort { $a->name cmp $b->name } @opts;
     foreach my $opt (@sorted_opts) {
-        next if !$full and $opt->hidden;
+        next if $style != FULL and $opt->hidden;
         push( @uopts, $opt->name_alias_comment );
     }
 
@@ -506,42 +506,17 @@ sub usage {
     return OptArgs2::Result->new( 'Usage', $usage );
 }
 
-sub parent_list {
-    my $self = shift;
-    return unless $self->parent;
-    return ( $self->parent, $self->parent->parent_list );
-}
-
 sub usage_tree {
-    my $self    = shift;
-    my $depth   = shift || '';
-    my @parents = map { $_->name } $self->parent_list;
+    my $self = shift;
+    my $depth = shift || '';
 
-    my $usage = $depth;
-    $usage .= join( ' ', @parents ) . ' ' if @parents;
-    $usage .= $self->name;
-
-    $self->build_args_opts;
-    my @args = @{ $self->args };
-    my @opts = @{ $self->args };
-
-    foreach my $arg ( @{ $self->args } ) {
-        $usage .= ' ';
-        $usage .= '[' unless $arg->required;
-        $usage .= uc $arg->name;
-        $usage .= '...' if $arg->greedy;
-        $usage .= ']' unless $arg->required;
-    }
-
-    # Options
-    $usage .= ' [OPTIONS...]' if @{ $self->opts };
-    $usage .= "\n";
+    my $str = $depth . $self->usage(SUMMARY);
 
     foreach my $subcmd ( sort { $a->name cmp $b->name } @{ $self->subcmds } ) {
-        $usage .= $depth . '    ' . $subcmd->usage_tree;
+        $str .= $subcmd->usage_tree( $depth . '    ' );
     }
 
-    return $usage;
+    return $str;
 }
 
 package OptArgs2;
