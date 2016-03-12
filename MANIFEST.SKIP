@@ -73,4 +73,7 @@
 \bOptArgs2-v[\d\.\_]+
 
 # generated files
-Args2.pm$
+\bArgs2.pm$
+
+\.perltidy
+\.podtidy
