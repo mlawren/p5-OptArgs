@@ -47,23 +47,43 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
-sub BUILD {
-    my $self = shift;
-}
+has comment => (
+    is       => 'ro',
+    required => 1,
+);
+
+has default => ( is => 'ro', );
+
+has fallback => ( is => 'ro', );
+
+has greedy => ( is => 'ro', );
+
+has isa => ( required => 1, );
+
+has getopt => ( is => 'rw', );
+
+has greedy => ( is => 'ro', );
+
+#has isa_name => ( is => 'rw', );
 
 has name => (
     is       => 'ro',
     required => 1,
 );
 
-has comment => (
-    is       => 'ro',
-    required => 1,
+has required => ( is => 'ro', );
+
+my %arg_isa = (
+    'Str'      => '=s',
+    'Int'      => '=i',
+    'Num'      => '=f',
+    'ArrayRef' => '=s@',
+    'HashRef'  => '=s%',
+    'SubCmd'   => '=s',
 );
 
-sub usage {
+sub BUILD {
     my $self = shift;
-    return $self->name . ' - ' . $self->comment;
 }
 
 package OptArgs2::Opt;
@@ -71,23 +91,6 @@ use strict;
 use warnings;
 use Carp qw/croak/;
 use OptArgs2::Mo;
-
-my %opt_isa = (
-    'Bool'     => '!',
-    'Counter'  => '+',
-    'Str'      => '=s',
-    'Int'      => '=i',
-    'Num'      => '=f',
-    'ArrayRef' => '=s@',
-    'HashRef'  => '=s%',
-);
-
-sub BUILD {
-    my $self = shift;
-    $self->isa_name( $self->isa ) unless $self->isa_name;
-    $self->isa( $opt_isa{ $self->isa }
-          || croak '"isa" type unknown: ' . $self->isa );
-}
 
 has alias => ( is => 'ro', );
 
@@ -102,6 +105,8 @@ has ishelp => ( is => 'ro', );
 
 has isa => ( required => 1, );
 
+has getopt => ( is => 'rw', );
+
 has isa_name => ( is => 'rw', );
 
 has name => (
@@ -111,15 +116,93 @@ has name => (
 
 has hidden => ( is => 'ro', );
 
-sub usage {
+my %isa_getopt = (
+    'Bool'     => '!',
+    'Counter'  => '+',
+    'Str'      => '=s',
+    'Int'      => '=i',
+    'Num'      => '=f',
+    'ArrayRef' => '=s@',
+    'HashRef'  => '=s%',
+);
+
+sub BUILD {
     my $self = shift;
-    return $self->name . ' - ' . $self->comment;
+
+    $self->getopt(
+        $isa_getopt{ $self->isa } || croak(
+            OptArgs2::Result->new(
+                'Error::IsaInvalid', 'invalid isa "%s" for opt "%s"',
+                $self->isa,          $self->name
+            )
+        )
+    );
+
+}
+
+my %isa_name = (
+    'Bool'     => '',
+    'Counter'  => '',
+    'Str'      => 'STR',
+    'Int'      => 'INT',
+    'Num'      => 'NUM',
+    'ArrayRef' => 'STR',
+    'HashRef'  => 'STR',
+);
+
+sub name_alias_comment {
+    my $self          = shift;
+    my $PRINT_DEFAULT = 1;
+    my $PRINT_ISA     = 1;
+
+    my $opt = $self->name =~ s/_/-/gr;
+
+    if ( $self->isa eq 'Bool' ) {
+        if ( $self->isa eq 'Bool' and $self->default ) {
+            $opt = 'no-' . $opt;
+        }
+        elsif ( $self->isa eq 'Bool' and not defined $self->default ) {
+            $opt = '[no-]' . $opt;
+        }
+    }
+    elsif ($PRINT_ISA) {
+        $opt .= '=' . ( $self->isa_name || $isa_name{ $self->isa } );
+    }
+
+    $opt = '--' . $opt;
+
+    my $alias = $self->alias;
+    if ( length $alias ) {
+        $alias = '-' . $alias;
+        $opt .= ',';
+    }
+    else {
+        $alias = '';
+    }
+
+    my $comment = $self->comment;
+    if ( $PRINT_DEFAULT && ( my $default = $self->default ) and !$self->ishelp )
+    {
+        my $value =
+          ref $default eq 'CODE'
+          ? $default->( {%$opt} )
+          : $default;
+
+        if ( $self->isa eq 'Bool' ) {
+            $value = $value ? 'true' : 'false';
+        }
+
+        $comment .= " [default: $value]";
+    }
+
+    return [ $opt, $alias, $comment ];
 }
 
 package OptArgs2::Cmd;
 use strict;
 use warnings;
 use OptArgs2::Mo;
+use List::Util qw/max/;
 
 sub BUILD {
     my $self = shift;
@@ -170,28 +253,239 @@ sub add_opt {
 }
 
 sub usage {
-    my $self = shift;
-    my $full = shift;
+    my $self   = shift;
+    my $full   = shift;
+    my $ishelp = shift;
+
+    my $usage = $self->name;
+
+    #    while ( $parent =~ s/(.*)::(.*)/$1/ ) {
+    #        last unless $seen{$parent};
+    #        ( my $name = $2 ) =~ s/_/-/g;
+    #        unshift( @parents, $name );
+    #        unshift( @opts,    @{ $opts{$parent} } );
+    #    }
+    #
+    #    $usage .= ' ' . join( ' ', @parents ) if @parents;
 
     $self->build_args_opts;
-    my $str = $self->name . "\n";
-    $str .= '  desc: ' . $self->comment . "\n";
+    my @args = @{ $self->args };
+    my @opts = @{ $self->opts };
 
-    if ( my @args = @{ $self->args } ) {
-        $str .= '  args:' . "\n";
-        foreach my $arg ( @{ $self->args } ) {
-            $str .= '      ' . $arg->usage . "\n";
+    my @usage;
+    my @uargs;
+    my @uopts;
+
+    # Arguments
+    #    my $last = $args[$#args];
+    #    if ($last) {
+    foreach my $arg (@args) {
+        $usage .= ' ';
+        $usage .= '[' unless $arg->required;
+        $usage .= uc $arg->name;
+        $usage .= '...' if $arg->greedy;
+        $usage .= ']' unless $arg->required;
+        push( @uargs, [ $arg->name, $arg->comment ] );
+    }
+
+    #    }
+
+    # Options
+    $usage .= ' [OPTIONS...]' if @opts;
+    $usage .= "\n";
+
+    my @sorted_opts = sort { $a->name cmp $b->name } @opts;
+    foreach my $opt (@sorted_opts) {
+        next if !$full and $opt->hidden;
+        push( @uopts, $opt->name_alias_comment );
+    }
+
+    #    $usage .= "\n  ${grey}Synopsis:$reset\n    $desc{$caller}\n"
+    #      if $ishelp and $desc{$caller};
+    #
+    #    if ( $ishelp and my $version = $caller->VERSION ) {
+    #        $usage .= "\n  ${grey}Version:$reset\n    $version\n";
+    #    }
+
+    ###
+
+    if (@uopts) {
+        my $w1 = max( map { length $_->[0] } @uopts );
+        my $fmt = '%-' . $w1 . "s %s";
+
+        @uopts = map { [ sprintf( $fmt, $_->[0], $_->[1] ), $_->[2] ] } @uopts;
+    }
+
+    my $w1 = max( map { length $_->[0] } @usage, @uargs, @uopts );
+    my $format = '    %-' . $w1 . "s   %s\n";
+
+    # Lengths are known so create the text
+    if (@usage) {
+        foreach my $row (@usage) {
+            $usage .= sprintf( $format, @$row );
         }
     }
 
-    if ( my @opts = @{ $self->opts } ) {
-        $str .= '  opts:' . "\n";
-        foreach my $opt (@opts) {
-            $str .= '      ' . $opt->usage . "\n";
+    #    if ( @uargs and $last->{isa} ne 'SubCmd' ) {
+    if (@uargs) {
+        $usage .= "\n  Arguments:\n";
+        foreach my $row (@uargs) {
+            $usage .= sprintf( $format, @$row );
         }
     }
 
-    return OptArgs2::Result->new( 'Usage', $str );
+    if (@uopts) {
+        $usage .= "\n  Options:\n";
+        foreach my $row (@uopts) {
+            $usage .= sprintf( $format, @$row );
+        }
+    }
+
+    $usage .= "\n";
+
+=cut
+    my $caller   = shift;
+    my $error    = shift;
+    my $ishelp   = shift;
+    my $terminal = -t STDOUT;
+    my $red      = ( $COLOUR && $terminal ) ? "\e[0;31m" : '';
+    my $yellow = '';    #( $COLOUR && $terminal ) ? "\e[0;33m" : '';
+    my $grey   = '';    #( $COLOUR && $terminal ) ? "\e[1;30m" : '';
+    my $reset  = ( $COLOUR && $terminal ) ? "\e[0m" : '';
+    my $parent = $caller;
+    my @args   = @{ $args{$caller} };
+    my @opts   = @{ $opts{$caller} };
+    my @parents;
+    my @usage;
+    my @uargs;
+    my @uopts;
+    my $usage;
+
+    require File::Basename;
+    my $me = File::Basename::basename( defined &static::list ? $^X : $0 );
+
+    if ($error) {
+        $usage .= "${red}error:$reset $error\n\n";
+    }
+
+    $usage .= $yellow . ( $ishelp ? 'help:' : 'usage:' ) . $reset . ' ' . $me;
+
+    while ( $parent =~ s/(.*)::(.*)/$1/ ) {
+        last unless $seen{$parent};
+        ( my $name = $2 ) =~ s/_/-/g;
+        unshift( @parents, $name );
+        unshift( @opts,    @{ $opts{$parent} } );
+    }
+
+    $usage .= ' ' . join( ' ', @parents ) if @parents;
+
+    my $last = $args[$#args];
+
+    if ($last) {
+        foreach my $def (@args) {
+            $usage .= ' ';
+            $usage .= '[' unless $def->{required};
+            $usage .= uc $def->{name};
+            $usage .= '...' if $def->{greedy};
+            $usage .= ']' unless $def->{required};
+            push( @uargs, [ uc $def->{name}, $def->{comment} ] );
+        }
+    }
+
+    $usage .= ' [OPTIONS...]' if @opts;
+
+    $usage .= "\n";
+
+    $usage .= "\n  ${grey}Synopsis:$reset\n    $desc{$caller}\n"
+      if $ishelp and $desc{$caller};
+
+    if ( $ishelp and my $version = $caller->VERSION ) {
+        $usage .= "\n  ${grey}Version:$reset\n    $version\n";
+    }
+
+    if ( $last && $last->{isa} eq 'SubCmd' ) {
+        $usage .= "\n  ${grey}" . ucfirst( $last->{name} ) . ":$reset\n";
+
+        my @subcommands = @{ $last->{subcommands} };
+
+        push( @subcommands, uc $last->{fallback}->{name} )
+          if (
+            exists $last->{fallback}
+            && ( $ishelp
+                or !$last->{fallback}->{hidden} )
+          );
+
+        @subcommands = sort @subcommands if $SORT;
+
+        foreach my $subcommand (@subcommands) {
+            my $pkg = $last->{package} . '::' . $subcommand;
+            $pkg =~ s/-/_/g;
+            next if $hidden{$pkg} and !$ishelp;
+            push( @usage, [ $subcommand, $desc{$pkg} ] );
+        }
+
+    }
+
+    @opts = sort { $a->{name} cmp $b->{name} } @opts if $SORT;
+
+    foreach my $opt (@opts) {
+        next if $opt->{hidden} and !$ishelp;
+
+        ( my $name = $opt->{name} ) =~ s/_/-/g;
+
+        if ( $opt->{isa} eq 'Bool' and $opt->{default} ) {
+            $name = 'no-' . $name;
+        }
+        elsif ( $opt->{isa} eq 'Bool' and not defined $opt->{default} ) {
+            $name = '[no-]' . $name;
+        }
+
+        my $default = '';
+        if ( $PRINT_DEFAULT && defined $opt->{default} and !$opt->{ishelp} ) {
+            my $value =
+              ref $opt->{default} eq 'CODE'
+              ? $opt->{default}->( {%$opt} )
+              : $opt->{default};
+            if ( $opt->{isa} eq 'Bool' ) {
+                $value = $value ? 'true' : 'false';
+            }
+            $default = " [default: $value]";
+        }
+
+        if ($PRINT_ISA) {
+            if ( $opt->{isa_name} ) {
+                $name .= '=' . uc $opt->{isa_name};
+            }
+            elsif ($opt->{isa} eq 'Str'
+                || $opt->{isa} eq 'HashRef'
+                || $opt->{isa} eq 'ArrayRef' )
+            {
+                $name .= '=STR';
+            }
+            elsif ( $opt->{isa} eq 'Int' ) {
+                $name .= '=INT';
+            }
+            elsif ( $opt->{isa} eq 'Num' ) {
+                $name .= '=NUM';
+            }
+        }
+
+        $name .= ',' if $opt->{alias};
+        push(
+            @uopts,
+            [
+                '--' . $name,
+                $opt->{alias}
+                ? '-' . $opt->{alias}
+                : '',
+                $opt->{comment} . $default
+            ]
+        );
+    }
+
+=cut
+
+    return OptArgs2::Result->new( 'Usage', $usage );
 }
 
 package OptArgs2;
