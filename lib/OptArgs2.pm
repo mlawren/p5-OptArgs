@@ -47,6 +47,11 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
+has cmd => (
+    is       => 'rw',
+    weak_ref => 1,
+);
+
 has comment => (
     is       => 'ro',
     required => 1,
@@ -54,7 +59,7 @@ has comment => (
 
 has default => ( is => 'ro', );
 
-has fallback => ( is => 'ro', );
+has fallback => ( is => 'rw', );
 
 has greedy => ( is => 'ro', );
 
@@ -84,7 +89,18 @@ my %arg_isa = (
 
 sub BUILD {
     my $self = shift;
+    $self->fallback( OptArgs2::Fallback->new( @{ $self->fallback } ) )
+      if $self->fallback;
 }
+
+package OptArgs2::Fallback;
+use strict;
+use warnings;
+use OptArgs2::Mo;
+
+extends 'OptArgs2::Arg';
+
+has hidden => ( is => 'ro', );
 
 package OptArgs2::Opt;
 use strict;
@@ -225,6 +241,8 @@ has comment => (
     required => 1,
 );
 
+has hidden => ( is => 'ro', );
+
 has name => ( is => 'rw', );
 
 has optargs => ( is => 'rw', );
@@ -234,7 +252,10 @@ has opts => (
     default => sub { [] },
 );
 
-has parent => ( is => 'rw', );
+has parent => (
+    is       => 'rw',
+    weak_ref => 1,
+);
 
 has subcmds => (
     is      => 'ro',
@@ -250,7 +271,14 @@ sub build_args_opts {
 }
 
 sub add_arg {
-    push( @{ $_[0]->args }, $_[1] );
+    my $self = shift;
+    my $arg  = shift;
+
+    push( @{ $self->args }, $arg );
+    $arg->cmd($self);
+
+    # A hack until Mo gets weaken support
+    weaken $arg->{cmd};
 }
 
 sub add_opt {
@@ -284,9 +312,12 @@ sub usage {
     my $style  = shift;
     my $ishelp = shift;
 
-    my $usage   = '';
     my @parents = $self->parents;
+    my @usage;
+    my @uargs;
+    my @uopts;
 
+    my $usage = '';
     $usage .= join( ' ', map { $_->name } @parents ) . ' ' if @parents;
     $usage .= $self->name;
 
@@ -299,6 +330,25 @@ sub usage {
         $usage .= uc $arg->name;
         $usage .= '...' if $arg->greedy;
         $usage .= ']' unless $arg->required;
+        push( @uargs, [ uc( $arg->name ), $arg->comment ] );
+
+        if ( $arg->isa eq 'SubCmd' ) {
+            push(
+                @uargs,
+                [
+                    '  '
+                      . (
+                        ref $_ eq 'OptArgs2::Fallback'
+                        ? uc( $_->name )
+                        : $_->name
+                      ),
+                    '  ' . $_->comment
+                ]
+              )
+              for sort { $a->name cmp $b->name }
+              grep { $style == FULL or !$_->hidden } @{ $arg->cmd->subcmds },
+              $arg->fallback ? $arg->fallback : ();
+        }
     }
 
     my @opts = map { @{ $_->opts } } @parents, $self;
@@ -307,18 +357,7 @@ sub usage {
 
     return $usage if $style == SUMMARY;
 
-    my @usage;
-    my @uargs;
-    my @uopts;
-
-    #    $usage .= "\n  ${grey}Synopsis:$reset\n    $desc{$caller}\n"
-    #      if $ishelp and $desc{$caller};
-    #
-    #    if ( $ishelp and my $version = $caller->VERSION ) {
-    #        $usage .= "\n  ${grey}Version:$reset\n    $version\n";
-    #    }
-
-    ###
+    $usage .= "\n  Synopsis:\n    " . $self->comment . "\n" if $style == FULL;
 
     # Calulate the widths of the columns
     my @sorted_opts = sort { $a->name cmp $b->name } @opts;
@@ -360,148 +399,6 @@ sub usage {
     }
 
     $usage .= "\n";
-
-=cut
-    my $caller   = shift;
-    my $error    = shift;
-    my $ishelp   = shift;
-    my $terminal = -t STDOUT;
-    my $red      = ( $COLOUR && $terminal ) ? "\e[0;31m" : '';
-    my $yellow = '';    #( $COLOUR && $terminal ) ? "\e[0;33m" : '';
-    my $grey   = '';    #( $COLOUR && $terminal ) ? "\e[1;30m" : '';
-    my $reset  = ( $COLOUR && $terminal ) ? "\e[0m" : '';
-    my $parent = $caller;
-    my @args   = @{ $args{$caller} };
-    my @opts   = @{ $opts{$caller} };
-    my @parents;
-    my @usage;
-    my @uargs;
-    my @uopts;
-    my $usage;
-
-    require File::Basename;
-    my $me = File::Basename::basename( defined &static::list ? $^X : $0 );
-
-    if ($error) {
-        $usage .= "${red}error:$reset $error\n\n";
-    }
-
-    $usage .= $yellow . ( $ishelp ? 'help:' : 'usage:' ) . $reset . ' ' . $me;
-
-    while ( $parent =~ s/(.*)::(.*)/$1/ ) {
-        last unless $seen{$parent};
-        ( my $name = $2 ) =~ s/_/-/g;
-        unshift( @parents, $name );
-        unshift( @opts,    @{ $opts{$parent} } );
-    }
-
-    $usage .= ' ' . join( ' ', @parents ) if @parents;
-
-    my $last = $args[$#args];
-
-    if ($last) {
-        foreach my $def (@args) {
-            $usage .= ' ';
-            $usage .= '[' unless $def->{required};
-            $usage .= uc $def->{name};
-            $usage .= '...' if $def->{greedy};
-            $usage .= ']' unless $def->{required};
-            push( @uargs, [ uc $def->{name}, $def->{comment} ] );
-        }
-    }
-
-    $usage .= ' [OPTIONS...]' if @opts;
-
-    $usage .= "\n";
-
-    $usage .= "\n  ${grey}Synopsis:$reset\n    $desc{$caller}\n"
-      if $ishelp and $desc{$caller};
-
-    if ( $ishelp and my $version = $caller->VERSION ) {
-        $usage .= "\n  ${grey}Version:$reset\n    $version\n";
-    }
-
-    if ( $last && $last->{isa} eq 'SubCmd' ) {
-        $usage .= "\n  ${grey}" . ucfirst( $last->{name} ) . ":$reset\n";
-
-        my @subcommands = @{ $last->{subcommands} };
-
-        push( @subcommands, uc $last->{fallback}->{name} )
-          if (
-            exists $last->{fallback}
-            && ( $ishelp
-                or !$last->{fallback}->{hidden} )
-          );
-
-        @subcommands = sort @subcommands if $SORT;
-
-        foreach my $subcommand (@subcommands) {
-            my $pkg = $last->{package} . '::' . $subcommand;
-            $pkg =~ s/-/_/g;
-            next if $hidden{$pkg} and !$ishelp;
-            push( @usage, [ $subcommand, $desc{$pkg} ] );
-        }
-
-    }
-
-    @opts = sort { $a->{name} cmp $b->{name} } @opts if $SORT;
-
-    foreach my $opt (@opts) {
-        next if $opt->{hidden} and !$ishelp;
-
-        ( my $name = $opt->{name} ) =~ s/_/-/g;
-
-        if ( $opt->{isa} eq 'Bool' and $opt->{default} ) {
-            $name = 'no-' . $name;
-        }
-        elsif ( $opt->{isa} eq 'Bool' and not defined $opt->{default} ) {
-            $name = '[no-]' . $name;
-        }
-
-        my $default = '';
-        if ( $PRINT_DEFAULT && defined $opt->{default} and !$opt->{ishelp} ) {
-            my $value =
-              ref $opt->{default} eq 'CODE'
-              ? $opt->{default}->( {%$opt} )
-              : $opt->{default};
-            if ( $opt->{isa} eq 'Bool' ) {
-                $value = $value ? 'true' : 'false';
-            }
-            $default = " [default: $value]";
-        }
-
-        if ($PRINT_ISA) {
-            if ( $opt->{isa_name} ) {
-                $name .= '=' . uc $opt->{isa_name};
-            }
-            elsif ($opt->{isa} eq 'Str'
-                || $opt->{isa} eq 'HashRef'
-                || $opt->{isa} eq 'ArrayRef' )
-            {
-                $name .= '=STR';
-            }
-            elsif ( $opt->{isa} eq 'Int' ) {
-                $name .= '=INT';
-            }
-            elsif ( $opt->{isa} eq 'Num' ) {
-                $name .= '=NUM';
-            }
-        }
-
-        $name .= ',' if $opt->{alias};
-        push(
-            @uopts,
-            [
-                '--' . $name,
-                $opt->{alias}
-                ? '-' . $opt->{alias}
-                : '',
-                $opt->{comment} . $default
-            ]
-        );
-    }
-
-=cut
 
     return OptArgs2::Result->new( 'Usage', $usage );
 }
@@ -594,6 +491,7 @@ sub class_optargs {
     my $cmd = $command{$class} || croak( 'command class not found: ' . $class );
 
     # for the moment fake
+    print $cmd->usage(OptArgs2::Cmd::FULL);
     require App::job;
     return ( 'App::job', { usage => 1 } );
 }

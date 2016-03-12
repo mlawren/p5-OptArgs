@@ -14,11 +14,18 @@ cmd 'App::job' => (
         arg command => (
             isa      => 'SubCmd',
             comment  => 'action to take',
-            fallback => (
+            required => 1,
+            fallback => [
                 name    => 'fallback',
                 isa     => 'Str',
                 comment => 'the fallback argument',
-            ),
+            ],
+        );
+
+        arg other => (
+            isa      => 'Str',
+            comment  => 'action to take',
+            required => 1,
         );
 
         opt help => (
@@ -54,6 +61,14 @@ subcmd 'App::job::start' => (
             comment  => 'job to start',
             required => 1,
         );
+
+        opt opt1 => (
+            isa     => 'Str',
+            alias   => 'o',
+            default => 'stuff',
+            comment => 'a string option',
+        );
+
     },
 );
 
@@ -66,10 +81,16 @@ subcmd 'App::job::stop' => (
             comment  => 'job to stop',
             required => 1,
         );
+
+        opt opt2 => (
+            isa      => 'ArrayRef',
+            isa_name => 'X',
+            alias    => 'p',
+            comment  => 'a string option with name',
+        );
+
     },
 );
-
-subcmd 'App::job::usage' => ( comment => 'print the command usage tree', );
 
 my ( $class, $opts ) = class_optargs('App::job');
 $class->new->run($opts);
