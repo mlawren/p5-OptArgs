@@ -396,14 +396,24 @@ sub usage {
 
     #    if ( @uargs and $last->{isa} ne 'SubCmd' ) {
     if (@uargs) {
-        $usage .= "\n  Arguments:\n";
+        if ( $style == OptArgs2::STYLE_FULL ) {
+            $usage .= "\n  Arguments:\n";
+        }
+        else {
+            $usage .= "\n";
+        }
         foreach my $row (@uargs) {
             $usage .= sprintf( $format, @$row );
         }
     }
 
     if (@uopts) {
-        $usage .= "\n  Options:\n";
+        if ( $style == OptArgs2::STYLE_FULL ) {
+            $usage .= "\n  Options:\n";
+        }
+        else {
+            $usage .= "\n";
+        }
         foreach my $row (@uopts) {
             $usage .= sprintf( $format, @$row );
         }
