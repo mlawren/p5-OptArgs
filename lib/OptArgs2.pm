@@ -227,10 +227,7 @@ has comment => (
 
 has name => ( is => 'rw', );
 
-has optargs => (
-    is       => 'rw',
-    required => 1,
-);
+has optargs => ( is => 'rw', );
 
 has opts => (
     is      => 'ro',
@@ -314,12 +311,6 @@ sub usage {
     $usage .= ' [OPTIONS...]' if @opts;
     $usage .= "\n";
 
-    my @sorted_opts = sort { $a->name cmp $b->name } @opts;
-    foreach my $opt (@sorted_opts) {
-        next if !$full and $opt->hidden;
-        push( @uopts, $opt->name_alias_comment );
-    }
-
     #    $usage .= "\n  ${grey}Synopsis:$reset\n    $desc{$caller}\n"
     #      if $ishelp and $desc{$caller};
     #
@@ -328,6 +319,13 @@ sub usage {
     #    }
 
     ###
+
+    # Calulate the widths of the columns
+    my @sorted_opts = sort { $a->name cmp $b->name } @opts;
+    foreach my $opt (@sorted_opts) {
+        next if !$full and $opt->hidden;
+        push( @uopts, $opt->name_alias_comment );
+    }
 
     if (@uopts) {
         my $w1 = max( map { length $_->[0] } @uopts );
@@ -339,7 +337,7 @@ sub usage {
     my $w1 = max( map { length $_->[0] } @usage, @uargs, @uopts );
     my $format = '    %-' . $w1 . "s   %s\n";
 
-    # Lengths are known so create the text
+    # Lengths are now known so create the text
     if (@usage) {
         foreach my $row (@usage) {
             $usage .= sprintf( $format, @$row );
@@ -554,7 +552,7 @@ use Exporter qw/import/;
 use OptArgs2::Mo;
 
 our $VERSION = '0.0.1_1';
-our @EXPORT  = (qw/arg cmd opt optargs subcmd/);
+our @EXPORT  = (qw/arg cmd class_optargs opt subcmd/);
 our $COMMAND;
 
 my %command;
@@ -578,6 +576,13 @@ sub cmd {
     return $cmd;
 }
 
+sub get_cmd {
+    my $class = shift;
+    return exists $command{$class}
+      ? $command{$class}
+      : croak( 'command not found: ' . $class );
+}
+
 sub subcmd {
     my $class = shift || Carp::confess('cmd($CLASS,@args)');
 
@@ -594,6 +599,7 @@ sub subcmd {
         @_
     );
 
+    $command{$class} = $subcmd;
     $command{$parent_class}->add_cmd($subcmd);
     return $subcmd;
 }
@@ -608,11 +614,13 @@ sub opt {
     $OptArgs2::COMMAND->add_opt( OptArgs2::Opt->new( name => $name, @_ ) );
 }
 
-sub optargs {
-    my $class = shift || croak('optargs($CLASS, [@argv])');
+sub class_optargs {
+    my $class = shift || croak('class_optargs($CLASS, [@argv])');
     my $cmd = $command{$class} || croak( 'command class not found: ' . $class );
 
-    die $cmd->usage;
+    # for the moment fake
+    require App::job;
+    return ( 'App::job', { usage => 1 } );
 }
 
 1;
