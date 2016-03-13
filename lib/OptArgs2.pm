@@ -323,10 +323,12 @@ sub add_arg {
 
     # A hack until Mo gets weaken support
     weaken $arg->{cmd};
+    return $arg;
 }
 
 sub add_opt {
     push( @{ $_[0]->opts }, $_[1] );
+    $_[1];
 }
 
 sub add_cmd {
@@ -338,6 +340,7 @@ sub add_cmd {
 
     # A hack until Mo gets weaken support
     weaken $subcmd->{parent};
+    return $subcmd;
 }
 
 sub parents {
@@ -360,7 +363,7 @@ sub usage {
     my @uargs;
     my @uopts;
 
-    my $usage = 'usage: ';
+    my $usage = '';
     $usage .= join( ' ', map { $_->name } @parents ) . ' ' if @parents;
     $usage .= $self->name;
 
@@ -434,7 +437,7 @@ sub usage {
         }
     }
 
-    return $usage .= "\n";
+    return 'usage: ' . $usage . "\n";
 }
 
 sub usage_tree {
@@ -508,9 +511,8 @@ sub subcmd {
         @_
     );
 
-    $command{$class} = $subcmd;
-    $command{$parent_class}->add_cmd($subcmd);
-    return $subcmd;
+    return $command{$class} = $command{$parent_class}
+      ->add_cmd( OptArgs2::Cmd->new( class => $class, @_ ) );
 }
 
 sub arg {
