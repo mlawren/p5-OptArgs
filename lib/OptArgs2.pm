@@ -633,16 +633,14 @@ sub class_optargs {
 
             if ( $result and $try->isa eq 'SubCmd' ) {
 
-    # look up abbreviated words
-    #                if ($cmd->abbrev) {
-    #                    require Text::Abbrev;
-    #                    my %words =
-    #                      map { m/^$package\:\:(\w+)$/; $1 => 1 }
-    #                      grep { m/^$package\:\:(\w+)$/ }
-    #                      keys %command;
-    #                    my %abbrev = Text::Abbrev::abbrev( keys %words );
-    #                    $result = $abbrev{$result} if defined $abbrev{$result};
-    #                }
+                # look up abbreviated words
+                if ( $cmd->abbrev ) {
+                    require Text::Abbrev;
+                    my %abbrev =
+                      Text::Abbrev::abbrev( map { $_->name }
+                          @{ $cmd->subcmds } );
+                    $result = $abbrev{$result} if defined $abbrev{$result};
+                }
 
                 my $new_class = $class . '::' . $result;
                 $new_class =~ s/-/_/g;

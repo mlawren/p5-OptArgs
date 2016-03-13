@@ -9,6 +9,7 @@ use OptArgs2;
 
 cmd 'App::job' => (
     comment => 'a job management tool',
+    abbrev  => 1,
     optargs => sub {
 
         arg command => (
