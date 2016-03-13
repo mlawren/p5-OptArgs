@@ -32,17 +32,16 @@ sub new {
 }
 
 sub as_string {
-    my $type = lc ref( $_[0] ) =~ s/^OptArgs2::Result::([^:]+?)(\b).*/$1/ir;
+    my $type = ref( $_[0] ) =~ s/^OptArgs2::Result::(.*)/$1/r;
     my @x    = @{ $_[0] };
     if ( my $str = shift @x ) {
-        return sprintf( "$type: $str (%s)\n", @x, ( ref $_[0] ) =~ s/.*://r )
+        return sprintf( "$str (%s)\n", @x, $type )
           unless $str =~ m/\n/;
-        return sprintf( "$type: $str", @x );
+        return sprintf( $str, @x );
     }
     return ref $_[0];
 }
 
-sub OptArgs2::STYLE_ERROR   { 0 }
 sub OptArgs2::STYLE_SUMMARY { 1 }
 sub OptArgs2::STYLE_NORMAL  { 2 }
 sub OptArgs2::STYLE_FULL    { 3 }
@@ -74,7 +73,7 @@ has getopt => ( is => 'rw', );
 
 has greedy => ( is => 'ro', );
 
-#has isa_name => ( is => 'rw', );
+#has isa2name => ( is => 'rw', );
 
 has name => (
     is       => 'ro',
@@ -83,7 +82,7 @@ has name => (
 
 has required => ( is => 'ro', );
 
-my %arg_isa = (
+my %arg2getopt = (
     'Str'      => '=s',
     'Int'      => '=i',
     'Num'      => '=f',
@@ -116,7 +115,7 @@ sub name_comment {
                     ? uc( $_->name )
                     : $_->name
                   ),
-                '' . $_->comment
+                '  ' . $_->comment
             ]
           }
           sort { $a->name cmp $b->name }
@@ -152,9 +151,10 @@ has default => ( is => 'ro', );
 
 has ishelp => ( is => 'ro', );
 
-has isa => ( required => 1, );
-
-has getopt => ( is => 'rw', );
+has isa => (
+    is       => 'ro',
+    required => 1,
+);
 
 has isa_name => ( is => 'rw', );
 
@@ -165,7 +165,7 @@ has name => (
 
 has hidden => ( is => 'ro', );
 
-my %isa_getopt = (
+my %isa2getopt = (
     'Bool'     => '!',
     'Counter'  => '+',
     'Str'      => '=s',
@@ -178,18 +178,22 @@ my %isa_getopt = (
 sub BUILD {
     my $self = shift;
 
-    $self->getopt(
-        $isa_getopt{ $self->isa } || croak(
-            OptArgs2::Result->new(
-                'Error::IsaInvalid', 'invalid isa "%s" for opt "%s"',
-                $self->isa,          $self->name
-            )
+    exists $isa2getopt{ $self->isa } || croak(
+        OptArgs2::Result->new(
+            'Error::IsaInvalid', 'invalid isa "%s" for opt "%s"',
+            $self->isa,          $self->name
         )
     );
-
 }
 
-my %isa_name = (
+sub getopt {
+    my $self = shift;
+    my $expr = $self->name;
+    $expr .= '|' . $self->alias if $self->alias;
+    return $expr .= $isa2getopt{ $self->isa };
+}
+
+my %isa2name = (
     'Bool'     => '',
     'Counter'  => '',
     'Str'      => 'STR',
@@ -215,7 +219,7 @@ sub name_alias_comment {
         }
     }
     elsif ($PRINT_ISA) {
-        $opt .= '=' . ( $self->isa_name || $isa_name{ $self->isa } );
+        $opt .= '=' . ( $self->isa_name || $isa2name{ $self->isa } );
     }
 
     $opt = '--' . $opt;
@@ -259,6 +263,8 @@ sub BUILD {
     $self->name( $self->class =~ s/.*://r ) unless $self->name;
 }
 
+has abbrev => ( is => 'ro', );
+
 has args => (
     is      => 'ro',
     default => sub { [] },
@@ -293,6 +299,11 @@ has parent => (
 has subcmds => (
     is      => 'ro',
     default => sub { [] },
+);
+
+has usage_style => (
+    is      => 'rw',
+    default => OptArgs2::STYLE_NORMAL,
 );
 
 sub build_args_opts {
@@ -335,17 +346,21 @@ sub parents {
     return ( $self->parent, $self->parent->parents );
 }
 
+sub result {
+    my $self = shift;
+    return OptArgs2::Result->new(@_);
+}
+
 sub usage {
-    my $self   = shift;
-    my $style  = shift;
-    my $ishelp = shift;
+    my $self = shift;
+    my $style = shift || $self->usage_style;
 
     my @parents = $self->parents;
     my @usage;
     my @uargs;
     my @uopts;
 
-    my $usage = '';
+    my $usage = 'usage: ';
     $usage .= join( ' ', map { $_->name } @parents ) . ' ' if @parents;
     $usage .= $self->name;
 
@@ -419,9 +434,7 @@ sub usage {
         }
     }
 
-    $usage .= "\n";
-
-    return OptArgs2::Result->new( 'Usage', $usage );
+    return $usage .= "\n";
 }
 
 sub usage_tree {
@@ -440,7 +453,9 @@ sub usage_tree {
 package OptArgs2;
 use strict;
 use warnings;
-use Carp 'croak';
+use Carp qw/croak/;
+use Encode qw/decode/;
+use Getopt::Long qw/GetOptionsFromArray/;
 use Exporter qw/import/;
 use OptArgs2::Mo;
 
@@ -508,479 +523,15 @@ sub opt {
     $OptArgs2::COMMAND->add_opt( OptArgs2::Opt->new( name => $name, @_ ) );
 }
 
+# ------------------------------------------------------------------------
+# Option/Argument processing
+# ------------------------------------------------------------------------
 sub class_optargs {
     my $class = shift || croak('class_optargs($CLASS, [@argv])');
     my $cmd = $command{$class} || croak( 'command class not found: ' . $class );
 
-    # for the moment fake
-    print $cmd->usage(OptArgs2::STYLE_NORMAL);
-    require App::job;
-    return ( 'App::job', { usage => 1 } );
-}
-
-1;
-
-__END__
-
-package OptArgs2;
-use strict;
-use warnings;
-use Carp qw/croak carp/;
-use Encode qw/decode/;
-use Exporter::Tidy
-  default => [qw/opt arg optargs usage subcmd/],
-  other   => [qw/dispatch class_optargs/];
-use Getopt::Long qw/GetOptionsFromArray/;
-use List::Util qw/max/;
-
-our $VERSION       = '0.1.19_2';
-our $COLOUR        = 0;
-our $ABBREV        = 0;
-our $SORT          = 0;
-our $PRINT_DEFAULT = 0;
-our $PRINT_ISA     = 0;
-
-my %seen;           # hash of hashes keyed by 'caller', then opt/arg name
-my %opts;           # option configuration keyed by 'caller'
-my %args;           # argument configuration keyed by 'caller'
-my %caller;         # current 'caller' keyed by real caller
-my %desc;           # sub-command descriptions
-my %dispatching;    # track optargs() calls from dispatch classes
-my %hidden;         # subcmd hiding by default
-
-# internal function for App::optargs
-sub _cmdlist {
-    return sort grep { $_ ne 'App::optargs' } keys %seen;
-}
-
-# ------------------------------------------------------------------------
-# Sub-command definition
-#
-# This works by faking caller context in opt() and arg()
-# ------------------------------------------------------------------------
-my %subcmd_params = (
-    cmd     => undef,
-    comment => undef,
-    hidden  => undef,
-
-    #    alias   => '',
-    #    ishelp  => undef,
-);
-
-my @subcmd_required = (qw/cmd comment/);
-
-sub subcmd {
-    my $params = {@_};
-    my $caller = caller;
-
-    if ( my @missing = grep { !exists $params->{$_} } @subcmd_required ) {
-        croak "missing required parameter(s): @missing";
-    }
-
-    if ( my @invalid = grep { !exists $subcmd_params{$_} } keys %$params ) {
-        my @valid = keys %subcmd_params;
-        croak "invalid parameter(s): @invalid (valid: @valid)";
-    }
-
-    #    croak "'ishelp' can only be applied to Bool opts"
-    #      if $params->{ishelp} and $params->{isa} ne 'Bool';
-
-    my @cmd =
-      ref $params->{cmd} eq 'ARRAY'
-      ? @{ $params->{cmd} }
-      : ( $params->{cmd} );
-    croak 'missing cmd elements' unless @cmd;
-
-    my $name = pop @cmd;
-    my $parent = join( '::', $caller, @cmd );
-    $parent =~ s/-/_/g;
-
-    croak "parent command not found: @cmd" unless $seen{$parent};
-
-    my $package = $parent . '::' . $name;
-    $package =~ s/-/_/g;
-
-    croak "sub command already defined: @cmd $name" if $seen{$package};
-
-    $caller{$caller}  = $package;
-    $desc{$package}   = $params->{comment};
-    $seen{$package}   = {};
-    $opts{$package}   = [];
-    $args{$package}   = [];
-    $hidden{$package} = $params->{hidden};
-
-    my $parent_arg = ( grep { $_->{isa} eq 'SubCmd' } @{ $args{$parent} } )[0];
-    push( @{ $parent_arg->{subcommands} }, $name );
-
-    return;
-}
-
-# ------------------------------------------------------------------------
-# Option definition
-# ------------------------------------------------------------------------
-my %opt_params = (
-    isa      => undef,
-    isa_name => undef,
-    comment  => undef,
-    default  => undef,
-    alias    => '',
-    ishelp   => undef,
-    hidden   => undef,
-);
-
-my @opt_required = (qw/isa comment/);
-
-my %opt_isa = (
-    'Bool'     => '!',
-    'Counter'  => '+',
-    'Str'      => '=s',
-    'Int'      => '=i',
-    'Num'      => '=f',
-    'ArrayRef' => '=s@',
-    'HashRef'  => '=s%',
-);
-
-sub opt {
-    my $name    = shift;
-    my $params  = {@_};
-    my $caller  = caller;
-    my $package = $caller{$caller} || $caller;
-
-    croak 'usage: opt $name => (%parameters)' unless $name;
-    croak "'$name' already defined" if $seen{$package}->{$name};
-
-    if ( my @missing = grep { !exists $params->{$_} } @opt_required ) {
-        croak "missing required parameter(s): @missing";
-    }
-
-    if ( my @invalid = grep { !exists $opt_params{$_} } keys %$params ) {
-        my @valid = keys %opt_params;
-        croak "invalid parameter(s): @invalid (valid: @valid)";
-    }
-
-    croak "'ishelp' can only be applied to Bool opts"
-      if $params->{ishelp} and $params->{isa} ne 'Bool';
-
-    croak "unknown type: $params->{isa}"
-      unless exists $opt_isa{ $params->{isa} };
-
-    $params = { %opt_params, %$params };
-    $params->{package} = $package;
-    $params->{name}    = $name;
-    $params->{length}  = length $name;
-    $params->{acount}  = do { my @tmp = split( '|', $params->{alias} ) };
-    $params->{type}    = 'opt';
-    $params->{ISA}     = $params->{name};
-
-    if ( ( my $dashed = $params->{name} ) =~ s/_/-/g ) {
-        $params->{dashed} = $dashed;
-        $params->{ISA} .= '|' . $dashed;
-    }
-
-    $params->{ISA} .= '|' . $params->{alias} if $params->{alias};
-    $params->{ISA} .= $opt_isa{ $params->{isa} };
-
-    push( @{ $opts{$package} }, $params );
-    $args{$package} ||= [];
-    $seen{$package}->{$name}++;
-
-    return;
-}
-
-# ------------------------------------------------------------------------
-# Argument definition
-# ------------------------------------------------------------------------
-my %arg_params = (
-    isa      => undef,
-    comment  => undef,
-    required => undef,
-    default  => undef,
-    greedy   => undef,
-    fallback => undef,
-);
-
-my @arg_required = (qw/isa comment/);
-
-my %arg_isa = (
-    'Str'      => '=s',
-    'Int'      => '=i',
-    'Num'      => '=f',
-    'ArrayRef' => '=s@',
-    'HashRef'  => '=s%',
-    'SubCmd'   => '=s',
-);
-
-sub arg {
-    my $name    = shift;
-    my $params  = {@_};
-    my $caller  = caller;
-    my $package = $caller{$caller} || $caller;
-
-    croak 'usage: arg $name => (%parameters)' unless $name;
-    croak "'$name' already defined" if $seen{$package}->{$name};
-
-    if ( my @missing = grep { !exists $params->{$_} } @arg_required ) {
-        croak "missing required parameter(s): @missing";
-    }
-
-    if ( my @invalid = grep { !exists $arg_params{$_} } keys %$params ) {
-        my @valid = keys %arg_params;
-        croak "invalid parameter(s): @invalid (valid: @valid)";
-    }
-
-    croak "unknown type: $params->{isa}"
-      unless exists $arg_isa{ $params->{isa} };
-
-    croak "'default' and 'required' cannot be used together"
-      if defined $params->{default} and defined $params->{required};
-
-    croak "'fallback' only valid with isa 'SubCmd'"
-      if $params->{fallback} and $params->{isa} ne 'SubCmd';
-
-    croak "fallback must be a hashref"
-      if defined $params->{fallback} && ref $params->{fallback} ne 'HASH';
-
-    $params->{package} = $package;
-    $params->{name}    = $name;
-    $params->{length}  = length $name;
-    $params->{acount}  = 0;
-    $params->{type}    = 'arg';
-    $params->{ISA}     = $params->{name} . $arg_isa{ $params->{isa} };
-
-    push( @{ $args{$package} }, $params );
-    $opts{$package} ||= [];
-    $seen{$package}->{$name}++;
-
-    if ( $params->{fallback} ) {
-        my $p = $package . '::' . uc $params->{fallback}->{name};
-        $p =~ s/-/_/g;
-        $opts{$p} = [];
-        $args{$p} = [];
-        $desc{$p} = $params->{fallback}->{comment};
-    }
-
-    return;
-}
-
-# ------------------------------------------------------------------------
-# Usage message generation
-# ------------------------------------------------------------------------
-
-sub _usage {
-    my $caller   = shift;
-    my $error    = shift;
-    my $ishelp   = shift;
-    my $terminal = -t STDOUT;
-    my $red      = ( $COLOUR && $terminal ) ? "\e[0;31m" : '';
-    my $yellow = '';    #( $COLOUR && $terminal ) ? "\e[0;33m" : '';
-    my $grey   = '';    #( $COLOUR && $terminal ) ? "\e[1;30m" : '';
-    my $reset  = ( $COLOUR && $terminal ) ? "\e[0m" : '';
-    my $parent = $caller;
-    my @args   = @{ $args{$caller} };
-    my @opts   = @{ $opts{$caller} };
-    my @parents;
-    my @usage;
-    my @uargs;
-    my @uopts;
-    my $usage;
-
-    require File::Basename;
-    my $me = File::Basename::basename( defined &static::list ? $^X : $0 );
-
-    if ($error) {
-        $usage .= "${red}error:$reset $error\n\n";
-    }
-
-    $usage .= $yellow . ( $ishelp ? 'help:' : 'usage:' ) . $reset . ' ' . $me;
-
-    while ( $parent =~ s/(.*)::(.*)/$1/ ) {
-        last unless $seen{$parent};
-        ( my $name = $2 ) =~ s/_/-/g;
-        unshift( @parents, $name );
-        unshift( @opts,    @{ $opts{$parent} } );
-    }
-
-    $usage .= ' ' . join( ' ', @parents ) if @parents;
-
-    my $last = $args[$#args];
-
-    if ($last) {
-        foreach my $def (@args) {
-            $usage .= ' ';
-            $usage .= '[' unless $def->{required};
-            $usage .= uc $def->{name};
-            $usage .= '...' if $def->{greedy};
-            $usage .= ']' unless $def->{required};
-            push( @uargs, [ uc $def->{name}, $def->{comment} ] );
-        }
-    }
-
-    $usage .= ' [OPTIONS...]' if @opts;
-
-    $usage .= "\n";
-
-    $usage .= "\n  ${grey}Synopsis:$reset\n    $desc{$caller}\n"
-      if $ishelp and $desc{$caller};
-
-    if ( $ishelp and my $version = $caller->VERSION ) {
-        $usage .= "\n  ${grey}Version:$reset\n    $version\n";
-    }
-
-    if ( $last && $last->{isa} eq 'SubCmd' ) {
-        $usage .= "\n  ${grey}" . ucfirst( $last->{name} ) . ":$reset\n";
-
-        my @subcommands = @{ $last->{subcommands} };
-
-        push( @subcommands, uc $last->{fallback}->{name} )
-          if (
-            exists $last->{fallback}
-            && ( $ishelp
-                or !$last->{fallback}->{hidden} )
-          );
-
-        @subcommands = sort @subcommands if $SORT;
-
-        foreach my $subcommand (@subcommands) {
-            my $pkg = $last->{package} . '::' . $subcommand;
-            $pkg =~ s/-/_/g;
-            next if $hidden{$pkg} and !$ishelp;
-            push( @usage, [ $subcommand, $desc{$pkg} ] );
-        }
-
-    }
-
-    @opts = sort { $a->{name} cmp $b->{name} } @opts if $SORT;
-
-    foreach my $opt (@opts) {
-        next if $opt->{hidden} and !$ishelp;
-
-        ( my $name = $opt->{name} ) =~ s/_/-/g;
-
-        if ( $opt->{isa} eq 'Bool' and $opt->{default} ) {
-            $name = 'no-' . $name;
-        }
-        elsif ( $opt->{isa} eq 'Bool' and not defined $opt->{default} ) {
-            $name = '[no-]' . $name;
-        }
-
-        my $default = '';
-        if ( $PRINT_DEFAULT && defined $opt->{default} and !$opt->{ishelp} ) {
-            my $value =
-              ref $opt->{default} eq 'CODE'
-              ? $opt->{default}->( {%$opt} )
-              : $opt->{default};
-            if ( $opt->{isa} eq 'Bool' ) {
-                $value = $value ? 'true' : 'false';
-            }
-            $default = " [default: $value]";
-        }
-
-        if ($PRINT_ISA) {
-            if ( $opt->{isa_name} ) {
-                $name .= '=' . uc $opt->{isa_name};
-            }
-            elsif ($opt->{isa} eq 'Str'
-                || $opt->{isa} eq 'HashRef'
-                || $opt->{isa} eq 'ArrayRef' )
-            {
-                $name .= '=STR';
-            }
-            elsif ( $opt->{isa} eq 'Int' ) {
-                $name .= '=INT';
-            }
-            elsif ( $opt->{isa} eq 'Num' ) {
-                $name .= '=NUM';
-            }
-        }
-
-        $name .= ',' if $opt->{alias};
-        push(
-            @uopts,
-            [
-                '--' . $name,
-                $opt->{alias}
-                ? '-' . $opt->{alias}
-                : '',
-                $opt->{comment} . $default
-            ]
-        );
-    }
-
-    if (@uopts) {
-        my $w1 = max( map { length $_->[0] } @uopts );
-        my $fmt = '%-' . $w1 . "s %s";
-
-        @uopts = map { [ sprintf( $fmt, $_->[0], $_->[1] ), $_->[2] ] } @uopts;
-    }
-
-    my $w1 = max( map { length $_->[0] } @usage, @uargs, @uopts );
-    my $format = '    %-' . $w1 . "s   %s\n";
-
-    if (@usage) {
-        foreach my $row (@usage) {
-            $usage .= sprintf( $format, @$row );
-        }
-    }
-    if ( @uargs and $last->{isa} ne 'SubCmd' ) {
-        $usage .= "\n  ${grey}Arguments:$reset\n";
-        foreach my $row (@uargs) {
-            $usage .= sprintf( $format, @$row );
-        }
-    }
-    if (@uopts) {
-        $usage .= "\n  ${grey}Options:$reset\n";
-        foreach my $row (@uopts) {
-            $usage .= sprintf( $format, @$row );
-        }
-    }
-
-    $usage .= "\n";
-    return bless( \$usage, 'OptArgs2::Usage' );
-}
-
-sub _synopsis {
-    my $caller = shift;
-    my $parent = $caller;
-    my @args   = @{ $args{$caller} };
-    my @parents;
-
-    require File::Basename;
-    my $usage = File::Basename::basename($0);
-
-    while ( $parent =~ s/(.*)::(.*)/$1/ ) {
-        last unless $seen{$parent};
-        ( my $name = $2 ) =~ s/_/-/g;
-        unshift( @parents, $name );
-    }
-
-    $usage .= ' ' . join( ' ', @parents ) if @parents;
-
-    if ( my $last = $args[$#args] ) {
-        foreach my $def (@args) {
-            $usage .= ' ';
-            $usage .= '[' unless $def->{required};
-            $usage .= uc $def->{name};
-            $usage .= '...' if $def->{greedy};
-            $usage .= ']' unless $def->{required};
-        }
-    }
-
-    return 'usage: ' . $usage . "\n";
-}
-
-sub usage {
-    my $caller = caller;
-    return _usage( $caller, @_ );
-}
-
-# ------------------------------------------------------------------------
-# Option/Argument processing
-# ------------------------------------------------------------------------
-sub _optargs {
-    my $caller      = shift;
     my $source      = \@_;
     my $source_hash = {};
-    my $package     = $caller;
 
     if ( !@_ and @ARGV ) {
         my $CODESET =
@@ -1000,13 +551,11 @@ sub _optargs {
 
     map { Carp::croak('_optargs argument undefined!') if !defined $_ } @$source;
 
-    croak "no option or argument defined for $caller"
-      unless exists $opts{$package}
-      or exists $args{$package};
-
     Getopt::Long::Configure(qw/pass_through no_auto_abbrev no_ignore_case/);
 
-    my @config = ( @{ $opts{$package} }, @{ $args{$package} } );
+    $cmd->build_args_opts;
+
+    my @config = ( @{ $cmd->opts }, @{ $cmd->args } );
 
     my $ishelp;
     my $missing_required;
@@ -1016,36 +565,41 @@ sub _optargs {
     while ( my $try = shift @config ) {
         my $result;
 
-        if ( $try->{type} eq 'opt' ) {
-            if ( exists $source_hash->{ $try->{name} } ) {
-                $result = delete $source_hash->{ $try->{name} };
+        if ( $try->SUPER::isa('OptArgs2::Opt') ) {
+            if ( exists $source_hash->{ $try->name } ) {
+                $result = delete $source_hash->{ $try->name };
             }
             else {
-                GetOptionsFromArray( $source, $try->{ISA} => \$result );
+                GetOptionsFromArray( $source, $try->getopt => \$result );
             }
+
         }
-        elsif ( $try->{type} eq 'arg' ) {
+        if ( $try->SUPER::isa('OptArgs2::Arg') ) {
+
             if (@$source) {
-                die _usage( $package, qq{Unknown option "$source->[0]"} )
+
+                die $cmd->result( 'Error::UnknownOption',
+                    qq{error: unknown option "$source->[0]"\n\n} . $cmd->usage )
                   if $source->[0] =~ m/^--\S/;
 
-                die _usage( $package, qq{Unknown option "$source->[0]"} )
+                die $cmd->result( 'Error::UnknownOption',
+                    qq{error: unknown option "$source->[0]"\n\n} . $cmd->usage )
                   if $source->[0] =~ m/^-\S/
                   and !(
-                    $source->[0] =~ m/^-\d/ and ( $try->{isa} ne 'Num'
-                        or $try->{isa} ne 'Int' )
+                    $source->[0] =~ m/^-\d/ and ( $try->isa ne 'Num'
+                        or $try->isa ne 'Int' )
                   );
 
-                if ( $try->{greedy} ) {
+                if ( $try->greedy ) {
                     my @later;
                     if ( @config and @$source > @config ) {
                         push( @later, pop @$source ) for @config;
                     }
 
-                    if ( $try->{isa} eq 'ArrayRef' ) {
+                    if ( $try->isa eq 'ArrayRef' ) {
                         $result = [@$source];
                     }
-                    elsif ( $try->{isa} eq 'HashRef' ) {
+                    elsif ( $try->isa eq 'HashRef' ) {
                         $result = { map { split /=/, $_ } @$source };
                     }
                     else {
@@ -1056,10 +610,10 @@ sub _optargs {
                     push( @$source, @later );
                 }
                 else {
-                    if ( $try->{isa} eq 'ArrayRef' ) {
+                    if ( $try->isa eq 'ArrayRef' ) {
                         $result = [ shift @$source ];
                     }
-                    elsif ( $try->{isa} eq 'HashRef' ) {
+                    elsif ( $try->isa eq 'HashRef' ) {
                         $result = { split /=/, shift @$source };
                     }
                     else {
@@ -1069,45 +623,55 @@ sub _optargs {
 
                 # TODO: type check using Param::Utils?
             }
-            elsif ( exists $source_hash->{ $try->{name} } ) {
-                $result = delete $source_hash->{ $try->{name} };
+            elsif ( exists $source_hash->{ $try->name } ) {
+                $result = delete $source_hash->{ $try->name };
             }
-            elsif ( $try->{required} and !$ishelp ) {
+            elsif ( $try->required and !$ishelp ) {
                 $missing_required++;
                 next;
             }
 
-            if ( $try->{isa} eq 'SubCmd' and $result ) {
+            if ( $result and $try->isa eq 'SubCmd' ) {
 
-                # look up abbreviated words
-                if ($ABBREV) {
-                    require Text::Abbrev;
-                    my %words =
-                      map { m/^$package\:\:(\w+)$/; $1 => 1 }
-                      grep { m/^$package\:\:(\w+)$/ }
-                      keys %seen;
-                    my %abbrev = Text::Abbrev::abbrev( keys %words );
-                    $result = $abbrev{$result} if defined $abbrev{$result};
-                }
+    # look up abbreviated words
+    #                if ($cmd->abbrev) {
+    #                    require Text::Abbrev;
+    #                    my %words =
+    #                      map { m/^$package\:\:(\w+)$/; $1 => 1 }
+    #                      grep { m/^$package\:\:(\w+)$/ }
+    #                      keys %command;
+    #                    my %abbrev = Text::Abbrev::abbrev( keys %words );
+    #                    $result = $abbrev{$result} if defined $abbrev{$result};
+    #                }
 
-                my $newpackage = $package . '::' . $result;
-                $newpackage =~ s/-/_/g;
+                my $new_class = $class . '::' . $result;
+                $new_class =~ s/-/_/g;
 
-                if ( exists $seen{$newpackage} ) {
-                    $package = $newpackage;
-                    @config = grep { $_->{type} eq 'opt' } @config;
-                    push( @config, @{ $opts{$package} }, @{ $args{$package} } );
+                if ( exists $command{$new_class} ) {
+                    $cmd = $command{$new_class};
+                    $cmd->build_args_opts;
+
+                    # Ignoring any remaining arguments
+                    @config =
+                      grep { ref($_)->SUPER::isa('OptArgs2::Opt') } @config;
+                    push( @config, @{ $cmd->opts }, @{ $cmd->args } );
                 }
                 elsif ( !$ishelp ) {
-                    if ( $try->{fallback} ) {
+                    if ( $try->fallback ) {
                         unshift @$source, $result;
-                        $try->{fallback}->{type} = 'arg';
-                        unshift( @config, $try->{fallback} );
+
+                      #                        $try->{fallback}->{type} = 'arg';
+                        unshift( @config, $try->fallback );
                         next;
                     }
                     else {
-                        die _usage( $package,
-                            "Unknown " . uc( $try->{name} ) . qq{ "$result"} );
+                        die $cmd->result(
+                            'Error::Unknown' . uc( $try->name ),
+                            'unknown '
+                              . uc( $try->name )
+                              . qq{ "$result"\n\n}
+                              . $cmd->usage
+                        );
                     }
                 }
 
@@ -1117,30 +681,34 @@ sub _optargs {
         }
 
         if ( defined $result ) {
-            $optargs->{ $try->{name} } = $result;
+            $optargs->{ $try->name } = $result;
         }
-        elsif ( defined $try->{default} ) {
-            push( @coderef_default_keys, $try->{name} )
-              if ref $try->{default} eq 'CODE';
-            $optargs->{ $try->{name} } = $result = $try->{default};
+        elsif ( defined $try->default ) {
+            push( @coderef_default_keys, $try->name )
+              if ref $try->default eq 'CODE';
+            $optargs->{ $try->name } = $result = $try->default;
         }
 
-        $ishelp = 1 if $result and $try->{ishelp};
+        $ishelp = 1
+          if $result and ( $try->SUPER::isa('OptArgs2::Opt') && $try->ishelp );
 
     }
 
     if ($ishelp) {
-        die _usage( $package, undef, 1 );
+        die $cmd->result( 'Help', $cmd->usage(OptArgs2::STYLE_FULL) );
     }
     elsif ($missing_required) {
-        die _usage($package);
+        die $cmd->result( 'Error::MissingRequired', $cmd->usage );
     }
     elsif (@$source) {
-        die _usage( $package, "Unexpected options or arguments: @$source" );
+        die $cmd->result( 'Error::UnexpectedOptArgs',
+            "error: unexpected option(s) or argument(s): @$source\n\n"
+              . $cmd->usage );
     }
     elsif ( my @unexpected = keys %$source_hash ) {
-        die _usage( $package,
-            "Unexpected HASH options or arguments: @unexpected" );
+        die $cmd->result( 'Error::UnexpectedHashOptArgs',
+            "error: unexpected HASH options or arguments: @unexpected\n\n"
+              . $cmd->usage );
     }
 
     # Re-calculate the default if it was a subref
@@ -1148,59 +716,16 @@ sub _optargs {
         $optargs->{$key} = $optargs->{$key}->( {%$optargs} );
     }
 
-    return ( $package, $optargs );
+    return ( $cmd->class, $optargs );
 }
 
-sub optargs {
-    my $caller = caller;
-
-    carp "optargs() called from dispatch handler"
-      if $dispatching{$caller};
-
-    my ( $package, $optargs ) = _optargs( $caller, @_ );
-    return $optargs;
-}
-
-sub class_optargs {
-    my $caller = shift;
-
-    croak 'dispatch($class, [@argv])' unless $caller;
-    carp "optargs_class() called from dispatch handler"
-      if $dispatching{$caller};
-
-    die $@ unless eval "require $caller;";
-
-    my ( $class, $optargs ) = _optargs( $caller, @_ );
-
-    croak $@ unless eval "require $class;1;";
-    return ( $class, $optargs );
-}
-
-sub dispatch {
-    my $method = shift;
-    my $class  = shift;
-
-    croak 'dispatch($method, $class, [@argv])' unless $method and $class;
-    croak $@ unless eval "require $class;1;";
-
-    my ( $package, $optargs ) = class_optargs( $class, @_ );
-
-    my $sub = $package->can($method);
-    die "Can't find method $method via package $package" unless $sub;
-
-    $dispatching{$class}++;
-    my @results = $sub->($optargs);
-    $dispatching{$class}--;
-    return @results if wantarray;
-    return $results[0];
-}
-
+1;
 
 __END__
 
 =head1 NAME
 
-OptArgs2 - integrated argument and option processing
+OptArgs2 - argument and option processor for scripts
 
 =head1 VERSION
 
@@ -1614,7 +1139,7 @@ following table:
      'ArrayRef'      's@'
      'HashRef'       's%'
 
-=item isa_name
+=item isa2name
 
 When C<$OptArgs2::PRINT_ISA> is set to a true value, this value will be
 printed instead of the generic value from C<isa>.

@@ -13,20 +13,20 @@ cmd 'App::job' => (
 
         arg command => (
             isa      => 'SubCmd',
-            comment  => 'action to take',
-            required => 1,
+            comment  => 'action to take, one of:',
             fallback => {
                 name    => 'fallback',
                 isa     => 'Str',
+                hidden  => 1,
                 comment => 'the fallback argument',
             },
         );
 
-        arg other => (
-            isa      => 'Str',
-            comment  => 'action to take',
-            required => 1,
-        );
+        #        arg other => (
+        #            isa      => 'Str',
+        #            comment  => 'action to take',
+        #            required => 1,
+        #        );
 
         opt help => (
             isa     => 'Bool',
@@ -93,5 +93,13 @@ subcmd 'App::job::stop' => (
 );
 
 my ( $class, $opts ) = class_optargs('App::job');
-$class->new->run($opts);
+if ( exists $opts->{usage} && $opts->{usage} ) {
+    print OptArgs2::get_cmd($class)->usage_tree;
+}
+else {
+    print $class. ' ' . Dumper($opts);
+}
+
+#eval "require $class" or die $@;
+#$class->new->run($opts);
 
