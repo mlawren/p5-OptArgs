@@ -2,6 +2,8 @@ blib/
 cover_db/
 .direnv
 .envrc
+_build
+Build
 lib/Getopt
 Makefile
 Makefile.old
