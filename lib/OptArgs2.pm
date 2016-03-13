@@ -116,7 +116,7 @@ sub name_comment {
                     ? uc( $_->name )
                     : $_->name
                   ),
-                '  ' . $_->comment
+                '' . $_->comment
             ]
           }
           sort { $a->name cmp $b->name }
@@ -482,7 +482,8 @@ sub subcmd {
     croak "sub-command already defined: $class"
       if exists $command{$class};
 
-    croak "no '::' in class - must have a parent" unless $class =~ m/::/;
+    croak "no '::' in class '$class' - must have a parent"
+      unless $class =~ m/::/;
 
     my $parent_class = $class =~ s/(.*)::.*/$1/r;
     croak "parent class not found" unless exists $command{$parent_class};
@@ -512,7 +513,7 @@ sub class_optargs {
     my $cmd = $command{$class} || croak( 'command class not found: ' . $class );
 
     # for the moment fake
-    print $cmd->usage(OptArgs2::STYLE_FULL);
+    print $cmd->usage(OptArgs2::STYLE_NORMAL);
     require App::job;
     return ( 'App::job', { usage => 1 } );
 }
