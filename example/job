@@ -15,11 +15,11 @@ cmd 'App::job' => (
             isa      => 'SubCmd',
             comment  => 'action to take',
             required => 1,
-            fallback => [
+            fallback => {
                 name    => 'fallback',
                 isa     => 'Str',
                 comment => 'the fallback argument',
-            ],
+            },
         );
 
         arg other => (

@@ -94,7 +94,7 @@ my %arg_isa = (
 
 sub BUILD {
     my $self = shift;
-    $self->fallback( OptArgs2::Fallback->new( @{ $self->fallback } ) )
+    $self->fallback( OptArgs2::Fallback->new( %{ $self->fallback } ) )
       if $self->fallback;
 }
 
