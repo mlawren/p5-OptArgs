@@ -306,10 +306,12 @@ has usage_style => (
     default => OptArgs2::STYLE_NORMAL,
 );
 
+our $CURRENT;
+
 sub build_args_opts {
     my $self = shift;
     return unless ref $self->optargs eq 'CODE';
-    local $OptArgs2::COMMAND = $self;
+    local $CURRENT = $self;
     $self->optargs->();
     $self->optargs(undef);
 }
@@ -464,7 +466,6 @@ use OptArgs2::Mo;
 
 our $VERSION = '0.0.1_1';
 our @EXPORT  = (qw/arg cmd class_optargs opt subcmd/);
-our $COMMAND;
 
 my %command;
 
@@ -517,12 +518,12 @@ sub subcmd {
 
 sub arg {
     my $name = shift;
-    $OptArgs2::COMMAND->add_arg( OptArgs2::Arg->new( name => $name, @_ ) );
+    $OptArgs2::Cmd::CURRENT->add_arg( OptArgs2::Arg->new( name => $name, @_ ) );
 }
 
 sub opt {
     my $name = shift;
-    $OptArgs2::COMMAND->add_opt( OptArgs2::Opt->new( name => $name, @_ ) );
+    $OptArgs2::Cmd::CURRENT->add_opt( OptArgs2::Opt->new( name => $name, @_ ) );
 }
 
 # ------------------------------------------------------------------------
