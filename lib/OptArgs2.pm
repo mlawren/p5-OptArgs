@@ -307,7 +307,7 @@ has usage_style => (
 
 our $CURRENT;
 
-sub build_args_opts {
+sub run_optargs {
     my $self = shift;
     return unless ref $self->optargs eq 'CODE';
     local $CURRENT = $self;
@@ -368,7 +368,7 @@ sub usage {
     $usage .= join( ' ', map { $_->name } @parents ) . ' ' if @parents;
     $usage .= $self->name;
 
-    $self->build_args_opts;
+    $self->run_optargs;
 
     my @args = @{ $self->args };
     foreach my $arg (@args) {
@@ -561,7 +561,7 @@ sub cmd_optargs {
 
     Getopt::Long::Configure(qw/pass_through no_auto_abbrev no_ignore_case/);
 
-    $cmd->build_args_opts;
+    $cmd->run_optargs;
 
     my @config = ( @{ $cmd->opts }, @{ $cmd->args } );
 
@@ -657,7 +657,7 @@ sub cmd_optargs {
 
                 if ( exists $command{$new_class} ) {
                     $cmd = $command{$new_class};
-                    $cmd->build_args_opts;
+                    $cmd->run_optargs;
 
                     # Ignoring any remaining arguments
                     @config =
