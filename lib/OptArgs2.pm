@@ -210,13 +210,15 @@ sub name_alias_comment {
     my $PRINT_DEFAULT = 1;
     my $PRINT_ISA     = 1;
 
-    my $opt = $self->name =~ s/_/-/gr;
+    $self->default( $self->default->( {%$self} ) )
+      if 'CODE' eq ref $self->default;
 
+    my $opt = $self->name =~ s/_/-/gr;
     if ( $self->isa eq 'Bool' ) {
-        if ( $self->isa eq 'Bool' and $self->default ) {
+        if ( $self->default ) {
             $opt = 'no-' . $opt;
         }
-        elsif ( $self->isa eq 'Bool' and not defined $self->default ) {
+        elsif ( not defined $self->default ) {
             $opt = '[no-]' . $opt;
         }
     }
@@ -236,16 +238,8 @@ sub name_alias_comment {
     }
 
     my $comment = $self->comment;
-    if ( $PRINT_DEFAULT && defined( my $default = $self->default ) ) {
-        my $value =
-          ref $default eq 'CODE'
-          ? $default->( {%$opt} )
-          : $default;
-
-        if ( $self->isa eq 'Bool' ) {
-            $value = $value ? 'true' : 'false';
-        }
-
+    if ( $PRINT_DEFAULT && defined( my $value = $self->default ) ) {
+        $value = $value ? 'true' : 'false' if $self->isa eq 'Bool';
         $comment .= " [default: $value]";
     }
 
