@@ -468,7 +468,7 @@ use Exporter qw/import/;
 use OptArgs2::Mo;
 
 our $VERSION = '0.0.1_1';
-our @EXPORT  = (qw/arg cmd class_optargs opt subcmd/);
+our @EXPORT  = (qw/arg cmd cmd_optargs opt subcmd/);
 
 my %command;
 
@@ -532,8 +532,8 @@ sub opt {
 # ------------------------------------------------------------------------
 # Option/Argument processing
 # ------------------------------------------------------------------------
-sub class_optargs {
-    my $class = shift || croak('class_optargs($CLASS, [@argv])');
+sub cmd_optargs {
+    my $class = shift || croak('cmd_optargs($CLASS, [@argv])');
     my $cmd = $command{$class} || croak( 'command class not found: ' . $class );
 
     my $source      = \@_;
