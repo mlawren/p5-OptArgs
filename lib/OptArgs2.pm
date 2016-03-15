@@ -251,7 +251,7 @@ use strict;
 use warnings;
 use overload
   bool     => sub { 1 },
-  '""'     => 'class',
+  '""'     => sub { shift->class },
   fallback => 1;
 use OptArgs2::Mo;
 use List::Util qw/max/;
