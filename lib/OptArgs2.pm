@@ -493,13 +493,6 @@ sub cmd {
     return $cmd;
 }
 
-sub get_cmd {
-    my $class = shift;
-    return exists $command{$class}
-      ? $command{$class}
-      : croak( 'command not found: ' . $class );
-}
-
 sub subcmd {
     my $class = shift || Carp::confess('cmd($CLASS,@args)');
 
@@ -811,11 +804,12 @@ following:
 
 =over
 
-=item Bool options with no default display as "--[no-]bool"
+=item Obvious API changes: cmd(), subcmd(), cmd_optargs()
 
-A Bool option without a default is now shown with the "[no-]" prefix
-unless a default has been provided, in which case either "--bool" (for
-default = false) or "--no-bool" (for default = true) is shown.
+Commands and subcommands must now be explicitly defined using C<cmd()>
+and C<subcmd()>. The old C<class_optargs()> has been renamed to
+C<cmd_optargs()>. The old C<optargs()> function has been removed
+completely.
 
 =item A new Flag option type
 
@@ -832,6 +826,15 @@ things off:
     );
 
     # do { } unless $opts->{no_foo}
+
+=item Bool options with no default display as "--[no-]bool"
+
+A Bool option without a default is now shown with the "[no-]" prefix
+unless a default has been provided, in which case either "--bool" (for
+default = false) or "--no-bool" (for default = true) is shown.
+
+What this means in practise is that many of your existing Bool options
+should possibly become Flag options instead.
 
 =item The "ishelp" option parameter is no longer supported.
 
@@ -1204,10 +1207,6 @@ I<combined>.
 As an aid for testing, if the passed in argument C<@argv> (not @ARGV)
 contains a HASH reference, the key/value combinations of the hash will
 be added as options. An undefined value means a boolean option.
-
-=item usage( [$message] ) -> Str
-
-Returns a usage string prefixed with $message if given.
 
 =back
 
