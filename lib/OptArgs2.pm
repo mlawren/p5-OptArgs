@@ -778,7 +778,7 @@ OptArgs2 - command-line argument and option processor
 
 =head1 DESCRIPTION
 
-B<OptArgs2> processes command line options I<and> arguments, with
+B<OptArgs2> processes command line options I<and arguments>, with
 support for sub-commands. It helps you build applications with a
 hierarchical command structure like so:
 
@@ -802,8 +802,8 @@ when arguments are missing or options are invalid:
         --quiet,   -q   a quiet global option
 
 
-This module is duplicated as L<Getopt::Args2>, to cover both its
-original name and yet still be found in the mess that is Getopt::*.
+This module is duplicated on CPAN as L<Getopt::Args2>, to cover both
+its original name and yet still be found in the mess that is Getopt::*.
 
 =head2 Differences Between OptArgs and OptArgs2
 
@@ -817,12 +817,38 @@ following:
 
 =over
 
+=item Bool options with no default display as "--[no-]bool"
+
+A Bool option without a default is now shown with the "[no-]" prefix
+unless a default has been provided, in which case either "--bool" (for
+default = false) or "--no-bool" (for default = true) is shown.
+
+=item A new 'Boo' option type
+
+The Boo option type is like a Bool that can only be set to true or left
+undefined. This makes sense for things such as C<--help> or
+C<--version> for which you never need to see a "--no" prefix.
+
+It also makes sense for "negative" options which will only ever turn
+things off:
+
+    opt no_foo => (
+        isa     => 'Boo',
+        comment => 'disable the foo feature',
+    );
+
+    # do { } unless $opts->{no_foo}
+
 =item The "ishelp" option parameter is no longer supported.
 
 Support for C<--help> style actions is now provided via the 'trigger'
 parameter as follows:
 
-    trigger => { sub die shift->usage(OptArgs2::STYLE_FULL) },
+    opt help => (
+        isa     => 'Boo',
+        comment => 'print a help message and exit',
+        trigger => { sub die shift->usage(OptArgs2::STYLE_FULL) },
+    );
 
 =back
 
@@ -876,14 +902,14 @@ separate packages, as you like.
 
 The C<cmd_optargs()> function uses this command structure to parse the
 C<@ARGV> array and calls your C<arg()> and C<opt()> definitions as
-needed. A usage exception is raised if elements of C<@ARGV> are missing
-or invalid according to the command structure.
+needed. A usage exception is raised if required elements of C<@ARGV>
+are missing or invalid.
 
 =item Dispatch/Execution
 
-The matching sub-command name plus a HASHref of argument and option
-values is returned, which you can use to execute the action or dispatch
-to the appropriate class/package as you like.
+The matching (sub-)command name plus a HASHref of combined argument and
+option values is returned, which you can use to execute the action or
+dispatch to the appropriate class/package as you like.
 
 =back
 
@@ -893,30 +919,10 @@ The following functions are exported by default.
 
 =over
 
-=item cmd( $name, %parameters )
+=item cmd( $name, %parameters ) -> OptArgs2::Cmd
 
-=item subcmd( $name, %parameters )
-
-Define a top-level or sub-command. The only real requirement for
-C<$name> is that '::' is used to indicate the relationship between
-parent and child in a hierarchical structure. This is because typically
-the names are Perl packages.
-
-    cmd 'App::foo' => (
-        comment => 'command foo description',
-        optargs => sub {
-            ...
-        },
-    );
-
-    subcmd 'App::foo::bar' => (
-        comment => 'command foo bar description',
-        optargs => sub {
-            ...
-        },
-    );
-
-The following parameters are accepted:
+Define a top-level command identified by C<$name> which is typically a
+Perl package name. The following parameters are accepted:
 
 =for comment
 =item name
@@ -940,14 +946,6 @@ C<cmd_optargs()> function sees arguments for that particular
 sub-command. However for testing it is useful to know immediately if
 you have an error. For this purpose the OPTARGS2_IMMEDIATE environment
 variable can be set to trigger it at definition time.
-
-=item hidden
-
-Only valid for sub-commands. When true this sub command will not appear
-in usage messages unless the usage message is a help request.
-
-This is handy if you have developer-only or rarely-used commands that
-you don't want cluttering up your normal usage message.
 
 =item abbrev
 
@@ -976,10 +974,28 @@ default value of all options.
 If $OptArgs::PRINT_ISA is a true value then usage will print the type
 of argument a options expects.
 
+=for comment
 =item usage
-
 Valid for C<cmd()> only. A subref for generating a custom usage
 message. See XXX befow for the structure this subref receives.
+
+=back
+
+=item subcmd( $name, %parameters ) -> OptArgs2::Cmd
+
+Defines a sub-command identified by C<$name> which must include the
+name of a previously defined (sub-)command + '::'.
+
+Accepts the same parameters as C<cmd()> in addition to the following:
+
+=over
+
+=item hidden
+
+Hide the existence of this subcommand in usage messages created with
+OptArgs::STYLE_NORMAL.  This is handy if you have developer-only or
+rarely-used commands that you don't want cluttering up your normal
+usage message.
 
 =back
 
