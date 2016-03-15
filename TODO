@@ -1,4 +1,4 @@
-Roles:
+- Roles:
 
     cmd_role 'role_name' => (
         abbrev  => 1,
@@ -14,4 +14,27 @@ Roles:
         },
     );
 
-Do not inherit options from parent commands?
+- Do not inherit options from parent commands?
+
+- Immediate response/trigger to a particular option
+
+    opt version => (
+        isa     => 'Boo',
+        comment => 'display version string and exit',
+        on_set  => sub {
+            my ($cmd,$value) = @_;
+            print "Version $VERSION\n";
+            exit;
+        },
+    );
+
+
+- An Enum type
+    opt things => (
+        isa     => 'Enum',
+        valid   => [qw/one two three/],
+        comment => 'only allows set values',
+    );
+
+
+- Currently using new type 'Boo' but how about 'Flag'?
