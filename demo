@@ -9,7 +9,7 @@ cmd demo => (
     comment => 'OptArg2 demonstration script',
     optargs => sub {
 
-        arg type => (
+        arg command => (
             isa      => 'SubCmd',
             comment  => '',
             required => 1,
@@ -18,8 +18,8 @@ cmd demo => (
         opt help => (
             isa     => 'Boo',
             alias   => 'h',
-            comment => 'print full help and exit',
-            ishelp  => 1,
+            comment => 'print full help message and exit',
+            trigger => sub { die shift->usage(OptArgs2::STYLE_FULL) },
         );
 
         opt dry_run => (

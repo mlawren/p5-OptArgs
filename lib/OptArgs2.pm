@@ -149,7 +149,7 @@ has comment => (
 
 has default => ( is => 'ro', );
 
-has ishelp => ( is => 'ro', );
+has trigger => ( is => 'ro', );
 
 has isa => (
     is       => 'ro',
@@ -236,9 +236,7 @@ sub name_alias_comment {
     }
 
     my $comment = $self->comment;
-    if ( $PRINT_DEFAULT && ( defined( my $default = $self->default ) )
-        and !$self->ishelp )
-    {
+    if ( $PRINT_DEFAULT && defined( my $default = $self->default ) ) {
         my $value =
           ref $default eq 'CODE'
           ? $default->( {%$opt} )
@@ -567,7 +565,6 @@ sub cmd_optargs {
 
     my @config = ( @{ $cmd->opts }, @{ $cmd->args } );
 
-    my $ishelp;
     my $missing_required;
     my $optargs = {};
     my @coderef_default_keys;
@@ -583,8 +580,11 @@ sub cmd_optargs {
                 GetOptionsFromArray( $source, $try->getopt => \$result );
             }
 
+            if ( my $ref = $try->trigger and defined $result ) {
+                $ref->( $cmd, $result );
+            }
         }
-        if ( $try->SUPER::isa('OptArgs2::Arg') ) {
+        elsif ( $try->SUPER::isa('OptArgs2::Arg') ) {
 
             if (@$source) {
 
@@ -636,7 +636,7 @@ sub cmd_optargs {
             elsif ( exists $source_hash->{ $try->name } ) {
                 $result = delete $source_hash->{ $try->name };
             }
-            elsif ( $try->required and !$ishelp ) {
+            elsif ( $try->required ) {
                 $missing_required++;
                 next;
             }
@@ -664,23 +664,21 @@ sub cmd_optargs {
                       grep { ref($_)->SUPER::isa('OptArgs2::Opt') } @config;
                     push( @config, @{ $cmd->opts }, @{ $cmd->args } );
                 }
-                elsif ( !$ishelp ) {
-                    if ( $try->fallback ) {
-                        unshift @$source, $result;
+                elsif ( $try->fallback ) {
+                    unshift @$source, $result;
 
-                      #                        $try->{fallback}->{type} = 'arg';
-                        unshift( @config, $try->fallback );
-                        next;
-                    }
-                    else {
-                        die $cmd->result(
-                            'Error::Unknown' . uc( $try->name ),
-                            'unknown '
-                              . uc( $try->name )
-                              . qq{ "$result"\n\n}
-                              . $cmd->usage
-                        );
-                    }
+                    #                        $try->{fallback}->{type} = 'arg';
+                    unshift( @config, $try->fallback );
+                    next;
+                }
+                else {
+                    die $cmd->result(
+                        'Error::Unknown' . uc( $try->name ),
+                        'unknown '
+                          . uc( $try->name )
+                          . qq{ "$result"\n\n}
+                          . $cmd->usage
+                    );
                 }
 
                 $result = undef;
@@ -697,15 +695,9 @@ sub cmd_optargs {
             $optargs->{ $try->name } = $result = $try->default;
         }
 
-        $ishelp = 1
-          if $result and ( $try->SUPER::isa('OptArgs2::Opt') && $try->ishelp );
-
     }
 
-    if ($ishelp) {
-        die $cmd->result( 'Help', $cmd->usage(OptArgs2::STYLE_FULL) );
-    }
-    elsif ($missing_required) {
+    if ($missing_required) {
         die $cmd->result( 'Error::MissingRequired', $cmd->usage );
     }
     elsif (@$source) {
@@ -781,16 +773,52 @@ OptArgs2 - command-line argument and option processor
 =head1 DESCRIPTION
 
 B<OptArgs2> processes command line options I<and> arguments, with
-support for sub-commands.  If your command/script does not need
-sub-commands you should perhaps consider using L<OptArgs2::Simple>
-instead.
+support for sub-commands. It helps you build applications with a
+hierarchical command structure like so:
 
-This module is a re-write of the original L<OptArgs> with a cleaner
-code base and improved API. It should be preferred over L<OptArgs> for
-new projects, however both distributions will continue to be maintained
-in parallel.  This module is again duplicated as L<Getopt::Args2>, to
-cover both its original name and yet still be found in the mess that is
-Getopt::*.
+    demo COMMAND [OPTIONS...]
+        demo args STRING [STRING] [GREEDY...] [OPTIONS...]
+        demo opts [OPTIONS...]
+
+B<OptArgs2> automatically generates usage messages like the following
+when arguments are missing or options are invalid:
+
+    error: unknown option "--not-exist"
+
+    usage: demo COMMAND [OPTIONS...]
+
+        COMMAND
+          args            demo for arguments
+          opts            demo for options
+
+        --dry-run, -n   a global option
+        --help,    -h   print full help and exit
+        --quiet,   -q   a quiet global option
+
+
+This module is duplicated as L<Getopt::Args2>, to cover both its
+original name and yet still be found in the mess that is Getopt::*.
+
+=head2 Differences Between OptArgs and OptArgs2
+
+B<OptArgs2> is a re-write of the original L<OptArgs> module with a
+cleaner code base and improved API. It should be preferred over
+L<OptArgs> for new projects however both distributions will continue to
+be maintained in parallel.
+
+Users converting to B<OptArgs2> from L<OptArgs> need to be aware of the
+following:
+
+=over
+
+=item The "ishelp" option parameter is no longer supported.
+
+Support for C<--help> style actions is now provided via the 'trigger'
+parameter as follows:
+
+    trigger => { sub die shift->usage(OptArgs2::STYLE_FULL) },
+
+=back
 
 =head2 Terminology
 
@@ -828,7 +856,7 @@ are given.
 
 =head2 Authoring Commands
 
-Perl scripts using B<OptArgs2> work like this:
+Applications using B<OptArgs2> work like this:
 
 =over
 
@@ -841,9 +869,9 @@ separate packages, as you like.
 =item Parsing
 
 The C<cmd_optargs()> function uses this command structure to parse the
-C<@ARGV> array (by default), calling your C<arg()> and C<opt()>
-definitions as needed. A usage exception is raised if elements of
-C<@ARGV> are missing or invalid according to the command structure.
+C<@ARGV> array and calls your C<arg()> and C<opt()> definitions as
+needed. A usage exception is raised if elements of C<@ARGV> are missing
+or invalid according to the command structure.
 
 =item Dispatch/Execution
 
@@ -1092,16 +1120,27 @@ well.
 
 A single character alias.
 
-=item ishelp
+=item trigger => sub { }
 
-When true flags this option as a help option, which when given on the
-command line results in a usage message exception.  This flag is
-basically a cleaner way of doing the following in each (sub) command:
+The trigger parameter lets you define a subroutine that is called
+I<immediately> as soon as the option presence is detected. This is
+primarily to support --help or --version options which typically don't
+need the full command line to be processed before generating a
+response.
 
-    my $opts = optargs;
-    if ( $opts->{help} ) {
-        die usage('help requested');
-    }
+    opt help => (
+        isa     => 'Boo',
+        alias   => 'h',
+        comment => 'print full help message and exit',
+        trigger => sub {
+            my ( $cmd, $value ) = @_;
+            die $cmd->usage(OptArg2::STYLE_FULL);
+        }
+    );
+
+The trigger subref is pass two parameters: an OptArgs2::Cmd object on
+which you can call the C<usage()> method and the value (if any) of the
+option.
 
 =item hidden
 
