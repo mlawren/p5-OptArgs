@@ -166,6 +166,7 @@ has name => (
 has hidden => ( is => 'ro', );
 
 my %isa2getopt = (
+    'Boo'      => '!',
     'Bool'     => '!',
     'Counter'  => '+',
     'Str'      => '=s',
@@ -194,6 +195,7 @@ sub getopt {
 }
 
 my %isa2name = (
+    'Boo'      => '',
     'Bool'     => '',
     'Counter'  => '',
     'Str'      => 'STR',
@@ -218,7 +220,7 @@ sub name_alias_comment {
             $opt = '[no-]' . $opt;
         }
     }
-    elsif ($PRINT_ISA) {
+    elsif ( !$self->isa eq 'Boo' and $PRINT_ISA ) {
         $opt .= '=' . ( $self->isa_name || $isa2name{ $self->isa } );
     }
 
@@ -234,7 +236,8 @@ sub name_alias_comment {
     }
 
     my $comment = $self->comment;
-    if ( $PRINT_DEFAULT && ( my $default = $self->default ) and !$self->ishelp )
+    if ( $PRINT_DEFAULT && ( defined( my $default = $self->default ) )
+        and !$self->ishelp )
     {
         my $value =
           ref $default eq 'CODE'
