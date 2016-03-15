@@ -733,305 +733,234 @@ __END__
 
 =head1 NAME
 
-OptArgs2 - argument and option processor for scripts
+OptArgs2 - command-line argument and option processor
 
 =head1 VERSION
 
-0.1.19_2 (yyyy-mm-dd)
+0.0.1_1 (yyyy-mm-dd)
 
 =head1 SYNOPSIS
 
-    #!/usr/bin/env perl
     use OptArgs2;
 
-    opt quiet => (
-        isa     => 'Bool',
-        alias   => 'q',
-        comment => 'output nothing while working',
+    cmd 'App::foo' => (
+        comment => 'the thing that goes foo',
+        optargs => sub {
+            arg item => (
+                isa      => 'Str',
+                required => 1,
+                comment  => 'the item to paint',
+            );
+
+            opt quiet => (
+                isa     => 'Bool',
+                alias   => 'q',
+                comment => 'output nothing while working',
+            );
+        },
     );
 
-    arg item => (
-        isa      => 'Str',
-        required => 1,
-        comment  => 'the item to paint',
+    subcmd 'App::foo::bar' => (
+        comment => 'go bar',
+        optargs => sub {
+            arg maybe => (
+                isa     => 'Bool',
+                alias   => 'm',
+                comment => 'output nothing while working',
+            );
+        },
     );
 
-    my $ref = optargs;
+    my ($cmd, $opts) = cmd_optargs('App::foo');
 
-    print "Painting $ref->{item}\n" unless $ref->{quiet};
+    # Load your $cmd and run it with $opts, perhaps
+    # eval "require $cmd" or die $@;
+    $cmd->new($opts);
+    print "Running $cmd\n" unless $opts->{quiet};
 
 =head1 DESCRIPTION
 
-B<OptArgs2> processes Perl script I<options> and I<arguments>.  This is
-in contrast with most modules in the Getopt::* namespace, which deal
-with options only. This module is duplicated as L<Getopt::Args>, to
+B<OptArgs2> processes command line options I<and> arguments, with
+support for sub-commands.  If your command/script does not need
+sub-commands you should perhaps consider using L<OptArgs2::Simple>
+instead.
+
+This module is a re-write of the original L<OptArgs> with a cleaner
+code base and improved API. It should be preferred over L<OptArgs> for
+new projects, however both distributions will continue to be maintained
+in parallel.  This module is again duplicated as L<Getopt::Args2>, to
 cover both its original name and yet still be found in the mess that is
 Getopt::*.
 
-The following model is assumed by B<OptArgs2> for command-line
+=head2 Terminology
+
+The following terminology is assumed by B<OptArgs2> for command-line
 applications:
 
 =over
 
 =item Command
 
-The program name - i.e. the filename be executed by the shell.
-
-=item Options
-
-Options are parameters that affect the way a command runs. They are
-generally not required to be present, but that is configurable. All
-options have a long form prefixed by '--', and may have a single letter
-alias prefixed by '-'.
+A program run from the command line to perform a task.
 
 =item Arguments
 
-Arguments are positional parameters that that a command needs know in
-order to do its work. Confusingly, arguments can be optional.
+Arguments are positional parameters that pass information to the
+command. Arguments can be optional, but they should not be confused
+with Options below.
+
+=item Options
+
+Options are parameters that also pass information to a command.  They
+are generally not required to be present (hence the name Option) but
+that is configurable. All options have a long form prefixed by '--',
+and may have a single letter alias prefixed by '-'.
 
 =item Sub-commands
 
-From a users point of view a sub-command is simply one or more
-arguments given to a Command that result in a particular action.
-However from a code perspective they are implemented as separate,
-stand-alone programs which are called by a dispatcher when the
-appropriate arguments are given.
+From the users point of view a sub-command is seen as a specific
+argument to a command.  However from a code authoring perspective
+sub-commands are often implemented as separate, stand-alone programs
+which are called by a dispatcher when the appropriate command arguments
+are given.
 
 =back
 
-=head2 Simple Scripts
+=head2 Authoring Commands
 
-To demonstrate lets put the code from the synopsis in a file called
-C<paint> and observe the following interactions from the shell:
-
-    $ ./paint
-    usage: paint ITEM
-
-      arguments:
-        ITEM          the item to paint
-
-      options:
-        --quiet, -q   output nothing while working
-
-The C<optargs()> function parses the commands arguments according to
-the C<opt> and C<arg> declarations and returns a single HASH reference.
-If the command is not called correctly then an exception is thrown (an
-C<OptArgs2::Usage> object) with an automatically generated usage
-message as shown above.
-
-Because B<OptArgs2> knows about arguments it can detect errors relating
-to them:
-
-    $ ./paint house red
-    error: unexpected option or argument: red
-
-So let's add that missing argument definition:
-
-    arg colour => (
-        isa     => 'Str',
-        default => 'blue',
-        comment => 'the colour to use',
-    );
-
-And then check the usage again:
-
-    $ ./paint
-    usage: paint ITEM [COLOUR]
-
-      arguments:
-        ITEM          the item to paint
-        COLOUR        the colour to use
-
-      options:
-        --quiet, -q   output nothing while working
-
-It can be seen that the non-required argument C<colour> appears inside
-square brackets indicating its optional nature.
-
-Let's add another argument with a positive value for the C<greedy>
-parameter:
-
-    arg message => (
-        isa     => 'Str',
-        comment => 'the message to paint on the item',
-        greedy  => 1,
-    );
-
-And check the new usage output:
-
-    usage: paint ITEM [COLOUR] [MESSAGE...]
-
-      arguments:
-        ITEM          the item to paint
-        COLOUR        the colour to use
-        MESSAGE       the message to paint on the item
-
-      options:
-        --quiet, -q   output nothing while working
-
-Three dots (...) are postfixed to usage message for greedy arguments.
-By being greedy, the C<message> argument will swallow whatever is left
-on the comand line:
-
-    $ ./paint house blue Perl is great
-    Painting in blue on house: "Perl is great".
-
-Note that it doesn't make sense to define any more arguments once you
-have a greedy argument.
-
-The order in which options and arguments (and sub-commands - see below)
-are defined is the order in which they appear in usage messsages, and
-is also the order in which the command line is parsed for them.
-
-=head2 Sub-Command Scripts
-
-Sub-commands are useful when your script performs different actions
-based on the value of a particular argument. To use sub-commands you
-build your application with the following structure:
+Perl scripts using B<OptArgs2> work like this:
 
 =over
 
-=item Command Class
+=item Definition
 
-The Command Class defines the options and arguments for your I<entire>
-application. The module is written the same way as a simple script but
-additionally specifies an argument of type 'SubCmd':
+You define your command structure using calls to C<cmd()> and
+C<subcmd()>.  This can be done in your main script, or in one or more
+separate packages, as you like.
 
-    package My::Cmd;
-    use OptArgs2;
+=item Parsing
 
-    arg command => (
-        isa     => 'SubCmd',
-        comment => 'sub command to run',
-    );
+The C<cmd_optargs()> function uses this command structure to parse the
+C<@ARGV> array (by default), calling your C<arg()> and C<opt()>
+definitions as needed. A usage exception is raised if elements of
+C<@ARGV> are missing or invalid according to the command structure.
 
-    opt help => (
-        isa     => 'Bool',
-        comment => 'print a help message and exit',
-        ishelp  => 1,
-    );
+=item Dispatch/Execution
 
-    opt dry_run => (
-        isa     => 'Bool',
-        comment => 'do nothing',
-    );
-
-The C<subcmd> function call is then used to define sub-command names
-and descriptions, and separate each sub-commands arguments and options:
-
-    subcmd(
-        cmd     => 'start',
-        comment => 'start a machine'
-    );
-
-    arg machine => (
-        isa     => 'Str',
-        comment => 'the machine to start',
-    );
-
-    opt quickly => (
-        isa     => 'Bool',
-        comment => 'start the machine quickly',
-    );
-
-    subcmd(
-        cmd     => 'stop',
-        comment => 'start the machine'
-    );
-
-    arg machine => (
-        isa     => 'Str',
-        comment => 'the machine to stop',
-    );
-
-    opt plug => (
-        isa     => 'Bool',
-        comment => 'stop the machine by pulling the plug',
-    );
-
-One nice thing about B<OptArgs2> is that options are I<inherited>. You
-only need to specify something like a C<dry-run> option once at the top
-level, and all sub-commands will see it if it has been set.
-
-Additionally, and this is the main reason why I wrote B<OptArgs2>, you
-do not have to load a whole bunch of slow-to-start modules ( I'm
-looking at you, L<Moose>) just to get a help message.
-
-=item Sub-Command Classes
-
-These classes do the actual work. The usual entry point would be a
-method or a function, typically called something like C<run>, which
-takes a HASHref argument:
-
-    package My::Cmd::start;
-
-    sub run {
-        my $self = shift;
-        my $opts = shift;
-        print "Starting $opts->{machine}\n";
-    }
-
-
-    package My::Cmd::stop;
-
-    sub run {
-        my $self = shift;
-        my $opts = shift;
-        print "Stoping $opts->{machine}\n";
-    }
-
-=item Command Script
-
-The command script is what the user runs, and does nothing more than
-dispatch to your Command Class, and eventually a Sub-Command Class.
-
-    #!/usr/bin/perl
-    use OptArgs2 qw/class_optargs/;
-    my ($class, $opts) = class_optargs('My::Cmd');
-
-    # Run object based sub-command classes
-    $class->new->run($opts);
-
-    # Or function based sub-command classes
-    $class->can('run')->($opts);
-
-One advantage to having a separate Command Class (and not defining
-everything inside a Command script) is that it is easy to run tests
-against your various Sub-Command Classes as follows:
-
-    use Test::More;
-    use Test::Output;
-    use OptArgs2 qw/class_optargs/;
-
-    stdout_is(
-        sub {
-            my ($class,$opts) = class_optargs('My::Cmd','start','A');
-            $class->new->run($opts);
-        },
-        "Starting A\n", 'start'
-    );
-
-    eval { class_optargs('My::Cmd', '--invalid-option') };
-    isa_ok $@, 'OptArgs2::Usage';
-
-    done_testing();
-
-It is much easier to catch and measure exceptions when the code is
-running inside your test script, instead of having to fork and parse
-stderr strings.
+The matching sub-command name plus a HASHref of argument and option
+values is returned, which you can use to execute the action or dispatch
+to the appropriate class/package as you like.
 
 =back
 
 =head1 FUNCTIONS
 
-The following functions are exported (by default except for
-C<dispatch>) using L<Exporter::Tidy>.
+The following functions are exported by default.
 
 =over
 
+=item cmd( $name, %parameters )
+
+=item subcmd( $name, %parameters )
+
+Define a top-level or sub-command. The only real requirement for
+C<$name> is that '::' is used to indicate the relationship between
+parent and child in a hierarchical structure. This is because typically
+the names are Perl packages.
+
+    cmd 'App::foo' => (
+        comment => 'command foo description',
+        optargs => sub {
+            ...
+        },
+    );
+
+    subcmd 'App::foo::bar' => (
+        comment => 'command foo bar description',
+        optargs => sub {
+            ...
+        },
+    );
+
+The following parameters are accepted:
+
+=for comment
+=item name
+A display name of the command. Optional - if it is not provided then the
+last part of the command name is used is usage messages.
+
+=over
+
+=item comment
+
+A description of the command. Required.
+
+=item optargs
+
+A subref containing calls to C<arg()> and C<opt>. Note that options are
+inherited by sub-commands so you don't need to define them again in
+child sub-commands.
+
+By default this subref is only called on demand when the
+C<cmd_optargs()> function sees arguments for that particular
+sub-command. However for testing it is useful to know immediately if
+you have an error. For this purpose the OPTARGS2_IMMEDIATE environment
+variable can be set to trigger it at definition time.
+
+=item hidden
+
+Only valid for sub-commands. When true this sub command will not appear
+in usage messages unless the usage message is a help request.
+
+This is handy if you have developer-only or rarely-used commands that
+you don't want cluttering up your normal usage message.
+
+=item abbrev
+
+If $OptArgs::ABBREV is a true value then sub-commands can be
+abbreviated, up to their shortest, unique values.
+
+=item colour
+
+If $OptArgs::COLOUR is a true value and "STDOUT" is connected to a
+terminal then usage and error messages will be colourized using
+terminal escape codes.
+
+=item sort
+
+If $OptArgs::SORT is a true value then sub-commands will be listed in
+usage messages alphabetically instead of in the order they were
+defined.
+
+=item print_default
+
+If $OptArgs::PRINT_DEFAULT is a true value then usage will print the
+default value of all options.
+
+=item print_isa
+
+If $OptArgs::PRINT_ISA is a true value then usage will print the type
+of argument a options expects.
+
+=item usage
+
+Valid for C<cmd()> only. A subref for generating a custom usage
+message. See XXX befow for the structure this subref receives.
+
+=back
+
 =item arg( $name, %parameters )
 
-Define a Command Argument with the following parameters:
+    arg name => (
+        isa      => 'Str',
+        isa_name => 'FILE',
+        comment  => 'the file to parse',
+        required => 1,
+        default  => '-',
+        greedy   => 0,
+    );
+
+Define a command argument with the following parameters:
 
 =over
 
@@ -1089,41 +1018,6 @@ don't easily fall into the OptArgs2 sub-command model.
 
 =back
 
-=item class_optargs( $rootclass, [ @argv ] ) -> ($class, $opts)
-
-This is a more general version of the C<optargs> function described in
-detail below.  It parses C<@ARGV> (or C<@argv> if given) according to
-the options and arguments as defined in C<$rootclass>, and returns two
-values:
-
-=over
-
-=item $class
-
-The class name of the matching sub-command.
-
-=item $opts
-
-The matching argument and options for the sub-command.
-
-=back
-
-As an aid for testing, if the passed in argument C<@argv> (not @ARGV)
-contains a HASH reference, the key/value combinations of the hash will
-be added as options. An undefined value means a boolean option.
-
-=item dispatch( $function, $rootclass, [ @argv ] )
-
-[ NOTE: This function is badly designed and is depreciated. It will be
-removed at some point before version 1.0.0]
-
-Parse C<@ARGV> (or C<@argv> if given) and dispatch to C<$function> in
-the appropriate package name constructed from C<$rootclass>.
-
-As an aid for testing, if the passed in argument C<@argv> (not @ARGV)
-contains a HASH reference, the key/value combinations of the hash will
-be added as options. An undefined value means a boolean option.
-
 =item opt( $name, %parameters )
 
 Define a Command Option. If C<$name> contains underscores then aliases
@@ -1137,15 +1031,38 @@ following parameters are accepted:
 Required. Is mapped to a L<Getopt::Long> type according to the
 following table:
 
-     optargs         Getopt::Long
-    ------------------------------
+    isa              Getopt::Long
+    ---              ------------
+     'ArrayRef'      's@'
+     'Boo'           '!'
      'Bool'          '!'
      'Counter'       '+'
-     'Str'           '=s'
+     'HashRef'       's%'
      'Int'           '=i'
      'Num'           '=f'
-     'ArrayRef'      's@'
-     'HashRef'       's%'
+     'Str'           '=s'
+
+The presentation of Boo and Bool types in usage messages is as follows:
+
+    $name       Type        Default         Presentation
+    ----        ----        -------         ------------
+    option      Boo         always undef    --option
+    no_option   Boo         always undef    --no-option
+    option      Bool        undef           --[no-]option
+    option      Bool        true            --no-option
+    option      Bool        false           --option
+    option      Counter     *               --option
+
+The presentation of the remaining types is as follows:
+
+    $name       Type        isa_name        Presentation
+    ----        ----        --------        ------------
+    option      ArrayRef    -               --option=STR
+    option      HashRef     -               --option=STR
+    option      Int         -               --option=INT
+    option      Num         -               --option=NUM
+    option      Str         -               --option=STR
+    option      *           XX              --option=XX
 
 =item isa2name
 
@@ -1202,43 +1119,35 @@ will be printed instead of the generic value from C<isa>.
 
 =back
 
-=item optargs( [ @argv ] ) -> HashRef
+=item cmd_optargs( $cmd, [ @argv ] ) -> ($sub_cmd, $opts)
 
 Parse @ARGV by default (or @argv when given) for the arguments and
-options defined in the I<current package>, and returns a hashref
-containing key/value pairs for options and arguments I<combined>.  An
-error / usage exception object (C<OptArgs2::Usage>) is thrown if an
-invalid combination of options and arguments is given.
+options defined in the command C<$cmd>.  C<@ARGV> will first be decoded
+into UTF-8 (if necessary) from whatever L<I18N::Langinfo> says your
+current locale codeset is.
 
-Note that C<@ARGV> will be decoded into UTF-8 (if necessary) from
-whatever L<I18N::Langinfo> says your current locale codeset is.
+Throws an error / usage exception object (typically C<OptArgs2::Usage>)
+if @ARGV is missing or contains invalid options or arguments.
 
-=item subcmd( %parameters )
-
-Create a sub-command. After this function is called further calls to
-C<opt> and C<arg> define options and arguments respectively for the
-sub-command.  The following parameters are accepted:
+Returns the following two values:
 
 =over
 
-=item cmd
+=item $sub_cmd
 
-Required. Either a scalar or an ARRAY reference containing the sub
-command name.
+The C<$sub_cmd> that was matched by parsing the arguments. This may be
+the same as C<$cmd>.
 
-=item comment
+=item $opts
 
-Required. Used to generate the usage/help message.
-
-=item hidden
-
-When true this sub command will not appear in usage messages unless the
-usage message is a help request.
-
-This is handy if you have developer-only or rarely-used commands that
-you don't want cluttering up your normal usage message.
+a hashref containing key/value pairs for options and arguments
+I<combined>.
 
 =back
+
+As an aid for testing, if the passed in argument C<@argv> (not @ARGV)
+contains a HASH reference, the key/value combinations of the hash will
+be added as options. An undefined value means a boolean option.
 
 =item usage( [$message] ) -> Str
 
@@ -1246,48 +1155,11 @@ Returns a usage string prefixed with $message if given.
 
 =back
 
-=head1 OPTIONAL BEHAVIOUR
-
-Certain B<OptArgs2> behaviour and/or output can be changed by setting
-the following package-level variables:
-
-=over
-
-=item $OptArgs2::ABBREV
-
-If C<$OptArgs2::ABBREV> is a true value then sub-commands can be
-abbreviated, up to their shortest, unique values.
-
-=item $OptArgs2::COLOUR
-
-If C<$OptArgs2::COLOUR> is a true value and C<STDOUT> is connected to a
-terminal then usage and error messages will be colourized using
-terminal escape codes.
-
-=item $OptArgs2::SORT
-
-If C<$OptArgs2::SORT> is a true value then sub-commands will be listed
-in usage messages alphabetically instead of in the order they were
-defined.
-
-=item $OptArgs2::PRINT_DEFAULT
-
-If C<$OptArgs2::PRINT_DEFAULT> is a true value then usage will print
-the default value of all options.
-
-=item $OptArgs2::PRINT_ISA
-
-If C<$OptArgs2::PRINT_ISA> is a true value then usage will print the
-type of argument a options expects.
-
-=back
-
 =head1 SEE ALSO
 
-L<Getopt::Long>, L<Exporter::Tidy>
+L<Getopt::Long>
 
 =head1 SUPPORT & DEVELOPMENT
-
 
 This distribution is managed via github:
 
@@ -1307,7 +1179,7 @@ Mark Lawrence <nomad@null.net>
 
 =head1 LICENSE
 
-Copyright 2012-2014 Mark Lawrence <nomad@null.net>
+Copyright 2016 Mark Lawrence <nomad@null.net>
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
