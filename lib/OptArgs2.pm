@@ -257,6 +257,10 @@ sub name_alias_comment {
 package OptArgs2::Cmd;
 use strict;
 use warnings;
+use overload
+  bool     => sub { 1 },
+  '""'     => 'class',
+  fallback => 1;
 use OptArgs2::Mo;
 use List::Util qw/max/;
 use Scalar::Util qw/weaken/;
@@ -720,7 +724,7 @@ sub cmd_optargs {
         $optargs->{$key} = $optargs->{$key}->( {%$optargs} );
     }
 
-    return ( $cmd->class, $optargs );
+    return ( $cmd, $optargs );
 }
 
 1;
