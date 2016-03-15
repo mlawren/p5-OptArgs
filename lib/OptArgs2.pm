@@ -166,14 +166,14 @@ has name => (
 has hidden => ( is => 'ro', );
 
 my %isa2getopt = (
-    'Boo'      => '!',
+    'ArrayRef' => '=s@',
     'Bool'     => '!',
     'Counter'  => '+',
-    'Str'      => '=s',
+    'Flag'     => '!',
+    'HashRef'  => '=s%',
     'Int'      => '=i',
     'Num'      => '=f',
-    'ArrayRef' => '=s@',
-    'HashRef'  => '=s%',
+    'Str'      => '=s',
 );
 
 sub BUILD {
@@ -195,14 +195,14 @@ sub getopt {
 }
 
 my %isa2name = (
-    'Boo'      => '',
+    'ArrayRef' => 'STR',
     'Bool'     => '',
     'Counter'  => '',
-    'Str'      => 'STR',
+    'Flag'     => '',
+    'HashRef'  => 'STR',
     'Int'      => 'INT',
     'Num'      => 'NUM',
-    'ArrayRef' => 'STR',
-    'HashRef'  => 'STR',
+    'Str'      => 'STR',
 );
 
 sub name_alias_comment {
@@ -220,7 +220,7 @@ sub name_alias_comment {
             $opt = '[no-]' . $opt;
         }
     }
-    elsif ( !$self->isa eq 'Boo' and $PRINT_ISA ) {
+    elsif ( $self->isa ne 'Flag' and $PRINT_ISA ) {
         $opt .= '=' . ( $self->isa_name || $isa2name{ $self->isa } );
     }
 
@@ -823,17 +823,17 @@ A Bool option without a default is now shown with the "[no-]" prefix
 unless a default has been provided, in which case either "--bool" (for
 default = false) or "--no-bool" (for default = true) is shown.
 
-=item A new 'Boo' option type
+=item A new Flag option type
 
-The Boo option type is like a Bool that can only be set to true or left
-undefined. This makes sense for things such as C<--help> or
+The Flag option type is like a Bool that can only be set to true or
+left undefined. This makes sense for things such as C<--help> or
 C<--version> for which you never need to see a "--no" prefix.
 
 It also makes sense for "negative" options which will only ever turn
 things off:
 
     opt no_foo => (
-        isa     => 'Boo',
+        isa     => 'Flag',
         comment => 'disable the foo feature',
     );
 
@@ -845,7 +845,7 @@ Support for C<--help> style actions is now provided via the 'trigger'
 parameter as follows:
 
     opt help => (
-        isa     => 'Boo',
+        isa     => 'Flag',
         comment => 'print a help message and exit',
         trigger => { sub die shift->usage(OptArgs2::STYLE_FULL) },
     );
@@ -1084,7 +1084,7 @@ following table:
     isa              Getopt::Long
     ---              ------------
      'ArrayRef'      's@'
-     'Boo'           '!'
+     'Flag'          '!'
      'Bool'          '!'
      'Counter'       '+'
      'HashRef'       's%'
@@ -1092,12 +1092,13 @@ following table:
      'Num'           '=f'
      'Str'           '=s'
 
-The presentation of Boo and Bool types in usage messages is as follows:
+The presentation of Flag and Bool types in usage messages is as
+follows:
 
     $name       Type        Default         Presentation
     ----        ----        -------         ------------
-    option      Boo         always undef    --option
-    no_option   Boo         always undef    --no-option
+    option      Flag        always undef    --option
+    no_option   Flag        always undef    --no-option
     option      Bool        undef           --[no-]option
     option      Bool        true            --no-option
     option      Bool        false           --option
@@ -1151,7 +1152,7 @@ need the full command line to be processed before generating a
 response.
 
     opt help => (
-        isa     => 'Boo',
+        isa     => 'Flag',
         alias   => 'h',
         comment => 'print full help message and exit',
         trigger => sub {

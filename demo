@@ -16,26 +16,26 @@ cmd demo => (
         );
 
         opt help => (
-            isa     => 'Boo',
+            isa     => 'Flag',
             alias   => 'h',
             comment => 'print full help message and exit',
             trigger => sub { die shift->usage(OptArgs2::STYLE_FULL) },
         );
 
         opt dry_run => (
-            isa     => 'Boo',
+            isa     => 'Flag',
             alias   => 'n',
             comment => 'a global option',
         );
 
         opt quiet => (
-            isa     => 'Boo',
+            isa     => 'Flag',
             alias   => 'q',
             comment => 'a quiet global option',
         );
 
         opt usage_tree => (
-            isa     => 'Boo',
+            isa     => 'Flag',
             comment => 'display usage tree and exit',
             alias   => 'u',
             hidden  => 1,
@@ -80,16 +80,16 @@ subcmd 'demo::opts' => (
             comment => 'name: arrayref, isa: ArrayRef',
         );
 
-        opt boo => (
-            isa     => 'Boo',
+        opt flag => (
+            isa     => 'Flag',
             alias   => 'b',
-            comment => 'name: boo, isa: Boo',
+            comment => 'name: flag, isa: Flag',
         );
 
-        opt no_boo => (
-            isa     => 'Boo',
+        opt no_flag => (
+            isa     => 'Flag',
             alias   => 'n',
-            comment => 'name: no_boo, isa: Boo',
+            comment => 'name: no_flag, isa: Flag',
         );
 
         opt bool => (
@@ -136,7 +136,7 @@ print $cmd->usage . Dumper($opts);
 __END__
                 ---              ------------
                  'ArrayRef'      's@'
-                 'Boo'           '!'
+                 'Flag'          '!'
                  'Bool'          '!'
                  'Counter'       '+'
                  'HashRef'       's%'
@@ -144,13 +144,13 @@ __END__
                  'Num'           '=f'
                  'Str'           '=s'
 
-            The presentation of Boo and Bool types in usage messages is as
+            The presentation of Flag and Bool types in usage messages is as
             follows:
 
                 $name       Type        Default         Presentation
                 ----        ----        -------         ------------
-                option      Boo         always undef    --option
-                no_option   Boo         always undef    --no-option
+                option      Flag        always undef    --option
+                no_option   Flag        always undef    --no-option
                 option      Bool        undef           --[no-]option
                 option      Bool        true            --no-option
                 option      Bool        false           --option
