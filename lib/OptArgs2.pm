@@ -561,6 +561,8 @@ sub cmd_optargs {
     my $missing_required;
     my $optargs = {};
     my @coderef_default_keys;
+    my @trigger_result;
+    my @errors;
 
     while ( my $try = shift @config ) {
         my $result;
@@ -574,19 +576,32 @@ sub cmd_optargs {
             }
 
             if ( my $ref = $try->trigger and defined $result ) {
-                $ref->( $cmd, $result );
+                push( @trigger_result, $ref, $result );
+
+                # TODO evaluate subcommands here and then call trigger?
             }
         }
         elsif ( $try->SUPER::isa('OptArgs2::Arg') ) {
 
             if (@$source) {
 
-                die $cmd->result( 'Error::UnknownOption',
-                    qq{error: unknown option "$source->[0]"\n\n} . $cmd->usage )
-                  if $source->[0] =~ m/^--\S/;
+                push(
+                    @errors,
+                    $cmd->result(
+                        'Error::UnknownOption',
+                        qq{error: unknown option "$source->[0]"\n\n}
+                          . $cmd->usage
+                    )
+                ) if $source->[0] =~ m/^--\S/;
 
-                die $cmd->result( 'Error::UnknownOption',
-                    qq{error: unknown option "$source->[0]"\n\n} . $cmd->usage )
+                push(
+                    @errors,
+                    $cmd->result(
+                        'Error::UnknownOption',
+                        qq{error: unknown option "$source->[0]"\n\n}
+                          . $cmd->usage
+                    )
+                  )
                   if $source->[0] =~ m/^-\S/
                   and !(
                     $source->[0] =~ m/^-\d/ and ( $try->isa ne 'Num'
@@ -665,12 +680,15 @@ sub cmd_optargs {
                     next;
                 }
                 else {
-                    die $cmd->result(
-                        'Error::Unknown' . uc( $try->name ),
-                        'unknown '
-                          . uc( $try->name )
-                          . qq{ "$result"\n\n}
-                          . $cmd->usage
+                    push(
+                        @errors,
+                        $cmd->result(
+                            'Error::Unknown' . uc( $try->name ),
+                            'unknown '
+                              . uc( $try->name )
+                              . qq{ "$result"\n\n}
+                              . $cmd->usage
+                        )
                     );
                 }
 
@@ -690,7 +708,15 @@ sub cmd_optargs {
 
     }
 
-    if ($missing_required) {
+    while (@trigger_result) {
+        my $trigger = shift @trigger_result;
+        $trigger->( $cmd, shift @trigger_result );
+    }
+
+    if (@errors) {
+        die $errors[0];
+    }
+    elsif ($missing_required) {
         die $cmd->result( 'Error::MissingRequired', $cmd->usage );
     }
     elsif (@$source) {
