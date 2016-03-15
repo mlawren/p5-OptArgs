@@ -13,3 +13,5 @@ Roles:
             # cmd specific
         },
     );
+
+Do not inherit options from parent commands?
