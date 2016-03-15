@@ -390,7 +390,8 @@ sub usage {
     $usage .= ' [OPTIONS...]' if @opts;
     $usage .= "\n";
 
-    return $usage if $style == OptArgs2::STYLE_SUMMARY;
+    return $self->result( 'UsageSummary', $usage )
+      if $style == OptArgs2::STYLE_SUMMARY;
 
     $usage .= "\n  Synopsis:\n    " . $self->comment . "\n"
       if $style == OptArgs2::STYLE_FULL;
@@ -444,20 +445,25 @@ sub usage {
         }
     }
 
-    return 'usage: ' . $usage . "\n";
+    return $self->result( 'UsageFull', 'usage: ' . $usage . "\n" );
 }
 
-sub usage_tree {
+sub _usage_tree {
     my $self = shift;
     my $depth = shift || '';
 
     my $str = $depth . $self->usage(OptArgs2::STYLE_SUMMARY);
 
     foreach my $subcmd ( sort { $a->name cmp $b->name } @{ $self->subcmds } ) {
-        $str .= $subcmd->usage_tree( $depth . '    ' );
+        $str .= $subcmd->_usage_tree( $depth . '    ' );
     }
 
     return $str;
+}
+
+sub usage_tree {
+    my $self = shift;
+    return $self->result( 'UsageTree', $self->_usage_tree );
 }
 
 package OptArgs2;

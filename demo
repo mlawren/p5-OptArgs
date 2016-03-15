@@ -34,6 +34,13 @@ cmd demo => (
             comment => 'a quiet global option',
         );
 
+        opt usage_tree => (
+            isa     => 'Boo',
+            comment => 'display usage tree and exit',
+            alias   => 'u',
+            hidden  => 1,
+            trigger => sub { die shift->usage_tree },
+        );
     },
 );
 
