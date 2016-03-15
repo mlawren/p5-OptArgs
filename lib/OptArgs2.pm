@@ -509,7 +509,7 @@ sub get_cmd {
 sub subcmd {
     my $class = shift || Carp::confess('cmd($CLASS,@args)');
 
-    croak "sub-command already defined: $class"
+    croak "subcommand already defined: $class"
       if exists $command{$class};
 
     croak "no '::' in class '$class' - must have a parent"
@@ -779,7 +779,7 @@ OptArgs2 - command-line argument and option processor
 =head1 DESCRIPTION
 
 B<OptArgs2> processes command line options I<and arguments>, with
-support for sub-commands. It helps you build applications with a
+support for subcommands. It helps you build applications with a
 hierarchical command structure like so:
 
     demo COMMAND [OPTIONS...]
@@ -876,11 +876,11 @@ are generally not required to be present (hence the name Option) but
 that is configurable. All options have a long form prefixed by '--',
 and may have a single letter alias prefixed by '-'.
 
-=item Sub-commands
+=item Subcommands
 
-From the users point of view a sub-command is seen as a specific
+From the users point of view a subcommand is seen as a specific
 argument to a command.  However from a code authoring perspective
-sub-commands are often implemented as separate, stand-alone programs
+subcommands are often implemented as separate, stand-alone programs
 which are called by a dispatcher when the appropriate command arguments
 are given.
 
@@ -907,7 +907,7 @@ are missing or invalid.
 
 =item Dispatch/Execution
 
-The matching (sub-)command name plus a HASHref of combined argument and
+The matching (sub)command name plus a HASHref of combined argument and
 option values is returned, which you can use to execute the action or
 dispatch to the appropriate class/package as you like.
 
@@ -938,18 +938,18 @@ A description of the command. Required.
 =item optargs
 
 A subref containing calls to C<arg()> and C<opt>. Note that options are
-inherited by sub-commands so you don't need to define them again in
-child sub-commands.
+inherited by subcommands so you don't need to define them again in
+child subcommands.
 
 By default this subref is only called on demand when the
 C<cmd_optargs()> function sees arguments for that particular
-sub-command. However for testing it is useful to know immediately if
-you have an error. For this purpose the OPTARGS2_IMMEDIATE environment
+subcommand. However for testing it is useful to know immediately if you
+have an error. For this purpose the OPTARGS2_IMMEDIATE environment
 variable can be set to trigger it at definition time.
 
 =item abbrev
 
-If $OptArgs::ABBREV is a true value then sub-commands can be
+If $OptArgs::ABBREV is a true value then subcommands can be
 abbreviated, up to their shortest, unique values.
 
 =item colour
@@ -960,7 +960,7 @@ terminal escape codes.
 
 =item sort
 
-If $OptArgs::SORT is a true value then sub-commands will be listed in
+If $OptArgs::SORT is a true value then subcommands will be listed in
 usage messages alphabetically instead of in the order they were
 defined.
 
@@ -983,8 +983,8 @@ message. See XXX befow for the structure this subref receives.
 
 =item subcmd( $name, %parameters ) -> OptArgs2::Cmd
 
-Defines a sub-command identified by C<$name> which must include the
-name of a previously defined (sub-)command + '::'.
+Defines a subcommand identified by C<$name> which must include the name
+of a previously defined (sub)command + '::'.
 
 Accepts the same parameters as C<cmd()> in addition to the following:
 
@@ -1056,15 +1056,15 @@ will never be seen.
 =item fallback
 
 A hashref containing an argument definition for the event that a
-sub-command match is not found. This parameter is only valid when
-C<isa> is a C<SubCmd>. The hashref must contain "isa", "name" and
-"comment" key/value pairs, and may contain a "greedy" key/value pair.
-The Command Class "run" function will be called with the fallback
-argument integrated into the first argument like a regular sub-command.
+subcommand match is not found. This parameter is only valid when C<isa>
+is a C<SubCmd>. The hashref must contain "isa", "name" and "comment"
+key/value pairs, and may contain a "greedy" key/value pair. The Command
+Class "run" function will be called with the fallback argument
+integrated into the first argument like a regular subcommand.
 
 This is generally useful when you want to calculate a command alias
 from a configuration file at runtime, or otherwise run commands which
-don't easily fall into the OptArgs2 sub-command model.
+don't easily fall into the OptArgs2 subcommand model.
 
 =back
 
@@ -1180,7 +1180,7 @@ will be printed instead of the generic value from C<isa>.
 
 =back
 
-=item cmd_optargs( $cmd, [ @argv ] ) -> ($sub_cmd, $opts)
+=item cmd_optargs( $cmd, [ @argv ] ) -> ($subcmd, $opts)
 
 Parse @ARGV by default (or @argv when given) for the arguments and
 options defined in the command C<$cmd>.  C<@ARGV> will first be decoded
@@ -1194,9 +1194,9 @@ Returns the following two values:
 
 =over
 
-=item $sub_cmd
+=item $subcmd
 
-The C<$sub_cmd> that was matched by parsing the arguments. This may be
+The C<$subcmd> that was matched by parsing the arguments. This may be
 the same as C<$cmd>.
 
 =item $opts
