@@ -15,40 +15,28 @@ cmd 'App::job' => (
         arg command => (
             isa      => 'SubCmd',
             comment  => 'action to take, one of:',
-            fallback => {
-                name    => 'fallback',
-                isa     => 'Str',
-                hidden  => 1,
-                comment => 'the fallback argument',
-            },
+            required => 1,
         );
 
-        #        arg other => (
-        #            isa      => 'Str',
-        #            comment  => 'action to take',
-        #            required => 1,
-        #        );
-
         opt help => (
-            isa     => 'Bool',
+            isa     => 'Flag',
             comment => 'print a help message and exit',
             alias   => 'h',
-            default => 0,
-            ishelp  => 1,
+            trigger => sub { die shift->usage(OptArgs2::STYLE_FULL) },
         );
 
         opt quiet => (
-            isa     => 'Bool',
+            isa     => 'Flag',
             alias   => 'q',
-            default => 0,
             comment => 'output nothing while working',
         );
 
         opt usage => (
-            isa     => 'Bool',
+            isa     => 'Flag',
             alias   => 'u',
             comment => 'display usage tree',
             hidden  => 1,
+            trigger => sub { die shift->usage_tree }
         );
     },
 );
@@ -93,14 +81,5 @@ subcmd 'App::job::stop' => (
     },
 );
 
-my ( $class, $opts ) = class_optargs('App::job');
-if ( exists $opts->{usage} && $opts->{usage} ) {
-    print OptArgs2::get_cmd($class)->usage_tree;
-}
-else {
-    print $class. ' ' . Dumper($opts);
-}
-
-#eval "require $class" or die $@;
-#$class->new->run($opts);
-
+my ( $class, $opts ) = cmd_optargs('App::job');
+print $class. ' ' . Dumper($opts);
