@@ -1,0 +1,161 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use lib 'lib';
+use OptArgs2;
+use Data::Dumper;
+
+cmd demo => (
+    comment => 'OptArg2 demonstration script',
+    optargs => sub {
+
+        arg type => (
+            isa      => 'SubCmd',
+            comment  => '',
+            required => 1,
+        );
+
+        opt help => (
+            isa     => 'Boo',
+            alias   => 'h',
+            comment => 'print full help and exit',
+            ishelp  => 1,
+        );
+
+        opt dry_run => (
+            isa     => 'Boo',
+            alias   => 'n',
+            comment => 'a global option',
+        );
+
+        opt quiet => (
+            isa     => 'Boo',
+            alias   => 'q',
+            comment => 'a quiet global option',
+        );
+
+    },
+);
+
+subcmd 'demo::args' => (
+    comment => 'demo for arguments',
+    optargs => sub {
+
+        arg string => (
+            isa      => 'Str',
+            comment  => 'name: string, isa: Str, required: true',
+            required => 1,
+            default  => 'meh',
+        );
+
+        arg string => (
+            isa      => 'Str',
+            isa_name => 'Str',
+            comment  => 'name: string, isa: Str',
+            default  => 'meh',
+        );
+
+        arg greedy => (
+            isa     => 'HashRef',
+            greedy  => 1,
+            comment => 'name: hashref, isa: HashRef',
+        );
+
+    },
+);
+
+subcmd 'demo::opts' => (
+    comment => 'demo for options',
+    optargs => sub {
+
+        opt arrayref => (
+            isa     => 'ArrayRef',
+            comment => 'name: arrayref, isa: ArrayRef',
+        );
+
+        opt boo => (
+            isa     => 'Boo',
+            alias   => 'b',
+            comment => 'name: boo, isa: Boo',
+        );
+
+        opt no_boo => (
+            isa     => 'Boo',
+            alias   => 'n',
+            comment => 'name: no_boo, isa: Boo',
+        );
+
+        opt bool => (
+            isa     => 'Bool',
+            alias   => 'l',
+            comment => 'name: bool, isa: Bool',
+        );
+
+        opt tbool => (
+            isa     => 'Bool',
+            comment => 'name: tbool, isa: Bool',
+            alias   => 't',
+            default => 1,
+        );
+
+        opt fbool => (
+            isa     => 'Bool',
+            comment => 'name: fbool, isa: Bool',
+            alias   => 'f',
+            default => 0,
+        );
+
+        opt hashref => (
+            isa     => 'HashRef',
+            alias   => 'h',
+            comment => 'name: hashref, isa: HashRef',
+        );
+
+        opt str => (
+            isa     => 'Str',
+            alias   => 's',
+            comment => 'name: str, isa: Str',
+        );
+
+    },
+);
+
+my ( $cmd, $opts ) = cmd_optargs('demo');
+
+print $cmd->usage . Dumper($opts);
+
+#die OptArgs2::get_cmd('demo')->usage;
+
+__END__
+                ---              ------------
+                 'ArrayRef'      's@'
+                 'Boo'           '!'
+                 'Bool'          '!'
+                 'Counter'       '+'
+                 'HashRef'       's%'
+                 'Int'           '=i'
+                 'Num'           '=f'
+                 'Str'           '=s'
+
+            The presentation of Boo and Bool types in usage messages is as
+            follows:
+
+                $name       Type        Default         Presentation
+                ----        ----        -------         ------------
+                option      Boo         always undef    --option
+                no_option   Boo         always undef    --no-option
+                option      Bool        undef           --[no-]option
+                option      Bool        true            --no-option
+                option      Bool        false           --option
+                option      Counter     *               --option
+
+            The presentation of the remaining types is as follows:
+
+                $name       Type        isa_name        Presentation
+                ----        ----        --------        ------------
+                option      ArrayRef    -               --option=STR
+                option      HashRef     -               --option=STR
+                option      Int         -               --option=INT
+                option      Num         -               --option=NUM
+                option      Str         -               --option=STR
+
