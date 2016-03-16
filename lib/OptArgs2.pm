@@ -650,7 +650,9 @@ sub cmd_optargs {
 
     $cmd->run_optargs;
 
-    my @config = ( @{ $cmd->opts }, @{ $cmd->args } );
+    # Start with the parents options
+    my @config = map { $_->run_optargs; @{ $_->opts } } $cmd->parents;
+    push( @config, ( @{ $cmd->opts }, @{ $cmd->args } ) );
 
     my $missing_required;
     my $optargs = {};
