@@ -1,4 +1,5 @@
 package OptArgs2::Mo;
+our $VERSION = '0.0.1_1';
 
 BEGIN {
 #<<< do not perltidy
@@ -18,6 +19,8 @@ use overload
   fallback => 1;
 
 1;
+
+our $VERSION = '0.0.1_1';
 
 sub new {
     my $proto = shift;
@@ -50,6 +53,8 @@ package OptArgs2::Arg;
 use strict;
 use warnings;
 use OptArgs2::Mo;
+
+our $VERSION = '0.0.1_1';
 
 has cmd => (
     is       => 'rw',
@@ -130,6 +135,8 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
+our $VERSION = '0.0.1_1';
+
 extends 'OptArgs2::Arg';
 
 has hidden => ( is => 'ro', );
@@ -139,6 +146,8 @@ use strict;
 use warnings;
 use Carp qw/croak/;
 use OptArgs2::Mo;
+
+our $VERSION = '0.0.1_1';
 
 has alias => ( is => 'ro', );
 
@@ -256,6 +265,8 @@ use overload
 use OptArgs2::Mo;
 use List::Util qw/max/;
 use Scalar::Util qw/weaken/;
+
+our $VERSION = '0.0.1_1';
 
 sub BUILD {
     my $self = shift;
