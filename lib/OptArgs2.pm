@@ -63,7 +63,7 @@ sub result {
     return OptArgs2::Result->new(@_);
 }
 
-sub user_error {
+sub error {
     my $self = shift;
 
     # By doing this before the CARP_NOT below we still catch bad
@@ -232,7 +232,7 @@ sub BUILD {
     my $self = shift;
 
     exists $isa2getopt{ $self->isa }
-      || $self->user_error( 'Error::IsaInvalid',
+      || return $self->error( 'Error::IsaInvalid',
         'invalid isa "%s" for opt "%s"',
         $self->isa, $self->name );
 }
@@ -242,8 +242,7 @@ sub new_from {
     my $ref   = {@_};
 
     if ( delete $ref->{ishelp} ) {
-        return $proto->user_error( 'IshelpTrigger',
-            'ishelp and trigger conflict' )
+        return $proto->error( 'IshelpTrigger', 'ishelp and trigger conflict' )
           if exists $ref->{trigger};
 
         $ref->{trigger} = sub { die shift->usage(OptArgs2::STYLE_FULL) };
@@ -543,7 +542,7 @@ my %command;
 sub cmd {
     my $class = shift || Carp::confess('cmd($CLASS,@args)');
 
-    return OptArgs2::Base->user_error( 'CommandDefined',
+    return OptArgs2::Base->error( 'CommandDefined',
         "command already defined: $class" )
       if exists $command{$class};
 
@@ -562,19 +561,19 @@ sub cmd {
 
 sub subcmd {
     my $class =
-      shift || OptArgs2::Base->user_error( 'Caller', 'cmd($CLASS,%args)' );
+      shift || return OptArgs2::Base->error( 'Caller', 'cmd($CLASS,%args)' );
 
-    OptArgs2::Base->user_error( 'SubcommandDefined',
+    return OptArgs2::Base->error( 'SubcommandDefined',
         "subcommand already defined: $class" )
       if exists $command{$class};
 
-    OptArgs2::Base->user_error( 'SubcmdNoParent',
+    return OptArgs2::Base->error( 'SubcmdNoParent',
         "no '::' in class '$class' - must have a parent" )
       unless $class =~ m/::/;
 
     my $parent_class = $class =~ s/(.*)::.*/$1/r;
 
-    OptArgs2::Base->user_error( 'ParentNotFound', "parent class not found" )
+    return OptArgs2::Base->error( 'ParentNotFound', "parent class not found" )
       unless exists $command{$parent_class};
 
     my $subcmd = OptArgs2::Cmd->new(
@@ -617,10 +616,11 @@ sub optargs {
 
 sub cmd_optargs {
     my $class = shift
-      || OptArgs2::Base->user_error( 'Caller', 'cmd_optargs($CLASS,[@argv])' );
+      || return OptArgs2::Base->error( 'Caller',
+        'cmd_optargs($CLASS,[@argv])' );
 
     my $cmd = $command{$class}
-      || OptArgs2::Base->user_error( 'CommandNotFound',
+      || return OptArgs2::Base->error( 'CommandNotFound',
         'command class not found: ' . $class );
 
     my $source      = \@_;
@@ -643,7 +643,7 @@ sub cmd_optargs {
     }
 
     map {
-        OptArgs2::Base->user_error( 'Undefined',
+        return OptArgs2::Base->error( 'Undefined',
             '_optargs argument undefined!' )
           if !defined $_
     } @$source;
