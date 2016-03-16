@@ -860,8 +860,8 @@ hierarchical command structure like so:
         demo args STRING [STRING] [GREEDY...] [OPTIONS...]
         demo opts [OPTIONS...]
 
-B<OptArgs2> automatically generates usage messages like the following
-when arguments are missing or options are invalid:
+B<OptArgs2> automatically generates usage messages for invalid or
+missing arguments and options:
 
     error: unknown option "--not-exist"
 
@@ -878,63 +878,6 @@ when arguments are missing or options are invalid:
 
 This module is duplicated on CPAN as L<Getopt::Args2>, to cover both
 its original name and yet still be found in the mess that is Getopt::*.
-
-=head2 Differences Between OptArgs and OptArgs2
-
-B<OptArgs2> is a re-write of the original L<OptArgs> module with a
-cleaner code base and improved API. It should be preferred over
-L<OptArgs> for new projects however both distributions will continue to
-be maintained in parallel.
-
-Users converting to B<OptArgs2> from L<OptArgs> need to be aware of the
-following:
-
-=over
-
-=item Obvious API changes: cmd(), subcmd(), cmd_optargs()
-
-Commands and subcommands must now be explicitly defined using C<cmd()>
-and C<subcmd()>. The old C<class_optargs()> has been renamed to
-C<cmd_optargs()>. The old C<optargs()> function has been removed
-completely.
-
-=item A new Flag option type
-
-The Flag option type is like a Bool that can only be set to true or
-left undefined. This makes sense for things such as C<--help> or
-C<--version> for which you never need to see a "--no" prefix.
-
-It also makes sense for "negative" options which will only ever turn
-things off:
-
-    opt no_foo => (
-        isa     => 'Flag',
-        comment => 'disable the foo feature',
-    );
-
-    # do { } unless $opts->{no_foo}
-
-=item Bool options with no default display as "--[no-]bool"
-
-A Bool option without a default is now shown with the "[no-]" prefix
-unless a default has been provided, in which case either "--bool" (for
-default = false) or "--no-bool" (for default = true) is shown.
-
-What this means in practise is that many of your existing Bool options
-should possibly become Flag options instead.
-
-=item The "ishelp" option parameter is no longer supported.
-
-Support for C<--help> style actions is now provided via the 'trigger'
-parameter as follows:
-
-    opt help => (
-        isa     => 'Flag',
-        comment => 'print a help message and exit',
-        trigger => { sub die shift->usage(OptArgs2::STYLE_FULL) },
-    );
-
-=back
 
 =head2 Terminology
 
@@ -962,11 +905,11 @@ and may have a single letter alias prefixed by '-'.
 
 =item Subcommands
 
-From the users point of view a subcommand is seen as a specific
-argument to a command.  However from a code authoring perspective
-subcommands are often implemented as separate, stand-alone programs
-which are called by a dispatcher when the appropriate command arguments
-are given.
+From the users point of view a subcommand is a special argument with
+its own set of arguments and options.  However from a code authoring
+perspective subcommands are often implemented as stand-alone programs,
+called from the main script when the appropriate command arguments are
+given.
 
 =back
 
@@ -994,6 +937,78 @@ are missing or invalid.
 The matching (sub)command name plus a HASHref of combined argument and
 option values is returned, which you can use to execute the action or
 dispatch to the appropriate class/package as you like.
+
+=back
+
+B<OptArgs2> has additional support for trivial command line
+applications with I<no> subcommands. Calls to C<arg()> and C<opt()>
+that do not occur within a C<cmd()> or C<subcmd()> block are added to a
+hidden global command.
+
+    use OptArgs2;
+
+    arg first => (
+        isa     => 'Str',
+        comment => 'the first argument',
+    );
+
+    opt quiet => (
+        isa     => 'Flag',
+        comment => 'work quietly',
+    );
+
+The C<optargs()> function can be used to parse @ARGV with this global
+command (similarly to C<cmd_optargs()>) but only returns a single
+HASHref.
+
+    my $opts = optargs();
+    # { first => 'argument', quiet => 1|0 }
+
+The name of this global command is set to the base of the script
+filename ($^O) using File::Basename.
+
+=head2 Differences Between OptArgs and OptArgs2
+
+B<OptArgs2> is a re-write of the original L<OptArgs> module with a
+cleaner code base and improved API. It should be preferred over
+L<OptArgs> for new projects however both distributions will continue to
+be maintained in parallel.
+
+Users converting to B<OptArgs2> from L<OptArgs> need to be aware of the
+following:
+
+=over
+
+=item Obvious API changes: cmd(), subcmd(), cmd_optargs()
+
+Commands and subcommands must now be explicitly defined using C<cmd()>
+and C<subcmd()> and the old C<class_optargs()> has been renamed to
+C<cmd_optargs()>.
+
+=item A new Flag option type
+
+The Flag option type is like a Bool that can only be set to true or
+left undefined. This makes sense for things such as C<--help> or
+C<--version> for which you never need to see a "--no" prefix.
+
+It also makes sense for "negative" options which will only ever turn
+things off:
+
+    opt no_foo => (
+        isa     => 'Flag',
+        comment => 'disable the foo feature',
+    );
+
+    # do { } unless $opts->{no_foo}
+
+=item Bool options with no default display as "--[no-]bool"
+
+A Bool option without a default is now shown with the "[no-]" prefix
+unless a default has been provided, in which case either "--bool" (for
+default = false) or "--no-bool" (for default = true) is shown.
+
+What this means in practise is that many of your existing Bool options
+should possibly become Flag options instead.
 
 =back
 
