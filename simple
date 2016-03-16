@@ -14,7 +14,7 @@ opt help => (
     isa     => 'Flag',
     alias   => 'h',
     comment => 'print help message and exit',
-    trigger => sub { die shift->usage(OptArgs2::STYLE_FULL) },
+    ishelp  => 1,
 );
 
 my $opts = optargs;

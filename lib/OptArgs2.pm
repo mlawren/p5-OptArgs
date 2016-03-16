@@ -3,6 +3,9 @@ sub OptArgs2::STYLE_SUMMARY { 1 }
 sub OptArgs2::STYLE_NORMAL  { 2 }
 sub OptArgs2::STYLE_FULL    { 3 }
 
+# list of internal packages for @CARP_NOT when croaking on a user error
+my @LOCAL_PACKAGES = (qw/OptArgs2 OptArgs2::Cmd OptArg2::Arg OptArg2::Opt/);
+
 package OptArgs2::Mo;
 our $VERSION = '0.0.1_1';
 
@@ -41,7 +44,7 @@ sub as_string {
     my $type = ref( $_[0] ) =~ s/^OptArgs2::Result::(.*)/$1/r;
     my @x    = @{ $_[0] };
     if ( my $str = shift @x ) {
-        return sprintf( "$str (%s)\n", @x, $type )
+        return sprintf( "$str (%s)", @x, $type )
           unless $str =~ m/\n/;
         return sprintf( $str, @x );
     }
@@ -199,6 +202,28 @@ sub BUILD {
             $self->isa,          $self->name
         )
     );
+}
+
+sub new_from {
+    my $proto = shift;
+    my $ref   = {@_};
+
+    if ( delete $ref->{ishelp} ) {
+        if ( $ref->{trigger} ) {
+            local @OptArgs2::Opt::CARP_NOT = @LOCAL_PACKAGES;
+            croak(
+                "opt $ref->{name}: ",
+                OptArgs2::Result->new(
+                    'Error::IshelpTrigger',
+                    'ishelp and trigger cannot be used together'
+                )
+            );
+        }
+
+        $ref->{trigger} = sub { die shift->usage(OptArgs2::STYLE_FULL) };
+    }
+
+    return $proto->new(%$ref);
 }
 
 sub getopt {
@@ -551,7 +576,8 @@ sub opt {
         require File::Basename;
         cmd( File::Basename::basename($0), comment => 'auto' );
     };
-    $OptArgs2::Cmd::CURRENT->add_opt( OptArgs2::Opt->new( name => $name, @_ ) );
+    $OptArgs2::Cmd::CURRENT->add_opt(
+        OptArgs2::Opt->new_from( name => $name, @_ ) );
 }
 
 # ------------------------------------------------------------------------
