@@ -414,7 +414,7 @@ sub add_cmd {
 sub parents {
     my $self = shift;
     return unless $self->parent;
-    return ( $self->parent, $self->parent->parents );
+    return ( $self->parent->parents, $self->parent );
 }
 
 sub usage {
