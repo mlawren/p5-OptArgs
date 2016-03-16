@@ -814,75 +814,56 @@ OptArgs2 - command-line argument and option processor
 =head1 SYNOPSIS
 
     use OptArgs2;
+    use Data::Dumper;
 
-    cmd 'App::foo' => (
-        comment => 'the thing that goes foo',
+    cmd 'App::demo' => (
+        comment => 'the demo command',
         optargs => sub {
-            arg item => (
-                isa      => 'Str',
+            arg command => (
+                isa      => 'SubCmd',
                 required => 1,
-                comment  => 'the item to paint',
+                comment  => 'command to run',
             );
 
             opt quiet => (
-                isa     => 'Bool',
+                isa     => 'Flag',
                 alias   => 'q',
-                comment => 'output nothing while working',
+                comment => 'run quietly',
             );
         },
     );
 
-    subcmd 'App::foo::bar' => (
-        comment => 'go bar',
+    subcmd 'App::demo::foo' => (
+        comment => 'demo foo',
         optargs => sub {
-            arg maybe => (
-                isa     => 'Bool',
-                alias   => 'm',
-                comment => 'output nothing while working',
+            arg action => (
+                isa      => 'Str',
+                required => 1,
+                comment  => 'command to run',
             );
         },
     );
 
-    my ($cmd, $opts) = cmd_optargs('App::foo');
+    subcmd 'App::demo::bar' => (
+        comment => 'demo bar',
+        optargs => sub {
+            opt baz => (
+                isa => 'Counter',
+                comment => '+1',
+            );
+        },
+    );
 
-    # Load your $cmd and run it with $opts, perhaps
-    # eval "require $cmd" or die $@;
-    $cmd->new($opts);
-    print "Running $cmd\n" unless $opts->{quiet};
+    my ($cmd, $opts) = cmd_optargs('App::demo');
+
+    printf "Running %s with %s\n", $cmd, Dumper($opts)
+      unless $opts->{quiet};
 
 =head1 DESCRIPTION
 
-B<OptArgs2> processes command line options I<and arguments>, with
-support for subcommands. It helps you build applications with a
-hierarchical command structure like so:
-
-    demo COMMAND [OPTIONS...]
-        demo args STRING [STRING] [GREEDY...] [OPTIONS...]
-        demo opts [OPTIONS...]
-
-B<OptArgs2> automatically generates usage messages for invalid or
-missing arguments and options:
-
-    error: unknown option "--not-exist"
-
-    usage: demo COMMAND [OPTIONS...]
-
-        COMMAND
-          args            demo for arguments
-          opts            demo for options
-
-        --dry-run, -n   a global option
-        --help,    -h   print full help and exit
-        --quiet,   -q   a quiet global option
-
-
-This module is duplicated on CPAN as L<Getopt::Args2>, to cover both
-its original name and yet still be found in the mess that is Getopt::*.
-
-=head2 Terminology
-
-The following terminology is assumed by B<OptArgs2> for command-line
-applications:
+B<OptArgs2> processes command line options I<and arguments>, and has
+excellent support for subcommands. The following definitions are
+assumed by B<OptArgs2> for command-line applications:
 
 =over
 
@@ -922,8 +903,15 @@ Applications using B<OptArgs2> work like this:
 =item Definition
 
 You define your command structure using calls to C<cmd()> and
-C<subcmd()>.  This can be done in your main script, or in one or more
-separate packages, as you like.
+C<subcmd()> that mirrors your command hierarchy.
+
+    # Command hierarchy according to the SYNOPSIS code:
+    demo COMMAND [OPTIONS...]
+        demo foo ACTION [OPTIONS...]
+        demo bar [OPTIONS...]
+
+This can be done in your main script, or in one or more separate
+packages, as you like.
 
 =item Parsing
 
@@ -932,11 +920,23 @@ C<@ARGV> array and calls your C<arg()> and C<opt()> definitions as
 needed. A usage exception is raised if required elements of C<@ARGV>
 are missing or invalid.
 
+    error: unknown option "--invalid"
+
+    usage: demo COMMAND [OPTIONS...]
+
+        COMMAND       command to run
+          bar           demo bar
+          foo           demo foo
+
+        --quiet, -q   run quietly
+
 =item Dispatch/Execution
 
 The matching (sub)command name plus a HASHref of combined argument and
 option values is returned, which you can use to execute the action or
 dispatch to the appropriate class/package as you like.
+
+    Running App::demo::foo with { action => 'jump' }
 
 =back
 
@@ -966,6 +966,63 @@ HASHref.
 
 The name of this global command is set to the base of the script
 filename ($^O) using File::Basename.
+
+=head2 Package Structure
+
+There are probably several ways to layout command classes when you have
+lots of subcommands. Here is one way that seems to work for this
+module's author.
+
+=over
+
+=item bin/demo
+
+The command script itself is usually fairly short:
+
+    #!/usr/bin/env perl
+    use OptArgs2;
+    use App::demo::OptArgs;
+
+    my ($cmd, $opts) = cmd_optargs('App::demo');
+    eval "require $cmd" or die $@;
+    $cmd->run($opts);
+
+The above does nothing more than load the definitions from
+App::demo::OptArgs, obtain the command name and options hashref, and
+then loads the appropriate package to run the command.
+
+=item lib/App/demo.pm
+
+App::demo itself only needs to exists if the root command does
+something. However I tend to also make App::demo the base class for all
+subcommands so it ends up being fairly large.
+
+=item lib/App/demo/OptArgs.pm
+
+App::demo::OptArgs is where I put all of my command definitions. Even
+though the package is App::demo::OptArgs the definitions are for
+App::demo.
+
+    package App::demo::OptArgs;
+    use OptArgs2;
+
+    cmd 'App::demo' => (
+        comment => 'the demo app',
+        optargs => sub {
+            #...
+        },
+    )
+
+The reason for keeping this separate from lib/App/demo.pm is for speed
+of loading. I don't want to have to load all of the modules that
+App::demo itself uses just to find out that I called the command
+incorrectly.
+
+=item lib/App/demo/subcmd.pm
+
+The implemention of the "demo subcmd".
+
+=back
 
 =head2 Differences Between OptArgs and OptArgs2
 
@@ -1315,6 +1372,9 @@ be added as options. An undefined value means a boolean option.
 =head1 SEE ALSO
 
 L<Getopt::Long>
+
+This module is duplicated on CPAN as L<Getopt::Args2>, to cover both
+its original name and yet still be found in the mess that is Getopt::*.
 
 =head1 SUPPORT & DEVELOPMENT
 
