@@ -3,9 +3,6 @@ sub OptArgs2::STYLE_SUMMARY { 1 }
 sub OptArgs2::STYLE_NORMAL  { 2 }
 sub OptArgs2::STYLE_FULL    { 3 }
 
-# list of internal packages for @CARP_NOT when croaking on a user error
-my @LOCAL_PACKAGES = (qw/OptArgs2 OptArgs2::Cmd OptArg2::Arg OptArg2::Opt/);
-
 package OptArgs2::Mo;
 our $VERSION = '0.0.1_1';
 
@@ -53,12 +50,42 @@ sub as_string {
 
 1;
 
+package OptArgs2::Base;
+use strict;
+use warnings;
+use OptArgs2::Mo;
+use Carp qw/croak/;
+
+our $VERSION = '0.0.1_1';
+
+sub user_error {
+    my $self = shift;
+    my $error = shift || croak('user_error($ERROR)');
+
+    # Internal packages we don't want to see for user-related errors
+    local @OptArgs2::Opt::CARP_NOT = (
+        qw/
+          OptArgs2
+          OptArgs2::Base
+          OptArgs2::Cmd
+          OptArgs2::Arg
+          OptArgs2::Opt
+          /
+    );
+
+    # Carp::croak has a bug when first argument is a reference
+    croak( '', OptArgs2::Result->new( $error, @_ ) );
+}
+
+1;
+
 package OptArgs2::Arg;
 use strict;
 use warnings;
 use OptArgs2::Mo;
 
 our $VERSION = '0.0.1_1';
+extends 'OptArgs2::Base';
 
 has cmd => (
     is       => 'rw',
@@ -156,6 +183,7 @@ use Carp qw/croak/;
 use OptArgs2::Mo;
 
 our $VERSION = '0.0.1_1';
+extends 'OptArgs2::Base';
 
 has alias => ( is => 'ro', );
 
@@ -209,16 +237,9 @@ sub new_from {
     my $ref   = {@_};
 
     if ( delete $ref->{ishelp} ) {
-        if ( $ref->{trigger} ) {
-            local @OptArgs2::Opt::CARP_NOT = @LOCAL_PACKAGES;
-            croak(
-                "opt $ref->{name}: ",
-                OptArgs2::Result->new(
-                    'Error::IshelpTrigger',
-                    'ishelp and trigger cannot be used together'
-                )
-            );
-        }
+        return $proto->user_error( 'IshelpTrigger',
+            'ishelp and trigger conflict' )
+          if exists $ref->{trigger};
 
         $ref->{trigger} = sub { die shift->usage(OptArgs2::STYLE_FULL) };
     }
@@ -299,6 +320,7 @@ use List::Util qw/max/;
 use Scalar::Util qw/weaken/;
 
 our $VERSION = '0.0.1_1';
+extends 'OptArgs2::Base';
 
 sub BUILD {
     my $self = shift;
