@@ -23,3 +23,7 @@
         comment => 'only allows set values',
     );
 
+- Lots of error checking
+    - No more args after SubCmd
+    - Arg/Opt name same as existing
+    - Use X->new_from(%parameters) in place of BUILDARGS
