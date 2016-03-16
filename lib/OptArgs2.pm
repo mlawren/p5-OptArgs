@@ -896,9 +896,8 @@ OptArgs2 - command-line argument and option processor
 
 =head1 DESCRIPTION
 
-B<OptArgs2> processes command line options I<and arguments>, and has
-excellent support for subcommands. The following definitions are
-assumed by B<OptArgs2> for command-line applications:
+B<OptArgs2> processes command line arguments, options, and subcommands
+according to the following definitions:
 
 =over
 
@@ -928,8 +927,6 @@ called from the main script when the appropriate command arguments are
 given.
 
 =back
-
-=head2 Authoring Commands
 
 Applications using B<OptArgs2> work like this:
 
