@@ -5,6 +5,9 @@ use lib 'lib';
 use OptArgs2;
 use Data::Dumper;
 
+$Data::Dumper::Indent   = 1;
+$Data::Dumper::Sortkeys = 1;
+
 cmd demo => (
     comment => 'OptArg2 demonstration script',
     optargs => sub {
@@ -20,18 +23,6 @@ cmd demo => (
             alias   => 'h',
             comment => 'print full help message and exit',
             trigger => sub { die shift->usage(OptArgs2::STYLE_FULL) },
-        );
-
-        opt dry_run => (
-            isa     => 'Flag',
-            alias   => 'n',
-            comment => 'a global option',
-        );
-
-        opt quiet => (
-            isa     => 'Flag',
-            alias   => 'q',
-            comment => 'a quiet global option',
         );
 
         opt usage_tree => (
@@ -71,14 +62,125 @@ subcmd 'demo::args' => (
     },
 );
 
-subcmd 'demo::opts' => (
-    comment => 'demo for options',
+subcmd 'demo::opt' => (
+    comment => 'options',
     optargs => sub {
 
-        opt arrayref => (
-            isa     => 'ArrayRef',
-            comment => 'name: arrayref, isa: ArrayRef',
+        arg type => (
+            isa      => 'SubCmd',
+            comment  => 'opt type',
+            required => 1,
         );
+    },
+);
+
+subcmd 'demo::opt::arrayref' => (
+    comment => 'ArrayRef option',
+    optargs => sub {
+
+        opt aaa => (
+            isa     => 'ArrayRef',
+            comment => 'isa: ArrayRef, name: aaa',
+            alias   => 'a',
+        );
+    },
+);
+
+subcmd 'demo::opt::bool' => (
+    comment => 'Bool option',
+    optargs => sub {
+
+        opt aaa => (
+            isa     => 'Bool',
+            comment => 'isa: Bool, name: aaa',
+            alias   => 'a',
+        );
+
+        opt bbb => (
+            isa     => 'Bool',
+            comment => 'isa: Bool, name: bbb',
+            default => 0,
+            alias   => 'b',
+        );
+
+        opt ccc => (
+            isa     => 'Bool',
+            comment => 'isa: Bool, name: ccc',
+            default => 1,
+            alias   => 'c',
+        );
+
+    },
+);
+
+subcmd 'demo::opt::counter' => (
+    comment => 'Counter option',
+    optargs => sub {
+
+        opt aaa => (
+            isa     => 'Counter',
+            comment => 'isa: Counter, name: aaa',
+            alias   => 'a',
+        );
+
+        opt bbb => (
+            isa     => 'Counter',
+            comment => 'isa: Counter, name: bbb',
+            default => -3,
+            alias   => 'b',
+        );
+    },
+);
+
+subcmd 'demo::opt::flag' => (
+    comment => 'Flag option',
+    optargs => sub {
+
+        opt aaa => (
+            isa     => 'Flag',
+            comment => 'isa: Flag, name: aaa',
+            alias   => 'a',
+        );
+
+        opt no_bbb => (
+            isa     => 'Flag',
+            comment => 'isa: Flag, name: no_bbb',
+            alias   => 'b',
+        );
+    },
+);
+
+subcmd 'demo::opt::hashref' => (
+    comment => 'HashRef option',
+    optargs => sub {
+
+        opt aaa => (
+            isa     => 'HashRef',
+            comment => 'isa: HashRef, name: aaa',
+            alias   => 'a',
+        );
+
+        opt bbb => (
+            isa     => 'HashRef',
+            comment => 'isa: HashRef, name: bbb',
+            default => { x => 1 },
+            alias   => 'b',
+        );
+    },
+);
+
+#    'ArrayRef' => 'STR',
+#    'Bool'     => '',
+#    'Counter'  => '',
+#    'Flag'     => '',
+#    'HashRef'  => 'STR',
+#    'Int'      => 'INT',
+#    'Num'      => 'NUM',
+#    'Str'      => 'STR',
+
+subcmd 'demo::opt::rest' => (
+    comment => 'arrayref option',
+    optargs => sub {
 
         opt flag => (
             isa     => 'Flag',
@@ -127,11 +229,20 @@ subcmd 'demo::opts' => (
     },
 );
 
-my ( $cmd, $opts ) = cmd_optargs('demo');
+my ( $cmd, $opts ) = eval { cmd_optargs('demo') };
 
-print $cmd->usage . Dumper($opts);
-
-#die OptArgs2::get_cmd('demo')->usage;
+if ( my $err = $@ ) {
+    if ( ref $err ) {
+        print $err . "(" . ref($err) . ")\n";
+    }
+    else {
+        print $err;
+    }
+}
+else {
+    print "$cmd:\n"
+      . ( Dumper($opts) =~ s/\$VAR1 = (.*);/$1/sr =~ s/^/    /gsmr );
+}
 
 __END__
                 ---              ------------
