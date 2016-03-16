@@ -741,7 +741,9 @@ sub cmd_optargs {
                 $result = delete $source_hash->{ $try->name };
             }
             elsif ( $try->required ) {
-                $missing_required++;
+                push( @errors,
+                    OptArgs2::Util->result( 'Parse::ArgRequired', $cmd->usage )
+                );
                 next;
             }
 
@@ -811,9 +813,6 @@ sub cmd_optargs {
 
     if (@errors) {
         die $errors[0];
-    }
-    elsif ($missing_required) {
-        die OptArgs2::Util->result( 'Parse::MissingRequired', $cmd->usage );
     }
     elsif (@$source) {
         die OptArgs2::Util->result( 'Parse::UnexpectedOptArgs',
