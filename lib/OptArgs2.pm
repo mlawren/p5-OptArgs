@@ -614,7 +614,7 @@ sub optargs {
 
 sub cmd_optargs {
     my $class = shift
-      || OptArgs2::Util->croak( 'Parse::MissingCmd',
+      || OptArgs2::Util->croak( 'Parse::CmdRequired',
         'cmd_optargs($CMD,[@argv])' );
 
     my $cmd = $command{$class}
@@ -781,8 +781,8 @@ sub cmd_optargs {
                     push(
                         @errors,
                         OptArgs2::Util->result(
-                            'Parse::Unknown' . uc( $try->name ),
-                            'unknown '
+                            'Parse::SubCmdNotFound',
+                            'error: unknown '
                               . uc( $try->name )
                               . qq{ "$result"\n\n}
                               . $cmd->usage
