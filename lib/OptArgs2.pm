@@ -1,3 +1,8 @@
+# constants
+sub OptArgs2::STYLE_SUMMARY { 1 }
+sub OptArgs2::STYLE_NORMAL  { 2 }
+sub OptArgs2::STYLE_FULL    { 3 }
+
 package OptArgs2::Mo;
 our $VERSION = '0.0.1_1';
 
@@ -17,8 +22,6 @@ use overload
   bool     => sub { 1 },
   '""'     => 'as_string',
   fallback => 1;
-
-1;
 
 our $VERSION = '0.0.1_1';
 
@@ -45,9 +48,7 @@ sub as_string {
     return ref $_[0];
 }
 
-sub OptArgs2::STYLE_SUMMARY { 1 }
-sub OptArgs2::STYLE_NORMAL  { 2 }
-sub OptArgs2::STYLE_FULL    { 3 }
+1;
 
 package OptArgs2::Arg;
 use strict;
@@ -130,6 +131,8 @@ sub name_comment {
     );
 }
 
+1;
+
 package OptArgs2::Fallback;
 use strict;
 use warnings;
@@ -140,6 +143,8 @@ our $VERSION = '0.0.1_1';
 extends 'OptArgs2::Arg';
 
 has hidden => ( is => 'ro', );
+
+1;
 
 package OptArgs2::Opt;
 use strict;
@@ -254,6 +259,8 @@ sub name_alias_comment {
 
     return [ $opt, $alias, $comment ];
 }
+
+1;
 
 package OptArgs2::Cmd;
 use strict;
@@ -470,6 +477,8 @@ sub usage_tree {
     my $self = shift;
     return $self->result( 'UsageTree', $self->_usage_tree );
 }
+
+1;
 
 package OptArgs2;
 use strict;
