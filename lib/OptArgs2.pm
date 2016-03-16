@@ -510,13 +510,14 @@ sub usage {
 }
 
 sub _usage_tree {
-    my $self = shift;
+    my $self  = shift;
+    my $style = shift;
     my $depth = shift || '';
 
-    my $str = $depth . $self->usage(OptArgs2::STYLE_SUMMARY);
+    my $str = $self->usage($style) =~ s/^/$depth/gsmr;
 
     foreach my $subcmd ( sort { $a->name cmp $b->name } @{ $self->subcmds } ) {
-        $str .= $subcmd->_usage_tree( $depth . '    ' );
+        $str .= $subcmd->_usage_tree( $style, $depth . '    ' );
     }
 
     return $str;
@@ -524,7 +525,8 @@ sub _usage_tree {
 
 sub usage_tree {
     my $self = shift;
-    return OptArgs2::Util->result( 'Usage::Tree', $self->_usage_tree );
+    my $style = shift || OptArgs2::STYLE_SUMMARY;
+    return OptArgs2::Util->result( 'Usage::Tree', $self->_usage_tree($style) );
 }
 
 1;
