@@ -756,11 +756,11 @@ sub cmd_optargs {
                     $result = $abbrev{$result} if defined $abbrev{$result};
                 }
 
-                my $new_class = $class . '::' . $result;
-                $new_class =~ s/-/_/g;
+                my $new_class = $class . '::' . $result =~ s/-/_/gr;
 
                 if ( exists $command{$new_class} ) {
-                    $cmd = $command{$new_class};
+                    $class = $new_class;
+                    $cmd   = $command{$new_class};
                     $cmd->run_optargs;
 
                     # Ignoring any remaining arguments
