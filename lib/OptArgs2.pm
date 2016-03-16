@@ -490,7 +490,7 @@ use Exporter qw/import/;
 use OptArgs2::Mo;
 
 our $VERSION = '0.0.1_1';
-our @EXPORT  = (qw/arg cmd cmd_optargs opt subcmd/);
+our @EXPORT  = (qw/arg cmd cmd_optargs opt optargs subcmd/);
 
 my %command;
 
@@ -536,17 +536,32 @@ sub subcmd {
 
 sub arg {
     my $name = shift;
+
+    $OptArgs2::Cmd::CURRENT //= do {
+        require File::Basename;
+        cmd( File::Basename::basename($0), comment => 'auto' );
+    };
     $OptArgs2::Cmd::CURRENT->add_arg( OptArgs2::Arg->new( name => $name, @_ ) );
 }
 
 sub opt {
     my $name = shift;
+
+    $OptArgs2::Cmd::CURRENT //= do {
+        require File::Basename;
+        cmd( File::Basename::basename($0), comment => 'auto' );
+    };
     $OptArgs2::Cmd::CURRENT->add_opt( OptArgs2::Opt->new( name => $name, @_ ) );
 }
 
 # ------------------------------------------------------------------------
 # Option/Argument processing
 # ------------------------------------------------------------------------
+sub optargs {
+    require File::Basename;
+    cmd_optargs( File::Basename::basename($0), @_ );
+}
+
 sub cmd_optargs {
     my $class = shift || croak('cmd_optargs($CLASS, [@argv])');
     my $cmd = $command{$class} || croak( 'command class not found: ' . $class );

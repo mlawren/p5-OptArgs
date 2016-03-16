@@ -1,0 +1,21 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use lib 'lib';
+use Data::Dumper;
+use OptArgs2;
+
+arg one => (
+    isa     => 'Str',
+    comment => 'some kind of arg',
+);
+
+opt help => (
+    isa     => 'Flag',
+    alias   => 'h',
+    comment => 'print help message and exit',
+    trigger => sub { die shift->usage(OptArgs2::STYLE_FULL) },
+);
+
+my $opts = optargs;
+print Dumper($opts);
