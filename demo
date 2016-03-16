@@ -35,32 +35,173 @@ cmd demo => (
     },
 );
 
-subcmd 'demo::args' => (
-    comment => 'demo for arguments',
+subcmd 'demo::arg' => (
+    comment => 'argions',
     optargs => sub {
 
-        arg string => (
-            isa      => 'Str',
-            comment  => 'name: string, isa: Str, required: true',
+        arg type => (
+            isa      => 'SubCmd',
+            comment  => 'arg type',
             required => 1,
-            default  => 'meh',
         );
-
-        arg string => (
-            isa      => 'Str',
-            isa_name => 'Str',
-            comment  => 'name: string, isa: Str',
-            default  => 'meh',
-        );
-
-        arg greedy => (
-            isa     => 'HashRef',
-            greedy  => 1,
-            comment => 'name: hashref, isa: HashRef',
-        );
-
     },
 );
+
+subcmd 'demo::arg::arrayref' => (
+    comment => 'ArrayRef argion',
+    optargs => sub {
+
+        arg aaa => (
+            isa      => 'ArrayRef',
+            comment  => 'isa: ArrayRef, name: aaa',
+            required => 1,
+        );
+    },
+);
+
+subcmd 'demo::arg::greedy' => (
+    comment => 'argions',
+    optargs => sub {
+
+        arg type => (
+            isa      => 'SubCmd',
+            comment  => 'arg type',
+            required => 1,
+        );
+    },
+);
+
+subcmd 'demo::arg::greedy::arrayref' => (
+    comment => 'ArrayRef argion',
+    optargs => sub {
+
+        arg aaa => (
+            isa      => 'ArrayRef',
+            comment  => 'isa: ArrayRef, name: aaa',
+            required => 1,
+        );
+    },
+);
+
+subcmd 'demo::arg::greedy::hashref' => (
+    comment => 'HashRef argion',
+    optargs => sub {
+
+        arg aaa => (
+            isa      => 'HashRef',
+            comment  => 'isa: HashRef, name: aaa',
+            required => 1,
+        );
+
+        arg bbb => (
+            isa     => 'HashRef',
+            comment => 'isa: HashRef, name: bbb',
+            default => { x => 1 },
+
+        );
+    },
+
+);
+
+subcmd 'demo::arg::greedy::str' => (
+    comment => 'Str argion',
+    optargs => sub {
+
+        arg aaa => (
+            isa      => 'Str',
+            comment  => 'isa: Str, name: aaa',
+            required => 1,
+        );
+
+        arg bbb => (
+            isa     => 'Str',
+            comment => 'isa: Str, name: bbb',
+            default => 'some text',
+
+        );
+    },
+);
+
+subcmd 'demo::arg::hashref' => (
+    comment => 'HashRef argion',
+    optargs => sub {
+
+        arg aaa => (
+            isa      => 'HashRef',
+            comment  => 'isa: HashRef, name: aaa',
+            required => 1,
+        );
+
+        arg bbb => (
+            isa     => 'HashRef',
+            comment => 'isa: HashRef, name: bbb',
+            default => { x => 1 },
+
+        );
+    },
+);
+
+subcmd 'demo::arg::int' => (
+    comment => 'Int argion',
+    optargs => sub {
+
+        arg aaa => (
+            isa      => 'Int',
+            comment  => 'isa: Int, name: aaa',
+            required => 1,
+        );
+
+        arg bbb => (
+            isa     => 'Int',
+            comment => 'isa: Int, name: bbb',
+            default => 5,
+
+        );
+    },
+);
+
+subcmd 'demo::arg::num' => (
+    comment => 'Num argion',
+    optargs => sub {
+
+        arg aaa => (
+            isa      => 'Num',
+            comment  => 'isa: Num, name: aaa',
+            required => 1,
+        );
+
+        arg bbb => (
+            isa     => 'Num',
+            comment => 'isa: Num, name: bbb',
+            default => 6,
+
+        );
+    },
+);
+
+subcmd 'demo::arg::str' => (
+    comment => 'Str argion',
+    optargs => sub {
+
+        arg aaa => (
+            isa      => 'Str',
+            comment  => 'isa: Str, name: aaa',
+            required => 1,
+        );
+
+        arg bbb => (
+            isa     => 'Str',
+            comment => 'isa: Str, name: bbb',
+            default => 'some text',
+
+        );
+    },
+);
+
+#    required => undef,
+#    default  => undef,
+#    greedy   => undef,
+#    fallback => undef,
 
 subcmd 'demo::opt' => (
     comment => 'options',
@@ -169,63 +310,79 @@ subcmd 'demo::opt::hashref' => (
     },
 );
 
-#    'ArrayRef' => 'STR',
-#    'Bool'     => '',
-#    'Counter'  => '',
-#    'Flag'     => '',
-#    'HashRef'  => 'STR',
-#    'Int'      => 'INT',
-#    'Num'      => 'NUM',
-#    'Str'      => 'STR',
-
-subcmd 'demo::opt::rest' => (
-    comment => 'arrayref option',
+subcmd 'demo::opt::int' => (
+    comment => 'Int option',
     optargs => sub {
 
-        opt flag => (
-            isa     => 'Flag',
+        opt aaa => (
+            isa     => 'Int',
+            comment => 'isa: Int, name: aaa',
+            alias   => 'a',
+        );
+
+        opt bbb => (
+            isa     => 'Int',
+            comment => 'isa: Int, name: bbb',
+            default => 5,
             alias   => 'b',
-            comment => 'name: flag, isa: Flag',
+        );
+    },
+);
+
+subcmd 'demo::opt::num' => (
+    comment => 'Num option',
+    optargs => sub {
+
+        opt aaa => (
+            isa     => 'Num',
+            comment => 'isa: Num, name: aaa',
+            alias   => 'a',
         );
 
-        opt no_flag => (
-            isa     => 'Flag',
-            alias   => 'n',
-            comment => 'name: no_flag, isa: Flag',
+        opt bbb => (
+            isa     => 'Num',
+            comment => 'isa: Num, name: bbb',
+            default => 6,
+            alias   => 'b',
         );
+    },
+);
 
-        opt bool => (
-            isa     => 'Bool',
-            alias   => 'l',
-            comment => 'name: bool, isa: Bool',
-        );
+subcmd 'demo::opt::str' => (
+    comment => 'Str option',
+    optargs => sub {
 
-        opt tbool => (
-            isa     => 'Bool',
-            comment => 'name: tbool, isa: Bool',
-            alias   => 't',
-            default => 1,
-        );
-
-        opt fbool => (
-            isa     => 'Bool',
-            comment => 'name: fbool, isa: Bool',
-            alias   => 'f',
-            default => 0,
-        );
-
-        opt hashref => (
-            isa     => 'HashRef',
-            alias   => 'h',
-            comment => 'name: hashref, isa: HashRef',
-        );
-
-        opt str => (
+        opt aaa => (
             isa     => 'Str',
-            alias   => 's',
-            comment => 'name: str, isa: Str',
+            comment => 'isa: Str, name: aaa',
+            alias   => 'a',
         );
 
+        opt bbb => (
+            isa     => 'Str',
+            comment => 'isa: Str, name: bbb',
+            default => 'some text',
+            alias   => 'b',
+        );
+    },
+);
+
+subcmd 'demo::opt::isa_name' => (
+    comment => 'option with isa_name',
+    optargs => sub {
+
+        opt aaa => (
+            isa     => 'Str',
+            comment => 'isa: Str, name: aaa',
+            alias   => 'a',
+        );
+
+        opt bbb => (
+            isa      => 'Str',
+            isa_name => 'XXX',
+            comment  => 'isa: Str, isa_name: XXX, name: bbb',
+            alias    => 'b',
+        );
     },
 );
 
@@ -233,10 +390,10 @@ my ( $cmd, $opts ) = eval { cmd_optargs('demo') };
 
 if ( my $err = $@ ) {
     if ( ref $err ) {
-        print $err . "(" . ref($err) . ")\n";
+        die $err . "(" . ref($err) . ")\n";
     }
     else {
-        print $err;
+        die $err;
     }
 }
 else {
@@ -244,36 +401,4 @@ else {
       . ( Dumper($opts) =~ s/\$VAR1 = (.*);/$1/sr =~ s/^/    /gsmr );
 }
 
-__END__
-                ---              ------------
-                 'ArrayRef'      's@'
-                 'Flag'          '!'
-                 'Bool'          '!'
-                 'Counter'       '+'
-                 'HashRef'       's%'
-                 'Int'           '=i'
-                 'Num'           '=f'
-                 'Str'           '=s'
-
-            The presentation of Flag and Bool types in usage messages is as
-            follows:
-
-                $name       Type        Default         Presentation
-                ----        ----        -------         ------------
-                option      Flag        always undef    --option
-                no_option   Flag        always undef    --no-option
-                option      Bool        undef           --[no-]option
-                option      Bool        true            --no-option
-                option      Bool        false           --option
-                option      Counter     *               --option
-
-            The presentation of the remaining types is as follows:
-
-                $name       Type        isa_name        Presentation
-                ----        ----        --------        ------------
-                option      ArrayRef    -               --option=STR
-                option      HashRef     -               --option=STR
-                option      Int         -               --option=INT
-                option      Num         -               --option=NUM
-                option      Str         -               --option=STR
-
+exit;
