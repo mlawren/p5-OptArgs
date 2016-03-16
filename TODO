@@ -16,19 +16,6 @@
 
 - Do not inherit options from parent commands?
 
-- Immediate response/trigger to a particular option
-
-    opt version => (
-        isa     => 'Boo',
-        comment => 'display version string and exit',
-        on_set  => sub {
-            my ($cmd,$value) = @_;
-            print "Version $VERSION\n";
-            exit;
-        },
-    );
-
-
 - An Enum type
     opt things => (
         isa     => 'Enum',
@@ -36,5 +23,3 @@
         comment => 'only allows set values',
     );
 
-
-- Currently using new type 'Boo' but how about 'Flag'?
