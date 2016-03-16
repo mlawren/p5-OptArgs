@@ -58,9 +58,17 @@ use Carp qw/croak/;
 
 our $VERSION = '0.0.1_1';
 
+sub result {
+    my $self = shift;
+    return OptArgs2::Result->new(@_);
+}
+
 sub user_error {
     my $self = shift;
-    my $error = shift || croak('user_error($ERROR)');
+
+    # By doing this before the CARP_NOT below we still catch bad
+    # internal calls to Result->new
+    my $result = OptArgs2::Result->new(@_);
 
     # Internal packages we don't want to see for user-related errors
     local @OptArgs2::Opt::CARP_NOT = (
@@ -74,7 +82,7 @@ sub user_error {
     );
 
     # Carp::croak has a bug when first argument is a reference
-    croak( '', OptArgs2::Result->new( $error, @_ ) );
+    croak( '', $result );
 }
 
 1;
@@ -179,7 +187,6 @@ has hidden => ( is => 'ro', );
 package OptArgs2::Opt;
 use strict;
 use warnings;
-use Carp qw/croak/;
 use OptArgs2::Mo;
 
 our $VERSION = '0.0.1_1';
@@ -224,12 +231,10 @@ my %isa2getopt = (
 sub BUILD {
     my $self = shift;
 
-    exists $isa2getopt{ $self->isa } || croak(
-        OptArgs2::Result->new(
-            'Error::IsaInvalid', 'invalid isa "%s" for opt "%s"',
-            $self->isa,          $self->name
-        )
-    );
+    exists $isa2getopt{ $self->isa }
+      || $self->user_error( 'Error::IsaInvalid',
+        'invalid isa "%s" for opt "%s"',
+        $self->isa, $self->name );
 }
 
 sub new_from {
@@ -415,11 +420,6 @@ sub parents {
     return ( $self->parent, $self->parent->parents );
 }
 
-sub result {
-    my $self = shift;
-    return OptArgs2::Result->new(@_);
-}
-
 sub usage {
     my $self = shift;
     my $style = shift || $self->usage_style;
@@ -530,7 +530,6 @@ sub usage_tree {
 package OptArgs2;
 use strict;
 use warnings;
-use Carp qw/croak/;
 use Encode qw/decode/;
 use Getopt::Long qw/GetOptionsFromArray/;
 use Exporter qw/import/;
@@ -544,7 +543,8 @@ my %command;
 sub cmd {
     my $class = shift || Carp::confess('cmd($CLASS,@args)');
 
-    croak "command already defined: $class"
+    return OptArgs2::Base->user_error( 'CommandDefined',
+        "command already defined: $class" )
       if exists $command{$class};
 
     my $cmd = OptArgs2::Cmd->new( class => $class, @_ );
@@ -561,16 +561,21 @@ sub cmd {
 }
 
 sub subcmd {
-    my $class = shift || Carp::confess('cmd($CLASS,@args)');
+    my $class =
+      shift || OptArgs2::Base->user_error( 'Caller', 'cmd($CLASS,%args)' );
 
-    croak "subcommand already defined: $class"
+    OptArgs2::Base->user_error( 'SubcommandDefined',
+        "subcommand already defined: $class" )
       if exists $command{$class};
 
-    croak "no '::' in class '$class' - must have a parent"
+    OptArgs2::Base->user_error( 'SubcmdNoParent',
+        "no '::' in class '$class' - must have a parent" )
       unless $class =~ m/::/;
 
     my $parent_class = $class =~ s/(.*)::.*/$1/r;
-    croak "parent class not found" unless exists $command{$parent_class};
+
+    OptArgs2::Base->user_error( 'ParentNotFound', "parent class not found" )
+      unless exists $command{$parent_class};
 
     my $subcmd = OptArgs2::Cmd->new(
         class => $class,
@@ -611,8 +616,12 @@ sub optargs {
 }
 
 sub cmd_optargs {
-    my $class = shift || croak('cmd_optargs($CLASS, [@argv])');
-    my $cmd = $command{$class} || croak( 'command class not found: ' . $class );
+    my $class = shift
+      || OptArgs2::Base->user_error( 'Caller', 'cmd_optargs($CLASS,[@argv])' );
+
+    my $cmd = $command{$class}
+      || OptArgs2::Base->user_error( 'CommandNotFound',
+        'command class not found: ' . $class );
 
     my $source      = \@_;
     my $source_hash = {};
@@ -633,7 +642,11 @@ sub cmd_optargs {
         $source = [ grep { ref $_ ne 'HASH' } @$source ];
     }
 
-    map { Carp::croak('_optargs argument undefined!') if !defined $_ } @$source;
+    map {
+        OptArgs2::Base->user_error( 'Undefined',
+            '_optargs argument undefined!' )
+          if !defined $_
+    } @$source;
 
     Getopt::Long::Configure(qw/pass_through no_auto_abbrev no_ignore_case/);
 
