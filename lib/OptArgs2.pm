@@ -648,17 +648,15 @@ sub cmd_optargs {
 
     Getopt::Long::Configure(qw/pass_through no_auto_abbrev no_ignore_case/);
 
-    $cmd->run_optargs;
-
-    # Start with the parents options
-    my @config = map { $_->run_optargs; @{ $_->opts } } $cmd->parents;
-    push( @config, ( @{ $cmd->opts }, @{ $cmd->args } ) );
-
-    my $missing_required;
     my $optargs = {};
     my @coderef_default_keys;
-    my @trigger_result;
+    my @trigger;
     my @errors;
+
+    # Start with the parents options
+    map { $_->run_optargs } $cmd->parents, $cmd;
+    my @config = map { @{ $_->opts } } $cmd->parents, $cmd;
+    push( @config, ( @{ $cmd->opts }, @{ $cmd->args } ) );
 
     while ( my $try = shift @config ) {
         my $result;
@@ -671,10 +669,8 @@ sub cmd_optargs {
                 GetOptionsFromArray( $source, $try->getopt => \$result );
             }
 
-            if ( my $ref = $try->trigger and defined $result ) {
-                push( @trigger_result, $ref, $result );
-
-                # TODO evaluate subcommands here and then call trigger?
+            if ( defined $result and my $ref = $try->trigger ) {
+                push( @trigger, $ref, $result );
             }
         }
         elsif ( $try->SUPER::isa('OptArgs2::Arg') ) {
@@ -792,7 +788,6 @@ sub cmd_optargs {
 
                 $result = undef;
             }
-
         }
 
         if ( defined $result ) {
@@ -806,9 +801,8 @@ sub cmd_optargs {
 
     }
 
-    while (@trigger_result) {
-        my $trigger = shift @trigger_result;
-        $trigger->( $cmd, shift @trigger_result );
+    foreach my $trigger (@trigger) {
+        $trigger->( $cmd, shift @trigger );
     }
 
     if (@errors) {
