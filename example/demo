@@ -38,7 +38,7 @@ cmd demo => (
 );
 
 subcmd 'demo::arg' => (
-    comment => 'argions',
+    comment => 'arguments',
     optargs => sub {
 
         arg type => (
@@ -50,7 +50,7 @@ subcmd 'demo::arg' => (
 );
 
 subcmd 'demo::arg::arrayref' => (
-    comment => 'ArrayRef argion',
+    comment => 'ArrayRef argument',
     optargs => sub {
 
         arg aaa => (
@@ -62,7 +62,7 @@ subcmd 'demo::arg::arrayref' => (
 );
 
 subcmd 'demo::arg::greedy' => (
-    comment => 'argions',
+    comment => 'arguments',
     optargs => sub {
 
         arg type => (
@@ -74,7 +74,7 @@ subcmd 'demo::arg::greedy' => (
 );
 
 subcmd 'demo::arg::greedy::arrayref' => (
-    comment => 'ArrayRef argion',
+    comment => 'ArrayRef argument',
     optargs => sub {
 
         arg aaa => (
@@ -82,11 +82,18 @@ subcmd 'demo::arg::greedy::arrayref' => (
             comment  => 'isa: ArrayRef, name: aaa',
             required => 1,
         );
+
+        arg bbb => (
+            isa     => 'ArrayRef',
+            comment => 'isa: ArrayRef, name: bbb',
+            default => [],
+            greedy  => 1,
+        );
     },
 );
 
 subcmd 'demo::arg::greedy::hashref' => (
-    comment => 'HashRef argion',
+    comment => 'HashRef argument',
     optargs => sub {
 
         arg aaa => (
@@ -98,15 +105,14 @@ subcmd 'demo::arg::greedy::hashref' => (
         arg bbb => (
             isa     => 'HashRef',
             comment => 'isa: HashRef, name: bbb',
-            default => { x => 1 },
-
+            greedy  => 1,
         );
     },
 
 );
 
 subcmd 'demo::arg::greedy::str' => (
-    comment => 'Str argion',
+    comment => 'Str argument',
     optargs => sub {
 
         arg aaa => (
@@ -125,7 +131,7 @@ subcmd 'demo::arg::greedy::str' => (
 );
 
 subcmd 'demo::arg::hashref' => (
-    comment => 'HashRef argion',
+    comment => 'HashRef argument',
     optargs => sub {
 
         arg aaa => (
@@ -144,7 +150,7 @@ subcmd 'demo::arg::hashref' => (
 );
 
 subcmd 'demo::arg::int' => (
-    comment => 'Int argion',
+    comment => 'Int argument',
     optargs => sub {
 
         arg aaa => (
@@ -163,7 +169,7 @@ subcmd 'demo::arg::int' => (
 );
 
 subcmd 'demo::arg::num' => (
-    comment => 'Num argion',
+    comment => 'Num argument',
     optargs => sub {
 
         arg aaa => (
@@ -182,7 +188,7 @@ subcmd 'demo::arg::num' => (
 );
 
 subcmd 'demo::arg::str' => (
-    comment => 'Str argion',
+    comment => 'Str argument',
     optargs => sub {
 
         arg aaa => (
