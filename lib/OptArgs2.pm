@@ -540,7 +540,7 @@ use Exporter qw/import/;
 use OptArgs2::Mo;
 
 our $VERSION = '0.0.1_1';
-our @EXPORT  = (qw/arg cmd cmd_optargs opt optargs subcmd/);
+our @EXPORT  = (qw/arg cmd cmd_optargs class_optargs opt optargs subcmd/);
 
 my %command;
 
@@ -565,8 +565,24 @@ sub cmd {
 }
 
 sub subcmd {
-    my $class =
-      shift || OptArgs2::Util->croak( 'Define::Usage', 'cmd($CLASS,%args)' );
+    my $class;
+
+    my $oldstyle;
+
+    # v1-style subcmd
+    if ( @_ % 2 ) {
+        $class = shift;
+    }
+    else {
+        my %args = @_;
+        my $cmd  = delete $args{cmd};
+        $cmd   = join( '::', @{$cmd} ) if ref $cmd eq 'ARRAY';
+        $class = ( scalar(caller) . '::' . $cmd ) =~ s/ +/::/r;
+        @_     = %args;
+        $oldstyle++;
+    }
+
+    $class or OptArgs2::Util->croak( 'Define::Usage', 'subcmd($CLASS,%args)' );
 
     OptArgs2::Util->croak( 'Define::SubcommandDefined',
         "subcommand already defined: $class" )
@@ -586,27 +602,27 @@ sub subcmd {
         @_
     );
 
-    return $command{$class} = $command{$parent_class}
-      ->add_cmd( OptArgs2::Cmd->new( class => $class, @_ ) );
+    $OptArgs2::Cmd::CURRENT = $subcmd if $oldstyle;
+    return $command{$class} = $command{$parent_class}->add_cmd($subcmd);
+}
+
+sub _default_command {
+    my $caller = shift;
+    require File::Basename;
+    cmd( $caller, name => File::Basename::basename($0), comment => '', );
 }
 
 sub arg {
     my $name = shift;
 
-    $OptArgs2::Cmd::CURRENT //= do {
-        require File::Basename;
-        cmd( File::Basename::basename($0), comment => 'auto' );
-    };
+    $OptArgs2::Cmd::CURRENT //= _default_command(caller);
     $OptArgs2::Cmd::CURRENT->add_arg( OptArgs2::Arg->new( name => $name, @_ ) );
 }
 
 sub opt {
     my $name = shift;
 
-    $OptArgs2::Cmd::CURRENT //= do {
-        require File::Basename;
-        cmd( File::Basename::basename($0), comment => 'auto' );
-    };
+    $OptArgs2::Cmd::CURRENT //= _default_command(caller);
     $OptArgs2::Cmd::CURRENT->add_opt(
         OptArgs2::Opt->new_from( name => $name, @_ ) );
 }
@@ -615,8 +631,15 @@ sub opt {
 # Option/Argument processing
 # ------------------------------------------------------------------------
 sub optargs {
-    require File::Basename;
-    cmd_optargs( File::Basename::basename($0), @_ );
+    my ( undef, $opts ) = class_optargs( scalar(caller), @_ );
+    return $opts;
+}
+
+sub class_optargs {
+    my ( $cmd, $opts ) = cmd_optargs(@_);
+    my $class = $cmd->class;
+    eval "require $class" or die $@;
+    return $class, $opts;
 }
 
 sub cmd_optargs {
