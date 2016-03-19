@@ -540,7 +540,7 @@ use Exporter qw/import/;
 use OptArgs2::Mo;
 
 our $VERSION = '0.0.1_1';
-our @EXPORT  = (qw/arg cmd cmd_optargs class_optargs opt optargs subcmd/);
+our @EXPORT  = (qw/arg cmd cmd_optargs opt optargs subcmd/);
 
 my %command;
 
@@ -554,6 +554,7 @@ sub cmd {
     my $cmd = OptArgs2::Cmd->new( class => $class, @_ );
     $command{$class} = $cmd;
 
+    # If this check is not performed we end up adding ourselves
     if ( $class =~ m/:/ ) {
         my $parent_class = $class =~ s/(.*)::/$1/r;
         if ( exists $command{$parent_class} ) {
@@ -565,24 +566,8 @@ sub cmd {
 }
 
 sub subcmd {
-    my $class;
-
-    my $oldstyle;
-
-    # v1-style subcmd
-    if ( @_ % 2 ) {
-        $class = shift;
-    }
-    else {
-        my %args = @_;
-        my $cmd  = delete $args{cmd};
-        $cmd   = join( '::', @{$cmd} ) if ref $cmd eq 'ARRAY';
-        $class = ( scalar(caller) . '::' . $cmd ) =~ s/ +/::/r;
-        @_     = %args;
-        $oldstyle++;
-    }
-
-    $class or OptArgs2::Util->croak( 'Define::Usage', 'subcmd($CLASS,%args)' );
+    my $class =
+      shift || OptArgs2::Util->croak( 'Define::Usage', 'subcmd($CLASS,%args)' );
 
     OptArgs2::Util->croak( 'Define::SubcommandDefined',
         "subcommand already defined: $class" )
@@ -594,16 +579,16 @@ sub subcmd {
 
     my $parent_class = $class =~ s/(.*)::.*/$1/r;
 
-    OptArgs2::Util->croak( 'Define::ParentNotFound', "parent class not found" )
+    OptArgs2::Util->croak( 'Define::ParentNotFound',
+        "parent class not found: " . $parent_class )
       unless exists $command{$parent_class};
 
-    my $subcmd = OptArgs2::Cmd->new(
+    $command{$class} = OptArgs2::Cmd->new(
         class => $class,
         @_
     );
 
-    $OptArgs2::Cmd::CURRENT = $subcmd if $oldstyle;
-    return $command{$class} = $command{$parent_class}->add_cmd($subcmd);
+    return $command{$parent_class}->add_cmd( $command{$class} );
 }
 
 sub _default_command {
@@ -631,15 +616,8 @@ sub opt {
 # Option/Argument processing
 # ------------------------------------------------------------------------
 sub optargs {
-    my ( undef, $opts ) = class_optargs( scalar(caller), @_ );
+    my ( undef, $opts ) = cmd_optargs( scalar(caller), @_ );
     return $opts;
-}
-
-sub class_optargs {
-    my ( $cmd, $opts ) = cmd_optargs(@_);
-    my $class = $cmd->class;
-    eval "require $class" or die $@;
-    return $class, $opts;
 }
 
 sub cmd_optargs {
