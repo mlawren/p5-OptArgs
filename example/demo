@@ -25,7 +25,7 @@ cmd demo => (
             isa     => 'Flag',
             alias   => 'h',
             comment => 'print full help message and exit',
-            trigger => sub { die shift->usage(OptArgs2::STYLE_FULL) },
+            ishelp  => 1,
         );
 
         opt usage_tree => (
@@ -395,7 +395,7 @@ subcmd 'demo::opt::isa_name' => (
     },
 );
 
-my ( $cmd, $opts ) = eval { cmd_optargs('demo') };
+my ( $cmd, $opts ) = eval { class_optargs('demo') };
 
 if ( my $err = $@ ) {
     if ( ref $err ) {

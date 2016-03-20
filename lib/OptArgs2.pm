@@ -542,7 +542,7 @@ use Exporter qw/import/;
 use OptArgs2::Mo;
 
 our $VERSION = '0.0.1_1';
-our @EXPORT  = (qw/arg cmd cmd_optargs opt optargs subcmd/);
+our @EXPORT  = (qw/arg class_optargs cmd opt optargs subcmd/);
 
 my %command;
 
@@ -559,34 +559,10 @@ sub arg {
     $OptArgs2::Cmd::CURRENT->add_arg( OptArgs2::Arg->new( name => $name, @_ ) );
 }
 
-sub cmd {
-    my $class = shift || Carp::confess('cmd($CLASS,@args)');
-
-    OptArgs2::Util->croak( 'Define::CommandDefined',
-        "command already defined: $class" )
-      if exists $command{$class};
-
-    my $cmd = OptArgs2::Cmd->new( class => $class, @_ );
-    $command{$class} = $cmd;
-
-    # If this check is not performed we end up adding ourselves
-    if ( $class =~ m/:/ ) {
-        my $parent_class = $class =~ s/(.*)::/$1/r;
-        if ( exists $command{$parent_class} ) {
-            $command{$parent_class}->add_cmd($cmd);
-        }
-    }
-
-    return $cmd;
-}
-
-# ------------------------------------------------------------------------
-# Option/Argument processing
-# ------------------------------------------------------------------------
-sub cmd_optargs {
+sub class_optargs {
     my $class = shift
       || OptArgs2::Util->croak( 'Parse::CmdRequired',
-        'cmd_optargs($CMD,[@argv])' );
+        'class_optargs($CMD,[@argv])' );
 
     my $cmd = $command{$class}
       || OptArgs2::Util->croak( 'Parse::CmdNotFound',
@@ -795,7 +771,28 @@ sub cmd_optargs {
         $optargs->{$key} = $optargs->{$key}->( {%$optargs} );
     }
 
-    return ( $cmd, $optargs );
+    return ( $cmd->class, $optargs );
+}
+
+sub cmd {
+    my $class = shift || Carp::confess('cmd($CLASS,@args)');
+
+    OptArgs2::Util->croak( 'Define::CommandDefined',
+        "command already defined: $class" )
+      if exists $command{$class};
+
+    my $cmd = OptArgs2::Cmd->new( class => $class, @_ );
+    $command{$class} = $cmd;
+
+    # If this check is not performed we end up adding ourselves
+    if ( $class =~ m/:/ ) {
+        my $parent_class = $class =~ s/(.*)::/$1/r;
+        if ( exists $command{$parent_class} ) {
+            $command{$parent_class}->add_cmd($cmd);
+        }
+    }
+
+    return $cmd;
 }
 
 sub opt {
@@ -807,7 +804,7 @@ sub opt {
 }
 
 sub optargs {
-    my ( undef, $opts ) = cmd_optargs( scalar(caller), @_ );
+    my ( undef, $opts ) = class_optargs( scalar(caller), @_ );
     return $opts;
 }
 
@@ -995,9 +992,9 @@ which we will describe over three phases:
 
 =item Definitions
 
-Your command structure must be defined using calls to the C<cmd()> and
-C<subcmd()> functions. An argument of type 'SubCmd' indicates
-subcommands can occur in that position.
+Your command structure is defined using calls to the C<cmd()> and
+C<subcmd()> functions. The first argument to both functions is the name
+of the Perl class that implements the (sub-)command.
 
     cmd 'App::demo' => (
         comment => 'the demo command',
@@ -1037,27 +1034,26 @@ subcommands can occur in that position.
         },
     );
 
-The command hierarchy is determined by the first argument to C<cmd()>
-and C<subcmd()>.
+    # Command hierarchy for the above code:
+    # demo COMMAND [OPTIONS...]
+    #     demo foo ACTION [OPTIONS...]
+    #     demo bar [OPTIONS...]
 
-    # Command hierarchy for the above
-    demo COMMAND [OPTIONS...]
-        demo foo ACTION [OPTIONS...]
-        demo bar [OPTIONS...]
-
-This definition can be done in your main script, or in one or more
-separate packages or plugins, as you like.
+An argument of type 'SubCmd' indicates subcommands can occur in that
+position. The command hierarchy is based upon the natural parent/child
+structure of the class names.  This definition can be done in your main
+script, or in one or more separate packages or plugins, as you like.
 
 =item Parsing
 
-The C<cmd_optargs()> function is called instead of C<optargs()> to
+The C<class_optargs()> function is called instead of C<optargs()> to
 parse the C<@ARGV> array and call the appropriate C<arg()> and C<opt()>
 definitions as needed. It's first argument is generally the top-level
 command name you used in your first C<cmd()> call.
 
-    my ($cmd, $opts) = cmd_optargs('App::demo');
+    my ($class, $opts) = class_optargs('App::demo');
 
-    printf "Running %s with %s\n", $cmd, Dumper($opts)
+    printf "Running %s with %s\n", $class, Dumper($opts)
       unless $opts->{quiet};
 
 The additional return value C<$cmd> is the name of the actual
@@ -1120,12 +1116,12 @@ itself uses just to find out that I called the command incorrectly.
 The command script itself is then usually fairly short:
 
     #!/usr/bin/env perl
-    use OptArgs2 'cmd_optargs';
+    use OptArgs2 'class_optargs';
     use App::demo::OptArgs;
 
-    my ($cmd, $opts) = cmd_optargs('App::demo');
-    eval "require $cmd" or die $@;
-    $cmd->new->run($opts);
+    my ($class, $opts) = class_optargs('App::demo');
+    eval "require $class" or die $@;
+    $class->new->run($opts);
 
 The above does nothing more than load the definitions from
 App::demo::OptArgs, obtain the command name and options hashref, and
@@ -1198,11 +1194,10 @@ following:
 
 =over
 
-=item Obvious API changes: cmd(), subcmd(), cmd_optargs()
+=item Obvious API changes: cmd(), subcmd()
 
 Commands and subcommands must now be explicitly defined using C<cmd()>
-and C<subcmd()> and the old C<class_optargs()> has been renamed to
-C<cmd_optargs()>.
+and C<subcmd()>.
 
 =item Bool options with no default display as "--[no-]bool"
 
@@ -1293,9 +1288,39 @@ If set to a true value then usage messages will show the default value.
 
 =back
 
-=item cmd( $name, %parameters ) -> OptArgs2::Cmd
+=item class_optargs( $class, [ @argv ] ) -> ($subclass, $opts)
 
-Define a top-level command identified by C<$name> which is typically a
+Parse @ARGV by default (or @argv when given) for the arguments and
+options defined for command C<$class>.  C<@ARGV> will first be decoded
+into UTF-8 (if necessary) from whatever L<I18N::Langinfo> says your
+current locale codeset is.
+
+Throws an error / usage exception object (typically C<OptArgs2::Usage>)
+for missing or invalid arguments/options.
+
+Returns the following two values:
+
+=over
+
+=item $subclass
+
+The actual subcommand name that was matched by parsing the arguments.
+This may be the same as C<$class>.
+
+=item $opts
+
+a hashref containing key/value pairs for options and arguments
+I<combined>.
+
+=back
+
+As an aid for testing, if the passed in argument C<@argv> (not @ARGV)
+contains a HASH reference, the key/value combinations of the hash will
+be added as options. An undefined value means a boolean option.
+
+=item cmd( $class, %parameters ) -> OptArgs2::Cmd
+
+Define a top-level command identified by C<$class> which is typically a
 Perl package name. The following parameters are accepted:
 
 =for comment
@@ -1317,7 +1342,7 @@ child subcommands.
 
 =for comment
 By default this subref is only called on demand when the
-C<cmd_optargs()> function sees arguments for that particular
+C<class_optargs()> function sees arguments for that particular
 subcommand. However for testing it is useful to know immediately if you
 have an error. For this purpose the OPTARGS2_IMMEDIATE environment
 variable can be set to trigger it at definition time.
@@ -1340,36 +1365,6 @@ Valid for C<cmd()> only. A subref for generating a custom usage
 message. See XXX befow for the structure this subref receives.
 
 =back
-
-=item cmd_optargs( $cmd, [ @argv ] ) -> ($subcmd, $opts)
-
-Parse @ARGV by default (or @argv when given) for the arguments and
-options defined for command C<$cmd>.  C<@ARGV> will first be decoded
-into UTF-8 (if necessary) from whatever L<I18N::Langinfo> says your
-current locale codeset is.
-
-Throws an error / usage exception object (typically C<OptArgs2::Usage>)
-for missing or invalid arguments/options.
-
-Returns the following two values:
-
-=over
-
-=item $subcmd
-
-The actual subcommand name that was matched by parsing the arguments.
-This may be the same as C<$cmd>.
-
-=item $opts
-
-a hashref containing key/value pairs for options and arguments
-I<combined>.
-
-=back
-
-As an aid for testing, if the passed in argument C<@argv> (not @ARGV)
-contains a HASH reference, the key/value combinations of the hash will
-be added as options. An undefined value means a boolean option.
 
 
 =item opt( $name, %parameters )
@@ -1485,13 +1480,13 @@ the value (if any) of the option.
 
 Parse @ARGV by default (or @argv when given) for the arguments and
 options defined for the I<default global> command. Argument decoding
-and exceptions are the same as for C<cmd_optargs>, but this function
+and exceptions are the same as for C<class_optargs>, but this function
 returns only the combined argument/option values HASHref.
 
-=item subcmd( $name, %parameters ) -> OptArgs2::Cmd
+=item subcmd( $class, %parameters ) -> OptArgs2::Cmd
 
-Defines a subcommand identified by C<$name> which must include the name
-of a previously defined (sub)command + '::'.
+Defines a subcommand identified by C<$class> which must include the
+name of a previously defined (sub)command + '::'.
 
 Accepts the same parameters as C<cmd()> in addition to the following:
 
