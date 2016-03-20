@@ -28,3 +28,5 @@
     - Arg/Opt name same as existing
     - Use X->new_from(%parameters) in place of BUILDARGS
     - Croak when two greedy arguments are defined
+
+- Why doesn't CARP_NOT work?
