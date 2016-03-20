@@ -379,14 +379,6 @@ has usage_style => (
 
 our $CURRENT;
 
-sub run_optargs {
-    my $self = shift;
-    return unless ref $self->optargs eq 'CODE';
-    local $CURRENT = $self;
-    $self->optargs->();
-    $self->optargs(undef);
-}
-
 sub add_arg {
     my $self = shift;
     my $arg  = shift;
@@ -397,11 +389,6 @@ sub add_arg {
     # A hack until Mo gets weaken support
     weaken $arg->{cmd};
     return $arg;
-}
-
-sub add_opt {
-    push( @{ $_[0]->opts }, $_[1] );
-    $_[1];
 }
 
 sub add_cmd {
@@ -416,10 +403,23 @@ sub add_cmd {
     return $subcmd;
 }
 
+sub add_opt {
+    push( @{ $_[0]->opts }, $_[1] );
+    $_[1];
+}
+
 sub parents {
     my $self = shift;
     return unless $self->parent;
     return ( $self->parent->parents, $self->parent );
+}
+
+sub run_optargs {
+    my $self = shift;
+    return unless ref $self->optargs eq 'CODE';
+    local $CURRENT = $self;
+    $self->optargs->();
+    $self->optargs(undef);
 }
 
 sub usage {
@@ -544,6 +544,19 @@ our @EXPORT  = (qw/arg cmd cmd_optargs opt optargs subcmd/);
 
 my %command;
 
+sub _default_command {
+    my $caller = shift;
+    require File::Basename;
+    cmd( $caller, name => File::Basename::basename($0), comment => '', );
+}
+
+sub arg {
+    my $name = shift;
+
+    $OptArgs2::Cmd::CURRENT //= _default_command(caller);
+    $OptArgs2::Cmd::CURRENT->add_arg( OptArgs2::Arg->new( name => $name, @_ ) );
+}
+
 sub cmd {
     my $class = shift || Carp::confess('cmd($CLASS,@args)');
 
@@ -565,61 +578,9 @@ sub cmd {
     return $cmd;
 }
 
-sub subcmd {
-    my $class =
-      shift || OptArgs2::Util->croak( 'Define::Usage', 'subcmd($CLASS,%args)' );
-
-    OptArgs2::Util->croak( 'Define::SubcommandDefined',
-        "subcommand already defined: $class" )
-      if exists $command{$class};
-
-    OptArgs2::Util->croak( 'Define::SubcmdNoParent',
-        "no '::' in class '$class' - must have a parent" )
-      unless $class =~ m/::/;
-
-    my $parent_class = $class =~ s/(.*)::.*/$1/r;
-
-    OptArgs2::Util->croak( 'Define::ParentNotFound',
-        "parent class not found: " . $parent_class )
-      unless exists $command{$parent_class};
-
-    $command{$class} = OptArgs2::Cmd->new(
-        class => $class,
-        @_
-    );
-
-    return $command{$parent_class}->add_cmd( $command{$class} );
-}
-
-sub _default_command {
-    my $caller = shift;
-    require File::Basename;
-    cmd( $caller, name => File::Basename::basename($0), comment => '', );
-}
-
-sub arg {
-    my $name = shift;
-
-    $OptArgs2::Cmd::CURRENT //= _default_command(caller);
-    $OptArgs2::Cmd::CURRENT->add_arg( OptArgs2::Arg->new( name => $name, @_ ) );
-}
-
-sub opt {
-    my $name = shift;
-
-    $OptArgs2::Cmd::CURRENT //= _default_command(caller);
-    $OptArgs2::Cmd::CURRENT->add_opt(
-        OptArgs2::Opt->new_from( name => $name, @_ ) );
-}
-
 # ------------------------------------------------------------------------
 # Option/Argument processing
 # ------------------------------------------------------------------------
-sub optargs {
-    my ( undef, $opts ) = cmd_optargs( scalar(caller), @_ );
-    return $opts;
-}
-
 sub cmd_optargs {
     my $class = shift
       || OptArgs2::Util->croak( 'Parse::CmdRequired',
@@ -835,6 +796,45 @@ sub cmd_optargs {
     return ( $cmd, $optargs );
 }
 
+sub opt {
+    my $name = shift;
+
+    $OptArgs2::Cmd::CURRENT //= _default_command(caller);
+    $OptArgs2::Cmd::CURRENT->add_opt(
+        OptArgs2::Opt->new_from( name => $name, @_ ) );
+}
+
+sub optargs {
+    my ( undef, $opts ) = cmd_optargs( scalar(caller), @_ );
+    return $opts;
+}
+
+sub subcmd {
+    my $class =
+      shift || OptArgs2::Util->croak( 'Define::Usage', 'subcmd($CLASS,%args)' );
+
+    OptArgs2::Util->croak( 'Define::SubcommandDefined',
+        "subcommand already defined: $class" )
+      if exists $command{$class};
+
+    OptArgs2::Util->croak( 'Define::SubcmdNoParent',
+        "no '::' in class '$class' - must have a parent" )
+      unless $class =~ m/::/;
+
+    my $parent_class = $class =~ s/(.*)::.*/$1/r;
+
+    OptArgs2::Util->croak( 'Define::ParentNotFound',
+        "parent class not found: " . $parent_class )
+      unless exists $command{$parent_class};
+
+    $command{$class} = OptArgs2::Cmd->new(
+        class => $class,
+        @_
+    );
+
+    return $command{$parent_class}->add_cmd( $command{$class} );
+}
+
 1;
 
 __END__
@@ -849,8 +849,152 @@ OptArgs2 - command-line argument and option processor
 
 =head1 SYNOPSIS
 
-    use OptArgs2;
-    use Data::Dumper;
+    #!/usr/bin/env perl
+    use OptArgs;
+
+    arg item => (
+        isa      => 'Str',
+        required => 1,
+        comment  => 'the item to paint',
+    );
+
+    opt quiet => (
+        isa     => 'Flag',
+        alias   => 'q',
+        comment => 'output nothing while working',
+    );
+
+    my $ref = optargs;
+
+    print "Painting $ref->{item}\n" unless $ref->{quiet};
+
+
+=head1 DESCRIPTION
+
+B<OptArgs2> processes command line arguments, options, and subcommands
+according to the following definitions:
+
+=over
+
+=item Command
+
+A program run from the command line to perform a task.
+
+=item Arguments
+
+Arguments are positional parameters that pass information to a command.
+Arguments can be optional, but they should not be confused with Options
+below.
+
+=item Options
+
+Options are non-positional parameters that pass information to a
+command.  They are generally not required to be present (hence the name
+Option) but that is configurable. All options have a long form prefixed
+by '--', and may have a single letter alias prefixed by '-'.
+
+=item Subcommands
+
+From the users point of view a subcommand is a special argument with
+its own set of arguments and options.  However from a code authoring
+perspective subcommands are often implemented as stand-alone programs,
+called from the main script when the appropriate command arguments are
+given.
+
+=back
+
+=head2 Simple Commands
+
+To demonstrate the simple use case (i.e. with no subcommands) lets put
+the code from the synopsis in a file called C<paint> and observe the
+following interactions from the shell:
+
+    $ ./paint
+    usage: paint ITEM [OPTIONS...]
+
+      arguments:
+        ITEM          the item to paint
+
+      options:
+        --quiet, -q   output nothing while working
+
+The C<optargs()> function parses the command line according to the
+previous C<opt()> and C<arg()> declarations and returns a single HASH
+reference.  If the command is not called correctly then an exception is
+thrown containing an automatically generated usage message as shown
+above.  Because B<OptArgs2> fully knows the valid arguments and options
+it can detect a wide range of errors:
+
+    $ ./paint wall message
+    error: unexpected option or argument: red
+
+So let's add that missing argument definition:
+
+    arg message => (
+        isa      => 'Str',
+        comment  => 'the message to paint on the item',
+        greedy   => 1,
+    );
+
+And then check the usage again:
+
+    $ ./paint
+    usage: paint ITEM [MESSAGE...] [OPTIONS...]
+
+      arguments:
+        ITEM          the item to paint
+        MESSAGE       the message to paint on the item
+
+      options:
+        --quiet, -q   output nothing while working
+
+Note that optional arguments are surrounded by square brackets, and
+that three dots (...) are postfixed to greedy arguments. A greedy
+argument will swallow whatever is left on the comand line:
+
+    $ ./paint wall Perl is great
+    Painting on wall: "Perl is great".
+
+Note that it probably doesn't make sense to define any more arguments
+once you have a greedy argument. Let's imagine you now want the user to
+be able to choose the colour if they don't like the default. An option
+might make sense here:
+
+    opt colour => (
+        isa           => 'Str',
+        default       => 'blue',
+        show_default  => 1,
+        comment       => 'the colour to use',
+    );
+
+This now produces the following usage output:
+
+    usage: paint ITEM [MESSAGE...] [OPTIONS...]
+
+      arguments:
+        ITEM               the item to paint
+        MESSAGE            the message to paint on the item
+ 
+      options:
+        --colour=STR, -c   the colour to use [default: blue]
+        --quiet,      -q   output nothing while working
+
+The command line is always parsed first for arguments, then for
+options, in the same order in which they are defined. This really only
+has minor implications for trigger actions (see FUNCTIONS below).
+
+=head2 Multi-Level Commands
+
+Commands with subcommands require a different coding model and syntax
+which we will describe over three phases:
+
+=over
+
+=item Definition
+
+Your command structure must be defined  using calls to the C<cmd()> and
+C<subcmd()> functions that mirror your command hierarchy. An argument
+of type 'SubCmd' indicates subcommands can occur in that position.
 
     cmd 'App::demo' => (
         comment => 'the demo command',
@@ -890,68 +1034,32 @@ OptArgs2 - command-line argument and option processor
         },
     );
 
+The command hierarchy is determined by the first argument to C<cmd()>
+and C<subcmd()>.
+
+    # Command hierarchy for the above
+    demo COMMAND [OPTIONS...]
+        demo foo ACTION [OPTIONS...]
+        demo bar [OPTIONS...]
+
+This definition can be done in your main script, or in one or more
+separate packages or plugins, as you like.
+
+=item Parsing
+
+The C<cmd_optargs()> function is called instead of C<optargs()> to
+parse the C<@ARGV> array and call the appropriate C<arg()> and C<opt()>
+definitions as needed. It's first argument is generally the top-level
+command name you used in your first C<cmd()> call.
+
     my ($cmd, $opts) = cmd_optargs('App::demo');
 
     printf "Running %s with %s\n", $cmd, Dumper($opts)
       unless $opts->{quiet};
 
-=head1 DESCRIPTION
-
-B<OptArgs2> processes command line arguments, options, and subcommands
-according to the following definitions:
-
-=over
-
-=item Command
-
-A program run from the command line to perform a task.
-
-=item Arguments
-
-Arguments are positional parameters that pass information to the
-command. Arguments can be optional, but they should not be confused
-with Options below.
-
-=item Options
-
-Options are parameters that also pass information to a command.  They
-are generally not required to be present (hence the name Option) but
-that is configurable. All options have a long form prefixed by '--',
-and may have a single letter alias prefixed by '-'.
-
-=item Subcommands
-
-From the users point of view a subcommand is a special argument with
-its own set of arguments and options.  However from a code authoring
-perspective subcommands are often implemented as stand-alone programs,
-called from the main script when the appropriate command arguments are
-given.
-
-=back
-
-Applications using B<OptArgs2> work like this:
-
-=over
-
-=item Definition
-
-You define your command structure using calls to C<cmd()> and
-C<subcmd()> that mirrors your command hierarchy.
-
-    # Command hierarchy according to the SYNOPSIS code:
-    demo COMMAND [OPTIONS...]
-        demo foo ACTION [OPTIONS...]
-        demo bar [OPTIONS...]
-
-This can be done in your main script, or in one or more separate
-packages, as you like.
-
-=item Parsing
-
-The C<cmd_optargs()> function uses this command structure to parse the
-C<@ARGV> array and calls your C<arg()> and C<opt()> definitions as
-needed. A usage exception is raised if required elements of C<@ARGV>
-are missing or invalid.
+The additional return value C<$cmd> is the name of the actual
+(sub-)command to which the C<$opts> HASHref applies. Usage exceptions
+are raised just the same as with the C<optargs()> function.
 
     error: unknown option "--invalid"
 
@@ -963,44 +1071,13 @@ are missing or invalid.
 
         --quiet, -q   run quietly
 
+Note that options are inherited by subcommands.
+
 =item Dispatch/Execution
 
-The matching (sub)command name plus a HASHref of combined argument and
-option values is returned, which you can use to execute the action or
-dispatch to the appropriate class/package as you like.
-
-    Running App::demo::foo with { action => 'jump' }
-
-=back
-
-B<OptArgs2> has additional support for trivial command line
-applications with I<no> subcommands. Calls to C<arg()> and C<opt()>
-that do not occur within a C<cmd()> or C<subcmd()> block are added to a
-hidden global command.
-
-    use OptArgs2;
-
-    arg first => (
-        isa     => 'Str',
-        comment => 'the first argument',
-    );
-
-    opt quiet => (
-        isa     => 'Flag',
-        comment => 'work quietly',
-    );
-
-The C<optargs()> function can be used to parse @ARGV with this global
-command (similarly to C<cmd_optargs()>) but only returns a single
-HASHref.
-
-    my $opts = optargs();
-    # { first => 'argument', quiet => 1|0 }
-
-The name of this global command is set to the base of the script
-filename ($^O) using File::Basename.
-
-=head2 Package Structure
+Once you have the subcommand name and the option/argument hashref you
+can either execute the action or dispatch to the appropriate
+class/package as you like.
 
 There are probably several ways to layout command classes when you have
 lots of subcommands. Here is one way that seems to work for this
@@ -1008,33 +1085,18 @@ module's author.
 
 =over
 
-=item bin/demo
+=item lib/App/demo.pm, lib/App/demo/subcmd.pm
 
-The command script itself is usually fairly short:
-
-    #!/usr/bin/env perl
-    use OptArgs2;
-    use App::demo::OptArgs;
-
-    my ($cmd, $opts) = cmd_optargs('App::demo');
-    eval "require $cmd" or die $@;
-    $cmd->run($opts);
-
-The above does nothing more than load the definitions from
-App::demo::OptArgs, obtain the command name and options hashref, and
-then loads the appropriate package to run the command.
-
-=item lib/App/demo.pm
-
-App::demo itself only needs to exists if the root command does
-something. However I tend to also make App::demo the base class for all
-subcommands so it ends up being fairly large.
+I typically put the actual (sub-)command implementations in
+F<lib/App/demo.pm> and F<lib/App/demo/subcmd.pm>. App::demo itself only
+needs to exists if the root command does something. However I tend to
+also make App::demo the base class for all subcommands so it often ends
+up loading a few modules.
 
 =item lib/App/demo/OptArgs.pm
 
-App::demo::OptArgs is where I put all of my command definitions. Even
-though the package is App::demo::OptArgs the definitions are for
-App::demo.
+App::demo::OptArgs is where I put all of my command definitions with
+names that match the actual implementation modules.
 
     package App::demo::OptArgs;
     use OptArgs2;
@@ -1051,9 +1113,23 @@ of loading. I don't want to have to load all of the modules that
 App::demo itself uses just to find out that I called the command
 incorrectly.
 
-=item lib/App/demo/subcmd.pm
+=item bin/demo
 
-The implemention of the "demo subcmd".
+The command script itself is then usually fairly short:
+
+    #!/usr/bin/env perl
+    use OptArgs2;
+    use App::demo::OptArgs;
+
+    my ($cmd, $opts) = cmd_optargs('App::demo');
+    eval "require $cmd" or die $@;
+    $cmd->new->run($opts);
+
+The above does nothing more than load the definitions from
+App::demo::OptArgs, obtain the command name and options hashref, and
+then loads the appropriate package to run the command.
+
+=back
 
 =back
 
@@ -1107,86 +1183,6 @@ should possibly become Flag options instead.
 The following functions are exported by default.
 
 =over
-
-=item cmd( $name, %parameters ) -> OptArgs2::Cmd
-
-Define a top-level command identified by C<$name> which is typically a
-Perl package name. The following parameters are accepted:
-
-=for comment
-=item name
-A display name of the command. Optional - if it is not provided then the
-last part of the command name is used is usage messages.
-
-=over
-
-=item comment
-
-A description of the command. Required.
-
-=item optargs
-
-A subref containing calls to C<arg()> and C<opt>. Note that options are
-inherited by subcommands so you don't need to define them again in
-child subcommands.
-
-By default this subref is only called on demand when the
-C<cmd_optargs()> function sees arguments for that particular
-subcommand. However for testing it is useful to know immediately if you
-have an error. For this purpose the OPTARGS2_IMMEDIATE environment
-variable can be set to trigger it at definition time.
-
-=item abbrev
-
-If $OptArgs::ABBREV is a true value then subcommands can be
-abbreviated, up to their shortest, unique values.
-
-=item colour
-
-If $OptArgs::COLOUR is a true value and "STDOUT" is connected to a
-terminal then usage and error messages will be colourized using
-terminal escape codes.
-
-=item sort
-
-If $OptArgs::SORT is a true value then subcommands will be listed in
-usage messages alphabetically instead of in the order they were
-defined.
-
-=item print_default
-
-If $OptArgs::PRINT_DEFAULT is a true value then usage will print the
-default value of all options.
-
-=item print_isa
-
-If $OptArgs::PRINT_ISA is a true value then usage will print the type
-of argument a options expects.
-
-=for comment
-=item usage
-Valid for C<cmd()> only. A subref for generating a custom usage
-message. See XXX befow for the structure this subref receives.
-
-=back
-
-=item subcmd( $name, %parameters ) -> OptArgs2::Cmd
-
-Defines a subcommand identified by C<$name> which must include the name
-of a previously defined (sub)command + '::'.
-
-Accepts the same parameters as C<cmd()> in addition to the following:
-
-=over
-
-=item hidden
-
-Hide the existence of this subcommand in usage messages created with
-OptArgs::STYLE_NORMAL.  This is handy if you have developer-only or
-rarely-used commands that you don't want cluttering up your normal
-usage message.
-
-=back
 
 =item arg( $name, %parameters )
 
@@ -1256,6 +1252,99 @@ from a configuration file at runtime, or otherwise run commands which
 don't easily fall into the OptArgs2 subcommand model.
 
 =back
+
+=item cmd( $name, %parameters ) -> OptArgs2::Cmd
+
+Define a top-level command identified by C<$name> which is typically a
+Perl package name. The following parameters are accepted:
+
+=for comment
+=item name
+A display name of the command. Optional - if it is not provided then the
+last part of the command name is used is usage messages.
+
+=over
+
+=item comment
+
+A description of the command. Required.
+
+=item optargs
+
+A subref containing calls to C<arg()> and C<opt>. Note that options are
+inherited by subcommands so you don't need to define them again in
+child subcommands.
+
+By default this subref is only called on demand when the
+C<cmd_optargs()> function sees arguments for that particular
+subcommand. However for testing it is useful to know immediately if you
+have an error. For this purpose the OPTARGS2_IMMEDIATE environment
+variable can be set to trigger it at definition time.
+
+=item abbrev
+
+If $OptArgs::ABBREV is a true value then subcommands can be
+abbreviated, up to their shortest, unique values.
+
+=item colour
+
+If $OptArgs::COLOUR is a true value and "STDOUT" is connected to a
+terminal then usage and error messages will be colourized using
+terminal escape codes.
+
+=item sort
+
+If $OptArgs::SORT is a true value then subcommands will be listed in
+usage messages alphabetically instead of in the order they were
+defined.
+
+=item print_default
+
+If $OptArgs::PRINT_DEFAULT is a true value then usage will print the
+default value of all options.
+
+=item print_isa
+
+If $OptArgs::PRINT_ISA is a true value then usage will print the type
+of argument a options expects.
+
+=for comment
+=item usage
+Valid for C<cmd()> only. A subref for generating a custom usage
+message. See XXX befow for the structure this subref receives.
+
+=back
+
+=item cmd_optargs( $cmd, [ @argv ] ) -> ($subcmd, $opts)
+
+Parse @ARGV by default (or @argv when given) for the arguments and
+options defined for command C<$cmd>.  C<@ARGV> will first be decoded
+into UTF-8 (if necessary) from whatever L<I18N::Langinfo> says your
+current locale codeset is.
+
+Throws an error / usage exception object (typically C<OptArgs2::Usage>)
+for missing or invalid arguments/options.
+
+Returns the following two values:
+
+=over
+
+=item $subcmd
+
+The actual C<$subcmd> that was matched by parsing the arguments. This
+may be the same as C<$cmd>.
+
+=item $opts
+
+a hashref containing key/value pairs for options and arguments
+I<combined>.
+
+=back
+
+As an aid for testing, if the passed in argument C<@argv> (not @ARGV)
+contains a HASH reference, the key/value combinations of the hash will
+be added as options. An undefined value means a boolean option.
+
 
 =item opt( $name, %parameters )
 
@@ -1370,35 +1459,30 @@ will be printed instead of the generic value from C<isa>.
 
 =back
 
-=item cmd_optargs( $cmd, [ @argv ] ) -> ($subcmd, $opts)
+=item optargs( [@argv] ) -> HASHref
 
 Parse @ARGV by default (or @argv when given) for the arguments and
-options defined in the command C<$cmd>.  C<@ARGV> will first be decoded
-into UTF-8 (if necessary) from whatever L<I18N::Langinfo> says your
-current locale codeset is.
+options defined for the I<default global> command. Argument decoding
+and exceptions are the same as for C<cmd_optargs>, but this function
+returns only the combined argument/option values HASHref.
 
-Throws an error / usage exception object (typically C<OptArgs2::Usage>)
-if @ARGV is missing or contains invalid options or arguments.
+=item subcmd( $name, %parameters ) -> OptArgs2::Cmd
 
-Returns the following two values:
+Defines a subcommand identified by C<$name> which must include the name
+of a previously defined (sub)command + '::'.
+
+Accepts the same parameters as C<cmd()> in addition to the following:
 
 =over
 
-=item $subcmd
+=item hidden
 
-The C<$subcmd> that was matched by parsing the arguments. This may be
-the same as C<$cmd>.
-
-=item $opts
-
-a hashref containing key/value pairs for options and arguments
-I<combined>.
+Hide the existence of this subcommand in usage messages created with
+OptArgs::STYLE_NORMAL.  This is handy if you have developer-only or
+rarely-used commands that you don't want cluttering up your normal
+usage message.
 
 =back
-
-As an aid for testing, if the passed in argument C<@argv> (not @ARGV)
-contains a HASH reference, the key/value combinations of the hash will
-be added as options. An undefined value means a boolean option.
 
 =back
 
