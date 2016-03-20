@@ -852,7 +852,7 @@ OptArgs2 - command-line argument and option processor
 =head1 SYNOPSIS
 
     #!/usr/bin/env perl
-    use OptArgs;
+    use OptArgs2;
 
     arg item => (
         isa      => 'Str',
