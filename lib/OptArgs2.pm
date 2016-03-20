@@ -72,10 +72,10 @@ sub croak {
         local @OptArgs2::Util::CARP_NOT = (
             qw/
               OptArgs2
-              OptArgs2::Util
-              OptArgs2::Cmd
               OptArgs2::Arg
+              OptArgs2::Cmd
               OptArgs2::Opt
+              OptArgs2::Util
               /
         );
 
