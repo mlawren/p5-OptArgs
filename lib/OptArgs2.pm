@@ -1055,7 +1055,7 @@ command name you used in your first C<cmd()> call.
     printf "Running %s with %s\n", $class, Dumper($opts)
       unless $opts->{quiet};
 
-The additional return value C<$cmd> is the name of the actual
+The additional return value C<$class> is the name of the actual
 (sub-)command to which the C<$opts> HASHref applies. Usage exceptions
 are raised just the same as with the C<optargs()> function.
 
