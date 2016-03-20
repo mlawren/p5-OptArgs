@@ -17,8 +17,10 @@ arg aaa => (
 );
 
 arg bbb => (
-    isa     => 'Str',
-    comment => 'other some kind of arg',
+    isa          => 'Str',
+    comment      => 'other some kind of arg',
+    default      => 'meh',
+    show_default => 1,
 );
 
 opt help => (

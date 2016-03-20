@@ -18,6 +18,7 @@ cmd demo => (
             isa      => 'SubCmd',
             comment  => '',
             required => 1,
+            abbrev   => 1,
         );
 
         opt help => (

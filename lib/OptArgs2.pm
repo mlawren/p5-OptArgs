@@ -94,6 +94,8 @@ use OptArgs2::Mo;
 
 our $VERSION = '0.0.1_1';
 
+has abbrev => ( is => 'ro', );
+
 has cmd => (
     is       => 'rw',
     weak_ref => 1,
@@ -108,15 +110,11 @@ has default => ( is => 'ro', );
 
 has fallback => ( is => 'rw', );
 
-has greedy => ( is => 'ro', );
-
 has isa => ( required => 1, );
 
 has getopt => ( is => 'rw', );
 
 has greedy => ( is => 'ro', );
-
-#has isa2name => ( is => 'rw', );
 
 has name => (
     is       => 'ro',
@@ -124,6 +122,8 @@ has name => (
 );
 
 has required => ( is => 'ro', );
+
+has show_default => ( is => 'ro', );
 
 my %arg2getopt = (
     'Str'      => '=s',
@@ -144,11 +144,19 @@ sub name_comment {
     my $self  = shift;
     my $style = shift;
 
-    return [ uc( $self->name ), $self->comment ]
+    $self->default( $self->default->( {%$self} ) )
+      if 'CODE' eq ref $self->default;
+
+    my $comment = $self->comment;
+    if ( $self->show_default && defined( my $value = $self->default ) ) {
+        $comment .= ' [default: ' . $value . ']';
+    }
+
+    return [ uc( $self->name ), $comment ]
       unless $self->isa eq 'SubCmd';
 
     return (
-        [ uc( $self->name ), $self->comment ],
+        [ uc( $self->name ), $comment ],
 
         map {
             [
@@ -199,7 +207,9 @@ has comment => (
 
 has default => ( is => 'ro', );
 
-has trigger => ( is => 'ro', );
+has getopt => ( is => 'ro', );
+
+has hidden => ( is => 'ro', );
 
 has isa => (
     is       => 'ro',
@@ -213,7 +223,9 @@ has name => (
     required => 1,
 );
 
-has hidden => ( is => 'ro', );
+has trigger => ( is => 'ro', );
+
+has show_default => ( is => 'ro', );
 
 my %isa2getopt = (
     'ArrayRef' => '=s@',
@@ -225,15 +237,6 @@ my %isa2getopt = (
     'Num'      => '=f',
     'Str'      => '=s',
 );
-
-sub BUILD {
-    my $self = shift;
-
-    exists $isa2getopt{ $self->isa }
-      || return OptArgs2::Util->croak( 'Define::IsaInvalid',
-        'invalid isa "%s" for opt "%s"',
-        $self->isa, $self->name );
-}
 
 sub new_from {
     my $proto = shift;
@@ -252,14 +255,17 @@ sub new_from {
             'isa:Flag cannot have default' );
     }
 
-    return $proto->new(%$ref);
-}
+    if ( !exists $isa2getopt{ $ref->{isa} } ) {
+        return OptArgs2::Util->croak( 'Define::IsaInvalid',
+            'invalid isa "%s" for opt "%s"',
+            $ref->{isa}, $ref->{name} );
+    }
 
-sub getopt {
-    my $self = shift;
-    my $expr = $self->name;
-    $expr .= '|' . $self->alias if $self->alias;
-    return $expr .= $isa2getopt{ $self->isa };
+    $ref->{getopt} = $ref->{name};
+    $ref->{getopt} .= '|' . $ref->{alias} if $ref->{alias};
+    $ref->{getopt} .= $isa2getopt{ $ref->{isa} };
+
+    return $proto->new(%$ref);
 }
 
 my %isa2name = (
@@ -274,9 +280,7 @@ my %isa2name = (
 );
 
 sub name_alias_comment {
-    my $self          = shift;
-    my $PRINT_DEFAULT = 1;
-    my $PRINT_ISA     = 1;
+    my $self = shift;
 
     $self->default( $self->default->( {%$self} ) )
       if 'CODE' eq ref $self->default;
@@ -290,7 +294,7 @@ sub name_alias_comment {
             $opt = '[no-]' . $opt;
         }
     }
-    elsif ( $self->isa ne 'Flag' and $PRINT_ISA ) {
+    elsif ( $self->isa ne 'Flag' ) {
         $opt .= '=' . ( $self->isa_name || $isa2name{ $self->isa } );
     }
 
@@ -306,9 +310,9 @@ sub name_alias_comment {
     }
 
     my $comment = $self->comment;
-    if ( $PRINT_DEFAULT && defined( my $value = $self->default ) ) {
+    if ( $self->show_default && defined( my $value = $self->default ) ) {
         $value = $value ? 'true' : 'false' if $self->isa eq 'Bool';
-        $comment .= " [default: $value]";
+        $comment .= ' [default: ' . $value . ']';
     }
 
     return [ $opt, $alias, $comment ];
@@ -333,8 +337,6 @@ sub BUILD {
     my $self = shift;
     $self->name( $self->class =~ s/.*://r ) unless $self->name;
 }
-
-has abbrev => ( is => 'ro', );
 
 has args => (
     is      => 'ro',
@@ -715,7 +717,7 @@ sub cmd_optargs {
             if ( $result and $try->isa eq 'SubCmd' ) {
 
                 # look up abbreviated words
-                if ( $cmd->abbrev ) {
+                if ( $try->abbrev ) {
                     require Text::Abbrev;
                     my %abbrev =
                       Text::Abbrev::abbrev( map { $_->name }
@@ -979,9 +981,10 @@ This now produces the following usage output:
         --colour=STR, -c   the colour to use [default: blue]
         --quiet,      -q   output nothing while working
 
-The command line is always parsed first for arguments, then for
-options, in the same order in which they are defined. This really only
-has minor implications for trigger actions (see FUNCTIONS below).
+The command line is parsed first for arguments, then for options, in
+the same order in which they are defined. This probably only of
+interest if you are using trigger actions on your options (see
+FUNCTIONS below for details).
 
 =head2 Multi-Level Commands
 
@@ -990,11 +993,11 @@ which we will describe over three phases:
 
 =over
 
-=item Definition
+=item Definitions
 
-Your command structure must be defined  using calls to the C<cmd()> and
-C<subcmd()> functions that mirror your command hierarchy. An argument
-of type 'SubCmd' indicates subcommands can occur in that position.
+Your command structure must be defined using calls to the C<cmd()> and
+C<subcmd()> functions. An argument of type 'SubCmd' indicates
+subcommands can occur in that position.
 
     cmd 'App::demo' => (
         comment => 'the demo command',
@@ -1090,8 +1093,8 @@ module's author.
 I typically put the actual (sub-)command implementations in
 F<lib/App/demo.pm> and F<lib/App/demo/subcmd.pm>. App::demo itself only
 needs to exists if the root command does something. However I tend to
-also make App::demo the base class for all subcommands so it often ends
-up loading a few modules.
+also make App::demo the base class for all subcommands so it is often a
+non-trivial piece of code.
 
 =item lib/App/demo/OptArgs.pm
 
@@ -1108,17 +1111,16 @@ names that match the actual implementation modules.
         },
     )
 
-The reason for keeping this separate from lib/App/demo.pm is for speed
-of loading. I don't want to have to load all of the modules that
-App::demo itself uses just to find out that I called the command
-incorrectly.
+The reason for keeping this separate from lib/App/demo.pm is speed of
+loading. I don't want to have to load all of the modules that App::demo
+itself uses just to find out that I called the command incorrectly.
 
 =item bin/demo
 
 The command script itself is then usually fairly short:
 
     #!/usr/bin/env perl
-    use OptArgs2;
+    use OptArgs2 'cmd_optargs';
     use App::demo::OptArgs;
 
     my ($cmd, $opts) = cmd_optargs('App::demo');
@@ -1132,6 +1134,57 @@ then loads the appropriate package to run the command.
 =back
 
 =back
+
+=head2 Formatting of Usage Messages
+
+Usage messages attempt to present as much information as possible to
+the caller. Here is a brief overview of how the various types look
+and/or change depending on things like defaults.
+
+The presentation of Bool options in usage messages is as follows:
+
+    Name        Type        Default         Presentation
+    ----        ----        -------         ------------
+    option      Bool        undef           --[no-]option
+    option      Bool        true            --no-option
+    option      Bool        false           --option
+    option      Counter     *               --option
+
+The Flag option type is like a Bool that can only be set to true or
+left undefined. This makes sense for things such as C<--help> or
+C<--version> for which you never need to see a "--no" prefix.
+
+    Name        Type        Default         Presentation
+    ----        ----        -------         ------------
+    option      Flag        always undef    --option
+
+Note that Flags also makes sense for "negative" options which will only
+ever turn things off:
+
+    Name        Type        Default         Presentation
+    ----        ----        -------         ------------
+    no_option   Flag        always undef    --no-option
+
+    # In Perl
+    opt no_foo => (
+        isa     => 'Flag',
+        comment => 'disable the foo feature',
+    );
+
+    # Then later do { } unless $opts->{no_foo}
+
+The remaining types are presented as follows:
+
+    Name        Type        isa_name        Presentation
+    ----        ----        --------        ------------
+    option      ArrayRef    -               --option=STR
+    option      HashRef     -               --option=STR
+    option      Int         -               --option=INT
+    option      Num         -               --option=NUM
+    option      Str         -               --option=STR
+    option      *           XX              --option=XX
+
+Defaults TO BE COMPLETED.
 
 =head2 Differences Between OptArgs and OptArgs2
 
@@ -1151,30 +1204,11 @@ Commands and subcommands must now be explicitly defined using C<cmd()>
 and C<subcmd()> and the old C<class_optargs()> has been renamed to
 C<cmd_optargs()>.
 
-=item A new Flag option type
-
-The Flag option type is like a Bool that can only be set to true or
-left undefined. This makes sense for things such as C<--help> or
-C<--version> for which you never need to see a "--no" prefix.
-
-It also makes sense for "negative" options which will only ever turn
-things off:
-
-    opt no_foo => (
-        isa     => 'Flag',
-        comment => 'disable the foo feature',
-    );
-
-    # do { } unless $opts->{no_foo}
-
 =item Bool options with no default display as "--[no-]bool"
 
-A Bool option without a default is now shown with the "[no-]" prefix
-unless a default has been provided, in which case either "--bool" (for
-default = false) or "--no-bool" (for default = true) is shown.
-
-What this means in practise is that many of your existing Bool options
-should possibly become Flag options instead.
+A Bool option without a default is now displayed with the "[no-]"
+prefix. What this means in practise is that many of your existing Bool
+options should likely become Flag options instead.
 
 =back
 
@@ -1186,18 +1220,53 @@ The following functions are exported by default.
 
 =item arg( $name, %parameters )
 
+Define a command argument, for example:
+
     arg name => (
-        isa      => 'Str',
-        isa_name => 'FILE',
         comment  => 'the file to parse',
-        required => 1,
         default  => '-',
         greedy   => 0,
+        isa      => 'Str',
+        required => 1,
     );
 
-Define a command argument with the following parameters:
+The C<arg()> function accepts the following parameters:
 
 =over
+
+=item abbrev
+
+Valid for arguments of type 'SubCmd' only. When set to true then
+subcommands can be abbreviated, up to their shortest, unique values.
+
+=item comment
+
+Required. Used to generate the usage/help message.
+
+=item default
+
+The value set when the argument is not given. Conflicts with the
+'required' parameter.
+
+If this is a subroutine reference it will be called with a hashref
+containg all option/argument values after parsing the source has
+finished.  The value to be set must be returned, and any changes to the
+hashref are ignored.
+
+=item greedy
+
+If true the argument swallows the rest of the command line.
+
+=item fallback
+
+A hashref containing an argument definition for the event that a
+subcommand match is not found. This parameter is only valid when C<isa>
+is a C<SubCmd>. The hashref must contain "isa", "name" and "comment"
+key/value pairs, and may contain a "greedy" key/value pair.
+
+This is generally useful when you want to calculate a command alias
+from a configuration file at runtime, or otherwise run commands which
+don't easily fall into the OptArgs2 subcommand model.
 
 =item isa
 
@@ -1213,43 +1282,14 @@ following table:
      'HashRef'       's%'
      'SubCmd'        '=s'
 
-=item comment
-
-Required. Used to generate the usage/help message.
-
 =item required
 
-Set to a true value when the caller must specify this argument.  Can
-not be used if a 'default' is given.
+Set to a true value when the caller must specify this argument.
+Conflicts with the 'default' parameter.
 
-=item default
+=item show_default
 
-The value set when the argument is not given. Can not be used if
-'required' is set.
-
-If this is a subroutine reference it will be called with a hashref
-containg all option/argument values after parsing the source has
-finished.  The value to be set must be returned, and any changes to the
-hashref are ignored.
-
-=item greedy
-
-If true the argument swallows the rest of the command line. It doesn't
-make sense to define any more arguments once you have used this as they
-will never be seen.
-
-=item fallback
-
-A hashref containing an argument definition for the event that a
-subcommand match is not found. This parameter is only valid when C<isa>
-is a C<SubCmd>. The hashref must contain "isa", "name" and "comment"
-key/value pairs, and may contain a "greedy" key/value pair. The Command
-Class "run" function will be called with the fallback argument
-integrated into the first argument like a regular subcommand.
-
-This is generally useful when you want to calculate a command alias
-from a configuration file at runtime, or otherwise run commands which
-don't easily fall into the OptArgs2 subcommand model.
+If set to a true value then usage messages will show the default value.
 
 =back
 
@@ -1275,38 +1315,24 @@ A subref containing calls to C<arg()> and C<opt>. Note that options are
 inherited by subcommands so you don't need to define them again in
 child subcommands.
 
+=for comment
 By default this subref is only called on demand when the
 C<cmd_optargs()> function sees arguments for that particular
 subcommand. However for testing it is useful to know immediately if you
 have an error. For this purpose the OPTARGS2_IMMEDIATE environment
 variable can be set to trigger it at definition time.
 
-=item abbrev
-
-If $OptArgs::ABBREV is a true value then subcommands can be
-abbreviated, up to their shortest, unique values.
-
+=for comment
 =item colour
-
 If $OptArgs::COLOUR is a true value and "STDOUT" is connected to a
 terminal then usage and error messages will be colourized using
 terminal escape codes.
 
+=for comment
 =item sort
-
 If $OptArgs::SORT is a true value then subcommands will be listed in
 usage messages alphabetically instead of in the order they were
 defined.
-
-=item print_default
-
-If $OptArgs::PRINT_DEFAULT is a true value then usage will print the
-default value of all options.
-
-=item print_isa
-
-If $OptArgs::PRINT_ISA is a true value then usage will print the type
-of argument a options expects.
 
 =for comment
 =item usage
@@ -1331,8 +1357,8 @@ Returns the following two values:
 
 =item $subcmd
 
-The actual C<$subcmd> that was matched by parsing the arguments. This
-may be the same as C<$cmd>.
+The actual subcommand name that was matched by parsing the arguments.
+This may be the same as C<$cmd>.
 
 =item $opts
 
@@ -1348,11 +1374,47 @@ be added as options. An undefined value means a boolean option.
 
 =item opt( $name, %parameters )
 
-Define a Command Option. If C<$name> contains underscores then aliases
-with the underscores replaced by dashes (-) will be created. The
-following parameters are accepted:
+Define a command option, for example:
+
+    opt colour => (
+        alias        => 'c',
+        comment      => 'the colour to paint',
+        default      => 'blue',
+        show_default => 1,
+        isa          => 'Str',
+    );
+
+Any underscores in C<$name> are be replaced by dashes (-) for
+presentation and command-line parsing.  The C<arg()> function accepts
+the following parameters:
 
 =over
+
+=item alias
+
+A single character alias.
+
+=item comment
+
+Required. Used to generate the usage/help message.
+
+=item default
+
+The value set when the option is not used.
+
+If this is a subroutine reference it will be called with a hashref
+containg all option/argument values after parsing the source has
+finished.  The value to be set must be returned, and any changes to the
+hashref are ignored.
+
+=item hidden
+
+When true this option will not appear in usage messages unless the
+usage message is a help request.
+
+This is handy if you have developer-only options, or options that are
+very rarely used that you don't want cluttering up your normal usage
+message.
 
 =item isa
 
@@ -1370,58 +1432,33 @@ following table:
      'Num'           '=f'
      'Str'           '=s'
 
-The presentation of Flag and Bool types in usage messages is as
-follows:
+=item isa_name
 
-    $name       Type        Default         Presentation
-    ----        ----        -------         ------------
-    option      Flag        always undef    --option
-    no_option   Flag        always undef    --no-option
-    option      Bool        undef           --[no-]option
-    option      Bool        true            --no-option
-    option      Bool        false           --option
-    option      Counter     *               --option
+When provided this parameter will be presented instead of the generic
+presentation for the 'isa' parameter.
 
-The presentation of the remaining types is as follows:
+=item ishelp
 
-    $name       Type        isa_name        Presentation
-    ----        ----        --------        ------------
-    option      ArrayRef    -               --option=STR
-    option      HashRef     -               --option=STR
-    option      Int         -               --option=INT
-    option      Num         -               --option=NUM
-    option      Str         -               --option=STR
-    option      *           XX              --option=XX
+When true creates a trigger parameter that generates a usage message
+exception. In other words it is just a shortcut for the following:
 
-=item isa2name
+    opt help => (
+        isa     => 'Flag',
+        alias   => 'h',
+        comment => 'print help message and exit',
+        trigger => sub {
+            my ( $cmd, $value ) = @_;
+            die $cmd->usage(OptArgs2::STYLE_FULL);
+        }
+    );
 
-When C<$OptArgs2::PRINT_ISA> is set to a true value, this value will be
-printed instead of the generic value from C<isa>.
+Note that this option conflicts with the trigger parameter.
 
-=item comment
+=item show_default
 
-Required. Used to generate the usage/help message.
+If set to a true value then usage messages will show the default value.
 
-=item default
-
-The value set when the option is not used.
-
-If this is a subroutine reference it will be called with a hashref
-containg all option/argument values after parsing the source has
-finished.  The value to be set must be returned, and any changes to the
-hashref are ignored.
-
-For "Bool" options setting "default" to a true has a special effect:
-the the usage message formats it as "--no-option" instead of
-"--option". If you do use a true default value for Bool options you
-probably want to reverse the normal meaning of your "comment" value as
-well.
-
-=item alias
-
-A single character alias.
-
-=item trigger => sub { }
+=item trigger
 
 The trigger parameter lets you define a subroutine that is called
 I<immediately> as soon as the option presence is detected. This is
@@ -1429,33 +1466,18 @@ primarily to support --help or --version options which typically don't
 need the full command line to be processed before generating a
 response.
 
-    opt help => (
+    opt version => (
         isa     => 'Flag',
-        alias   => 'h',
-        comment => 'print full help message and exit',
+        alias   => 'V',
+        comment => 'print version string and exit',
         trigger => sub {
             my ( $cmd, $value ) = @_;
-            die $cmd->usage(OptArg2::STYLE_FULL);
+            die "$cmd version $VERSION\n";
         }
     );
 
-The trigger subref is pass two parameters: an OptArgs2::Cmd object on
-which you can call the C<usage()> method and the value (if any) of the
-option.
-
-=item hidden
-
-When true this option will not appear in usage messages unless the
-usage message is a help request.
-
-This is handy if you have developer-only options, or options that are
-very rarely used that you don't want cluttering up your normal usage
-message.
-
-=item arg_name
-
-When C<$OptArgs2::PRINT_OPT_ARG> is set to a true value, this value
-will be printed instead of the generic value from C<isa>.
+The trigger subref is pass two parameters: a OptArgs2::Cmd object and
+the value (if any) of the option.
 
 =back
 
