@@ -4,7 +4,7 @@ cover_db/
 .envrc
 _build
 Build
-lib/Getopt/Arg2.pm
+lib/Getopt/Args2.pm
 Makefile
 Makefile.old
 MANIFEST
