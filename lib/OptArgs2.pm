@@ -901,6 +901,35 @@ given.
 
 =back
 
+B<OptArgs2> is a re-write of the original L<OptArgs> module with a
+cleaner code base and improved API. It should be preferred over
+L<OptArgs> for new projects however L<OptArgs> is not likely to
+disappear from CPAN anytime soon.  Users converting to B<OptArgs2> from
+L<OptArgs> need to be aware of the following:
+
+=over
+
+=item Obvious API changes: cmd(), subcmd()
+
+Commands and subcommands must now be explicitly defined using C<cmd()>
+and C<subcmd()>.
+
+=item class_optargs() no longer loads the class
+
+Users must specifically require the class if they want to use it
+afterwards:
+
+    my ($class, $opts) = class_optargs('App::demo');
+    eval "require $class" or die $@; # new requirement
+
+=item Bool options with no default display as "--[no-]bool"
+
+A Bool option without a default is now displayed with the "[no-]"
+prefix. What this means in practise is that many of your existing Bool
+options should likely become Flag options instead.
+
+=back
+
 =head2 Simple Commands
 
 To demonstrate the simple use case (i.e. with no subcommands) lets put
@@ -1181,31 +1210,6 @@ The remaining types are presented as follows:
 
 Defaults TO BE COMPLETED.
 
-=head2 Differences Between OptArgs and OptArgs2
-
-B<OptArgs2> is a re-write of the original L<OptArgs> module with a
-cleaner code base and improved API. It should be preferred over
-L<OptArgs> for new projects however both distributions will continue to
-be maintained in parallel.
-
-Users converting to B<OptArgs2> from L<OptArgs> need to be aware of the
-following:
-
-=over
-
-=item Obvious API changes: cmd(), subcmd()
-
-Commands and subcommands must now be explicitly defined using C<cmd()>
-and C<subcmd()>.
-
-=item Bool options with no default display as "--[no-]bool"
-
-A Bool option without a default is now displayed with the "[no-]"
-prefix. What this means in practise is that many of your existing Bool
-options should likely become Flag options instead.
-
-=back
-
 =head1 FUNCTIONS
 
 The following functions are exported by default.
@@ -1470,8 +1474,26 @@ response.
         }
     );
 
-The trigger subref is pass two parameters: a OptArgs2::Cmd object and
-the value (if any) of the option.
+The trigger subref is passed two parameters: a OptArgs2::Cmd object and
+the value (if any) of the option. The OptArgs2::Cmd object is an
+internal one, but one public interface is has (in addition to the
+usage() method described in 'ishelp' above) is the usage_tree() method
+which gives a usage overview of all subcommands in the command
+hierarchy.
+
+    opt usage_tree => (
+        isa     => 'Flag',
+        alias   => 'U',
+        comment => 'print usage tree and exit',
+        trigger => sub {
+            my ( $cmd, $value ) = @_;
+            die $cmd->usage_tree;
+        }
+    );
+
+    # demo COMMAND [OPTIONS...]
+    #     demo foo ACTION [OPTIONS...]
+    #     demo bar [OPTIONS...]
 
 =back
 
