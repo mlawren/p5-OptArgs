@@ -64,25 +64,24 @@ sub result {
 }
 
 sub croak {
-    my $self = shift;
-
-    # By doing this before the CARP_NOT below we still catch bad
-    # internal calls to Result->new
+    my $self   = shift;
     my $result = OptArgs2::Result->new(@_);
 
-    # Internal packages we don't want to see for user-related errors
-    local @OptArgs2::Opt::CARP_NOT = (
-        qw/
-          OptArgs2
-          OptArgs2::Util
-          OptArgs2::Cmd
-          OptArgs2::Arg
-          OptArgs2::Opt
-          /
-    );
+    {
+        # Internal packages we don't want to see for user-related errors
+        local @OptArgs2::Util::CARP_NOT = (
+            qw/
+              OptArgs2
+              OptArgs2::Util
+              OptArgs2::Cmd
+              OptArgs2::Arg
+              OptArgs2::Opt
+              /
+        );
 
-    # Carp::croak has a bug when first argument is a reference
-    Carp::croak( '', $result );
+        # Carp::croak has a bug when first argument is a reference
+        Carp::croak( '', $result );
+    }
 }
 
 1;
