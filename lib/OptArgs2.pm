@@ -635,7 +635,7 @@ sub class_optargs {
 
                 push(
                     @errors,
-                    OptArgs::Util->result(
+                    OptArgs2::Util->result(
                         'Parse::UnknownOption',
                         qq{error: unknown option "$source->[0]"\n\n}
                           . $cmd->usage
@@ -1526,7 +1526,7 @@ Accepts the same parameters as C<cmd()> in addition to the following:
 =item hidden
 
 Hide the existence of this subcommand in usage messages created with
-OptArgs::STYLE_NORMAL.  This is handy if you have developer-only or
+OptArgs2::STYLE_NORMAL.  This is handy if you have developer-only or
 rarely-used commands that you don't want cluttering up your normal
 usage message.
 

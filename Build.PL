@@ -12,7 +12,7 @@ my $builder = Module::Build::Pluggable->new(
     dist_author       => 'Mark Lawrence <nomad@null.net>',
     dist_version_from => 'lib/OptArgs2.pm',
     no_index          => {
-        package => [ 'OptArgs::Usage', 'Getopt::Args::Usage' ],
+        package => [ 'OptArgs2::Result', 'Getopt::Args2::Result' ],
     },
     recursive_test_files => 1,
     add_to_cleanup =>
