@@ -140,8 +140,7 @@ sub BUILD {
 }
 
 sub name_comment {
-    my $self  = shift;
-    my $style = shift;
+    my $self = shift;
 
     $self->default( $self->default->( {%$self} ) )
       if 'CODE' eq ref $self->default;
@@ -151,28 +150,7 @@ sub name_comment {
         $comment .= ' [default: ' . $value . ']';
     }
 
-    return [ uc( $self->name ), $comment ]
-      unless $self->isa eq 'SubCmd';
-
-    return (
-        [ uc( $self->name ), $comment ],
-
-        map {
-            [
-                '  '
-                  . (
-                    ref $_ eq 'OptArgs2::Fallback'
-                    ? uc( $_->name )
-                    : $_->name
-                  ),
-                '  ' . $_->comment
-            ]
-          }
-          sort { $a->name cmp $b->name }
-          grep { $style == OptArgs2::STYLE_FULL or !$_->hidden }
-          @{ $self->cmd->subcmds },
-        $self->fallback ? $self->fallback : ()
-    );
+    return $self->name, $comment;
 }
 
 1;
@@ -314,7 +292,7 @@ sub name_alias_comment {
         $comment .= ' [default: ' . $value . ']';
     }
 
-    return [ $opt, $alias, $comment ];
+    return $opt, $alias, $comment;
 }
 
 1;
@@ -427,81 +405,113 @@ sub usage {
     my $self = shift;
     my $style = shift || $self->usage_style;
 
-    my @parents = $self->parents;
-    my @usage;
-    my @uargs;
-    my @uopts;
+    $self->run_optargs;
 
-    my $usage = '';
+    my $usage   = '';
+    my @parents = $self->parents;
+    my @args    = @{ $self->args };
+    my @opts    = sort { $a->name cmp $b->name } map { @{ $_->opts } } @parents,
+      $self;
+
+    # Summary line
     $usage .= join( ' ', map { $_->name } @parents ) . ' ' if @parents;
     $usage .= $self->name;
 
-    $self->run_optargs;
-
-    my @args = @{ $self->args };
     foreach my $arg (@args) {
         $usage .= ' ';
         $usage .= '[' unless $arg->required;
         $usage .= uc $arg->name;
         $usage .= '...' if $arg->greedy;
         $usage .= ']' unless $arg->required;
-        push( @uargs, $arg->name_comment($style) );
     }
 
-    my @opts = map { @{ $_->opts } } @parents, $self;
     $usage .= ' [OPTIONS...]' if @opts;
     $usage .= "\n";
 
     return OptArgs2::Util->result( 'Usage::Summary', $usage )
       if $style == OptArgs2::STYLE_SUMMARY;
 
+    # Synopsis
     $usage .= "\n  Synopsis:\n    " . $self->comment . "\n"
       if $style == OptArgs2::STYLE_FULL;
 
-    # Calulate the widths of the columns
-    my @sorted_opts = sort { $a->name cmp $b->name } @opts;
-    foreach my $opt (@sorted_opts) {
-        next if $style != OptArgs2::STYLE_FULL and $opt->hidden;
-        push( @uopts, $opt->name_alias_comment );
+    # Build arguments
+    my @uargs;
+    my $last_sub;
+    if (@args) {
+        $last_sub = $args[$#args]->isa eq 'SubCmd' ? pop @args : undef;
+
+        if ($last_sub) {
+            push( @uargs,
+                [ '  ' . ucfirst( $last_sub->name ) . ':', $last_sub->comment ]
+            );
+        }
+        else {
+            push( @uargs, [ '  Arguments:', '' ] );
+        }
+
+        foreach my $arg (@args) {
+            my ( $n, $c ) = $arg->name_comment;
+            push( @uargs, [ '    ' . uc($n), $c ] );
+        }
+
+        if ($last_sub) {
+            my @sorted_subs =
+              sort { $a->name cmp $b->name }
+              grep { $style == OptArgs2::STYLE_FULL or !$_->hidden }
+              @{ $last_sub->cmd->subcmds },
+              $last_sub->fallback ? $last_sub->fallback : ();
+
+            my $prefix = length( $last_sub->comment ) ? '  ' : '';
+            foreach my $subcmd (@sorted_subs) {
+                push(
+                    @uargs,
+                    [
+                        '    '
+                          . (
+                            ref $subcmd eq 'OptArgs2::Fallback'
+                            ? uc( $subcmd->name )
+                            : $subcmd->name
+                          ),
+                        $prefix . $subcmd->comment
+                    ]
+                );
+            }
+        }
     }
 
-    if (@uopts) {
+    # Build options
+    my @uopts;
+    if (@opts) {
+        push( @uopts, [ "  Options:", '', '' ] );
+        foreach my $opt (@opts) {
+            next if $style != OptArgs2::STYLE_FULL and $opt->hidden;
+            my ( $n, $a, $c ) = $opt->name_alias_comment;
+            push( @uopts, [ '    ' . $n, $a, $c ] );
+        }
+
+        # Width calculation: turn 3 option fields into 2:
         my $w1 = max( map { length $_->[0] } @uopts );
         my $fmt = '%-' . $w1 . "s %s";
 
         @uopts = map { [ sprintf( $fmt, $_->[0], $_->[1] ), $_->[2] ] } @uopts;
     }
 
-    my $w1 = max( map { length $_->[0] } @usage, @uargs, @uopts );
-    my $format = '    %-' . $w1 . "s   %s\n";
+    # Width calculation for args and opts combined
+    my $w1 = max( map { length $_->[0] } @uargs, @uopts );
+    my $format = '%-' . $w1 . "s   %s\n";
 
-    # Lengths are now known so create the text
-    if (@usage) {
-        foreach my $row (@usage) {
-            $usage .= sprintf( $format, @$row );
-        }
-    }
-
-    #    if ( @uargs and $last->{isa} ne 'SubCmd' ) {
+    # Output Arguments
     if (@uargs) {
-        if ( $style == OptArgs2::STYLE_FULL ) {
-            $usage .= "\n  Arguments:\n";
-        }
-        else {
-            $usage .= "\n";
-        }
+        $usage .= "\n";
         foreach my $row (@uargs) {
             $usage .= sprintf( $format, @$row );
         }
     }
 
+    # Output Options
     if (@uopts) {
-        if ( $style == OptArgs2::STYLE_FULL ) {
-            $usage .= "\n  Options:\n";
-        }
-        else {
-            $usage .= "\n";
-        }
+        $usage .= "\n";
         foreach my $row (@uopts) {
             $usage .= sprintf( $format, @$row );
         }
