@@ -239,7 +239,8 @@ sub new_from {
     }
 
     $ref->{getopt} = $ref->{name};
-    $ref->{getopt} .= '|' . $ref->{alias} if $ref->{alias};
+    $ref->{getopt} .= '|' . $ref->{name} =~ s/_/-/gr if $ref->{name} =~ m/_/;
+    $ref->{getopt} .= '|' . $ref->{alias}            if $ref->{alias};
     $ref->{getopt} .= $isa2getopt{ $ref->{isa} };
 
     return $proto->new(%$ref);
