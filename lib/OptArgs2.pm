@@ -105,7 +105,8 @@ has comment => (
     required => 1,
 );
 
-has default => ( is => 'ro', );
+# Can be re-set by CODEref defaults
+has default => ( is => 'rw', );
 
 has fallback => ( is => 'rw', );
 
@@ -182,7 +183,8 @@ has comment => (
     required => 1,
 );
 
-has default => ( is => 'ro', );
+# Can be re-set by CODEref defaults
+has default => ( is => 'rw', );
 
 has getopt => ( is => 'ro', );
 
