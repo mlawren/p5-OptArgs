@@ -613,7 +613,7 @@ sub class_optargs {
     # Start with the parents options
     map { $_->run_optargs } $cmd->parents, $cmd;
     my @config = map { @{ $_->opts } } $cmd->parents, $cmd;
-    push( @config, ( @{ $cmd->opts }, @{ $cmd->args } ) );
+    push( @config, @{ $cmd->args } );
 
     while ( my $try = shift @config ) {
         my $result;
