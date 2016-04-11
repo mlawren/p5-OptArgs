@@ -1,22 +1,20 @@
-0.1.19_1 (2016-03-03)
-
-    API / Behaviour Changes:
-        - None.
+0.1.20 (2016-04-11)
 
     New Features:
-        - None.
+        - None in this release but it might be worth you taking a look
+          at the upcoming OptArgs2 for a cleaner and more flexible
+          re-implementation.
+
+    Authoring:
+        - Clean up empty Changes entries
+
+0.1.19_1 (2016-03-03)
 
     Enhancements:
         - New $OptArgs::PRINT_DEFAULT option for displaying default
           values in usage messages (Mario Domgoergen)
         - New $OptArgs::PRINT_ISA option for displaying option
           types in usage messages (Mario Domgoergen)
-
-    Bug Fixes:
-        - None.
-
-    Dependencies:
-        - None.
 
 0.1.18 (2015-11-27)
 
@@ -40,33 +38,12 @@
     New Features:
         - New class_optargs() function for more caller flexibility
 
-    Enhancements:
-        - None.
-
-    Bug Fixes:
-        - None.
-
 0.1.14 (2014-06-16)
-
-    API Changes:
-       - None.
-
-   New Features:
-      - None.
-
-   Enhancements:
-      - None.
 
    Bug Fixes:
       - Support "command SUBCMD(with fallback) FALLBACK_ARG"
 
 0.1.12 (2014-06-11)
-
-    API Changes:
-       - None.
-
-    New Features:
-       - None.
 
     Enhancements:
        - Put POD back into .pm files; metacpan looks odd when separate.
@@ -81,29 +58,11 @@
 
 0.1.10 (2014-05-07)
 
-    API Changes:
-        - None
-
-    New Features:
-        - None
-
     Enhancements:
         - Enable build/run/test on MSWin32 environments
         - Small code cleanups
 
-    Bug Fixes:
-        - None.
-
 0.1.8 (2014-03-17)
-
-    API Changes:
-        - None
-
-    New Features:
-        - None
-
-    Enhancements:
-        - None
 
     Bug Fixes:
         - Several "s/-/_/g" regex's were missing the final "g". Without
@@ -112,12 +71,6 @@
           https://github.com/mlawren/p5-OptArgs/issues/8.
 
 0.1.6 (2014-02-13)
-
-    API Changes:
-        - None
-
-    New Features:
-        - None
 
     Enhancements:
         - Program VERSION is displayed for help at top level
@@ -129,12 +82,6 @@
 
 0.1.4 (2013-12-23)
 
-    API Changes:
-        - None
-
-    New Features:
-        - None
-
     Enhancements:
         - Add "[OPTIONS]" to usage line when options exist
         - Allow fallbacks to be hidden
@@ -145,9 +92,6 @@
         - Sort option list according to $SORT
 
 0.1.2 (2013-05-20)
-
-    API Changes:
-        - None
 
     New Features:
         - Sub-commands can now be optionally abbreviated by setting
@@ -166,9 +110,6 @@
         - Do not count negative Int/Num arguments as unknown options
 
 0.0.4 (2012-08-21)
-
-    API Changes:
-        - None
 
     New Features:
         - Convert HASHrefs to options in dispatch()
@@ -190,16 +131,7 @@
     Enhancements:
         - Better check for utf8 aware environment in tests
 
-    Bug Fixes:
-        - None.
-
 0.0.2 (2012-07-31)
-
-    API Changes:
-        - None.
-
-    New Features:
-        - None.
 
     Enhancements:
         - Make hidden options visible when when help is requested.
