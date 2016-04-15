@@ -436,7 +436,7 @@ sub usage {
 
     # Synopsis
     $usage .= "\n  Synopsis:\n    " . $self->comment . "\n"
-      if $style == OptArgs2::STYLE_FULL;
+      if $style == OptArgs2::STYLE_FULL and length $self->comment;
 
     # Build arguments
     my @uargs;
