@@ -38,6 +38,7 @@ my %subcmd_params = (
     cmd     => undef,
     comment => undef,
     hidden  => undef,
+    caller  => undef,
 
     #    alias   => '',
     #    ishelp  => undef,
@@ -47,7 +48,7 @@ my @subcmd_required = (qw/cmd comment/);
 
 sub subcmd {
     my $params = {@_};
-    my $caller = caller;
+    my $caller = $params->{caller} || caller;
 
     if ( my @missing = grep { !exists $params->{$_} } @subcmd_required ) {
         croak "missing required parameter(s): @missing";
@@ -102,6 +103,7 @@ my %opt_params = (
     alias    => '',
     ishelp   => undef,
     hidden   => undef,
+    caller   => undef,
 );
 
 my @opt_required = (qw/isa comment/);
@@ -119,7 +121,7 @@ my %opt_isa = (
 sub opt {
     my $name    = shift;
     my $params  = {@_};
-    my $caller  = caller;
+    my $caller  = $params->{caller} || caller;
     my $package = $caller{$caller} || $caller;
 
     croak 'usage: opt $name => (%parameters)' unless $name;
@@ -173,6 +175,7 @@ my %arg_params = (
     default  => undef,
     greedy   => undef,
     fallback => undef,
+    caller   => undef,
 );
 
 my @arg_required = (qw/isa comment/);
@@ -189,7 +192,7 @@ my %arg_isa = (
 sub arg {
     my $name    = shift;
     my $params  = {@_};
-    my $caller  = caller;
+    my $caller  = $params->{caller} || caller;
     my $package = $caller{$caller} || $caller;
 
     croak 'usage: arg $name => (%parameters)' unless $name;
