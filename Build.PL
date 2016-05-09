@@ -1,17 +1,18 @@
 #!perl
 use strict;
 use warnings;
+use Module::Build;
 use Module::Build::Compat;
 use Module::Build::Pluggable 'CPANfile';
 
 my $builder = Module::Build::Pluggable->new(
-    module_name       => 'OptArgs2',
-    create_license    => 1,
-    create_readme     => 1,
-    license           => 'GPL_3',
-    dist_author       => 'Mark Lawrence <nomad@null.net>',
-    dist_version_from => 'lib/OptArgs2.pm',
-    no_index          => {
+    module_name    => 'OptArgs2',
+    create_license => 1,
+    create_readme  => 1,
+    license        => 'GPL_3',
+    dist_author    => 'Mark Lawrence <nomad@null.net>',
+    dist_version   => '0.0.1_1',
+    no_index       => {
         package => [ 'OptArgs2::Result', 'Getopt::Args2::Result' ],
     },
     recursive_test_files => 1,
