@@ -6,6 +6,7 @@ _build
 Build
 lib/Getopt/Args2.pm
 Makefile
+Makefile.PL
 Makefile.old
 MANIFEST
 MANIFEST.bak

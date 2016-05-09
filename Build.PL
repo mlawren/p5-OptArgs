@@ -31,5 +31,5 @@ $builder->create_build_script();
 
 # I prefer to use make when developing so lets built the Makefile here
 # as well
-#Module::Build::Compat->create_makefile_pl( 'small', $builder );
+Module::Build::Compat->create_makefile_pl( 'small', $builder );
 Module::Build::Compat->write_makefile( build_class => 'Module::Build' );
