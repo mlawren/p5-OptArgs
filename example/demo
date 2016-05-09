@@ -11,7 +11,7 @@ $Data::Dumper::Indent   = 1;
 $Data::Dumper::Sortkeys = 1;
 
 cmd demo => (
-    comment => 'OptArg2 demonstration script',
+    comment => 'OptArgs2 demonstration script',
     optargs => sub {
 
         arg command => (
