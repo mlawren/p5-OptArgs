@@ -11,7 +11,7 @@ my $builder = Module::Build::Pluggable->new(
     create_readme  => 1,
     license        => 'GPL_3',
     dist_author    => 'Mark Lawrence <nomad@null.net>',
-    dist_version   => '0.0.1_1',
+    dist_version   => '0.0.1_2',
     no_index       => {
         package => [ 'OptArgs2::Result', 'Getopt::Args2::Result' ],
     },
