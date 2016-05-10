@@ -1,4 +1,4 @@
-0.0.1_2 (yyyy-mm-dd)
+0.0.1_2 (2016-05-10)
 
     Bug Fixes:
         - Don't use the /r modifier (non-destructive substitution) on
