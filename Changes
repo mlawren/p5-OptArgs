@@ -1,3 +1,10 @@
+0.0.1_2 (2016-05-10)
+
+    Bug Fixes:
+        - Don't use the /r modifier (non-destructive substitution) on
+          regex replacements as it is not supported by Perl's earlier
+          than 5.14.
+
 0.0.1_1 (2016-05-09)
 
     Initial release.

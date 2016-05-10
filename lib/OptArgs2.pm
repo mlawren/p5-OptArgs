@@ -4,7 +4,7 @@ sub OptArgs2::STYLE_NORMAL  { 2 }
 sub OptArgs2::STYLE_FULL    { 3 }
 
 package OptArgs2::Mo;
-our $VERSION = '0.0.1_1';
+our $VERSION = '0.0.1_2';
 
 BEGIN {
 #<<< do not perltidy
@@ -23,7 +23,7 @@ use overload
   '""'     => 'as_string',
   fallback => 1;
 
-our $VERSION = '0.0.1_1';
+our $VERSION = '0.0.1_2';
 
 sub new {
     my $proto = shift;
@@ -38,8 +38,8 @@ sub new {
 }
 
 sub as_string {
-    my $type = ref( $_[0] ) =~ s/^OptArgs2::Result::(.*)/$1/r;
-    my @x    = @{ $_[0] };
+    ( my $type = ref( $_[0] ) ) =~ s/^OptArgs2::Result::(.*)/$1/;
+    my @x = @{ $_[0] };
     if ( my $str = shift @x ) {
         return sprintf( "$str (%s)", @x, $type )
           unless $str =~ m/\n/;
@@ -56,7 +56,7 @@ use warnings;
 use OptArgs2::Mo;
 use Carp ();
 
-our $VERSION = '0.0.1_1';
+our $VERSION = '0.0.1_2';
 
 sub result {
     my $self = shift;
@@ -91,7 +91,7 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.1_1';
+our $VERSION = '0.0.1_2';
 
 has abbrev => ( is => 'ro', );
 
@@ -161,7 +161,7 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.1_1';
+our $VERSION = '0.0.1_2';
 
 extends 'OptArgs2::Arg';
 
@@ -174,7 +174,7 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.1_1';
+our $VERSION = '0.0.1_2';
 
 has alias => ( is => 'ro', );
 
@@ -311,11 +311,11 @@ use OptArgs2::Mo;
 use List::Util qw/max/;
 use Scalar::Util qw/weaken/;
 
-our $VERSION = '0.0.1_1';
+our $VERSION = '0.0.1_2';
 
 sub BUILD {
     my $self = shift;
-    $self->name( $self->class =~ s/.*://r ) unless $self->name;
+    $self->name( ( my $x = $self->class ) =~ s/.*:// ) unless $self->name;
 }
 
 has args => (
@@ -553,7 +553,7 @@ use Getopt::Long qw/GetOptionsFromArray/;
 use Exporter qw/import/;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.1_1';
+our $VERSION = '0.0.1_2';
 our @EXPORT  = (qw/arg class_optargs cmd opt optargs subcmd/);
 
 my %command;
@@ -798,7 +798,7 @@ sub cmd {
 
     # If this check is not performed we end up adding ourselves
     if ( $class =~ m/:/ ) {
-        my $parent_class = $class =~ s/(.*)::/$1/r;
+        ( my $parent_class = $class ) =~ s/(.*)::/$1/;
         if ( exists $command{$parent_class} ) {
             $command{$parent_class}->add_cmd($cmd);
         }
@@ -832,7 +832,7 @@ sub subcmd {
         "no '::' in class '$class' - must have a parent" )
       unless $class =~ m/::/;
 
-    my $parent_class = $class =~ s/(.*)::.*/$1/r;
+    ( my $parent_class = $class ) =~ s/(.*)::.*/$1/;
 
     OptArgs2::Util->croak( 'Define::ParentNotFound',
         "parent class not found: " . $parent_class )
@@ -856,7 +856,7 @@ OptArgs2 - command-line argument and option processor
 
 =head1 VERSION
 
-0.0.1_1 (2016-05-09)
+0.0.1_2 (2016-05-10)
 
 =head1 SYNOPSIS
 
