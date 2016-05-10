@@ -38,8 +38,8 @@ sub new {
 }
 
 sub as_string {
-    my $type = ref( $_[0] ) =~ s/^OptArgs2::Result::(.*)/$1/r;
-    my @x    = @{ $_[0] };
+    ( my $type = ref( $_[0] ) ) =~ s/^OptArgs2::Result::(.*)/$1/;
+    my @x = @{ $_[0] };
     if ( my $str = shift @x ) {
         return sprintf( "$str (%s)", @x, $type )
           unless $str =~ m/\n/;
@@ -315,7 +315,7 @@ our $VERSION = '0.0.1_2';
 
 sub BUILD {
     my $self = shift;
-    $self->name( $self->class =~ s/.*://r ) unless $self->name;
+    $self->name( ( my $x = $self->class ) =~ s/.*:// ) unless $self->name;
 }
 
 has args => (
@@ -798,7 +798,7 @@ sub cmd {
 
     # If this check is not performed we end up adding ourselves
     if ( $class =~ m/:/ ) {
-        my $parent_class = $class =~ s/(.*)::/$1/r;
+        ( my $parent_class = $class ) =~ s/(.*)::/$1/;
         if ( exists $command{$parent_class} ) {
             $command{$parent_class}->add_cmd($cmd);
         }
@@ -832,7 +832,7 @@ sub subcmd {
         "no '::' in class '$class' - must have a parent" )
       unless $class =~ m/::/;
 
-    my $parent_class = $class =~ s/(.*)::.*/$1/r;
+    ( my $parent_class = $class ) =~ s/(.*)::.*/$1/;
 
     OptArgs2::Util->croak( 'Define::ParentNotFound',
         "parent class not found: " . $parent_class )
