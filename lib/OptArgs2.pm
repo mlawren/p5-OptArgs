@@ -241,8 +241,11 @@ sub new_from {
     }
 
     $ref->{getopt} = $ref->{name};
-    $ref->{getopt} .= '|' . $ref->{name} =~ s/_/-/gr if $ref->{name} =~ m/_/;
-    $ref->{getopt} .= '|' . $ref->{alias}            if $ref->{alias};
+    if ( $ref->{name} =~ m/_/ ) {
+        ( my $x = $ref->{name} ) =~ s/_/-/g;
+        $ref->{getopt} .= '|' . $x;
+    }
+    $ref->{getopt} .= '|' . $ref->{alias} if $ref->{alias};
     $ref->{getopt} .= $isa2getopt{ $ref->{isa} };
 
     return $proto->new(%$ref);
@@ -265,7 +268,7 @@ sub name_alias_comment {
     $self->default( $self->default->( {%$self} ) )
       if 'CODE' eq ref $self->default;
 
-    my $opt = $self->name =~ s/_/-/gr;
+    ( my $opt = $self->name ) =~ s/_/-/g;
     if ( $self->isa eq 'Bool' ) {
         if ( $self->default ) {
             $opt = 'no-' . $opt;
@@ -713,7 +716,7 @@ sub class_optargs {
                     $result = $abbrev{$result} if defined $abbrev{$result};
                 }
 
-                my $new_class = $class . '::' . $result =~ s/-/_/gr;
+                ( my $new_class = $class . '::' . $result ) =~ s/-/_/g;
 
                 if ( exists $command{$new_class} ) {
                     $class = $new_class;

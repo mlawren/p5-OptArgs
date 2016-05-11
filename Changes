@@ -10,7 +10,8 @@
         - None.
 
     Bug Fixes:
-        - None.
+        - Remove the other uses of /r in regexes that I missed in
+          the previous version.
 
     Dependencies:
         - None.
