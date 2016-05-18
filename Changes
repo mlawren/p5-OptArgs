@@ -1,20 +1,8 @@
 0.0.1_3 (yyyy-mm-dd)
 
-    API / Behaviour Changes:
-        - None.
-
-    New Features:
-        - None.
-
-    Enhancements:
-        - None.
-
     Bug Fixes:
         - Remove the other uses of /r in regexes that I missed in
           the previous version.
-
-    Dependencies:
-        - None.
 
 0.0.1_2 (2016-05-10)
 
