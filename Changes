@@ -1,4 +1,4 @@
-0.0.1_3 (yyyy-mm-dd)
+0.0.2 (yyyy-mm-dd)
 
     Bug Fixes:
         - Remove the other uses of /r in regexes that I missed in

@@ -4,7 +4,7 @@ sub OptArgs2::STYLE_NORMAL  { 2 }
 sub OptArgs2::STYLE_FULL    { 3 }
 
 package OptArgs2::Mo;
-our $VERSION = '0.0.1_3';
+our $VERSION = '0.0.2';
 
 BEGIN {
 #<<< do not perltidy
@@ -23,7 +23,7 @@ use overload
   '""'     => 'as_string',
   fallback => 1;
 
-our $VERSION = '0.0.1_3';
+our $VERSION = '0.0.2';
 
 sub new {
     my $proto = shift;
@@ -56,7 +56,7 @@ use warnings;
 use OptArgs2::Mo;
 use Carp ();
 
-our $VERSION = '0.0.1_3';
+our $VERSION = '0.0.2';
 
 sub result {
     my $self = shift;
@@ -91,7 +91,7 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.1_3';
+our $VERSION = '0.0.2';
 
 has abbrev => ( is => 'ro', );
 
@@ -161,7 +161,7 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.1_3';
+our $VERSION = '0.0.2';
 
 extends 'OptArgs2::Arg';
 
@@ -174,7 +174,7 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.1_3';
+our $VERSION = '0.0.2';
 
 has alias => ( is => 'ro', );
 
@@ -314,7 +314,7 @@ use OptArgs2::Mo;
 use List::Util qw/max/;
 use Scalar::Util qw/weaken/;
 
-our $VERSION = '0.0.1_3';
+our $VERSION = '0.0.2';
 
 sub BUILD {
     my $self = shift;
@@ -556,7 +556,7 @@ use Getopt::Long qw/GetOptionsFromArray/;
 use Exporter qw/import/;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.1_3';
+our $VERSION = '0.0.2';
 our @EXPORT  = (qw/arg class_optargs cmd opt optargs subcmd/);
 
 my %command;
@@ -859,7 +859,7 @@ OptArgs2 - command-line argument and option processor
 
 =head1 VERSION
 
-0.0.1_3 (yyyy-mm-dd)
+0.0.2 (yyyy-mm-dd)
 
 =head1 SYNOPSIS
 
