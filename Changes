@@ -1,3 +1,9 @@
+0.0.2 (2016-05-18)
+
+    Bug Fixes:
+        - Remove the other uses of /r in regexes that I missed in
+          the previous version.
+
 0.0.1_2 (2016-05-10)
 
     Bug Fixes:

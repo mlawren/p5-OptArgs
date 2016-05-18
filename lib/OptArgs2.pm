@@ -4,7 +4,7 @@ sub OptArgs2::STYLE_NORMAL  { 2 }
 sub OptArgs2::STYLE_FULL    { 3 }
 
 package OptArgs2::Mo;
-our $VERSION = '0.0.1_2';
+our $VERSION = '0.0.2';
 
 BEGIN {
 #<<< do not perltidy
@@ -23,7 +23,7 @@ use overload
   '""'     => 'as_string',
   fallback => 1;
 
-our $VERSION = '0.0.1_2';
+our $VERSION = '0.0.2';
 
 sub new {
     my $proto = shift;
@@ -56,7 +56,7 @@ use warnings;
 use OptArgs2::Mo;
 use Carp ();
 
-our $VERSION = '0.0.1_2';
+our $VERSION = '0.0.2';
 
 sub result {
     my $self = shift;
@@ -91,7 +91,7 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.1_2';
+our $VERSION = '0.0.2';
 
 has abbrev => ( is => 'ro', );
 
@@ -161,7 +161,7 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.1_2';
+our $VERSION = '0.0.2';
 
 extends 'OptArgs2::Arg';
 
@@ -174,7 +174,7 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.1_2';
+our $VERSION = '0.0.2';
 
 has alias => ( is => 'ro', );
 
@@ -241,8 +241,11 @@ sub new_from {
     }
 
     $ref->{getopt} = $ref->{name};
-    $ref->{getopt} .= '|' . $ref->{name} =~ s/_/-/gr if $ref->{name} =~ m/_/;
-    $ref->{getopt} .= '|' . $ref->{alias}            if $ref->{alias};
+    if ( $ref->{name} =~ m/_/ ) {
+        ( my $x = $ref->{name} ) =~ s/_/-/g;
+        $ref->{getopt} .= '|' . $x;
+    }
+    $ref->{getopt} .= '|' . $ref->{alias} if $ref->{alias};
     $ref->{getopt} .= $isa2getopt{ $ref->{isa} };
 
     return $proto->new(%$ref);
@@ -265,7 +268,7 @@ sub name_alias_comment {
     $self->default( $self->default->( {%$self} ) )
       if 'CODE' eq ref $self->default;
 
-    my $opt = $self->name =~ s/_/-/gr;
+    ( my $opt = $self->name ) =~ s/_/-/g;
     if ( $self->isa eq 'Bool' ) {
         if ( $self->default ) {
             $opt = 'no-' . $opt;
@@ -311,7 +314,7 @@ use OptArgs2::Mo;
 use List::Util qw/max/;
 use Scalar::Util qw/weaken/;
 
-our $VERSION = '0.0.1_2';
+our $VERSION = '0.0.2';
 
 sub BUILD {
     my $self = shift;
@@ -553,7 +556,7 @@ use Getopt::Long qw/GetOptionsFromArray/;
 use Exporter qw/import/;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.1_2';
+our $VERSION = '0.0.2';
 our @EXPORT  = (qw/arg class_optargs cmd opt optargs subcmd/);
 
 my %command;
@@ -713,7 +716,7 @@ sub class_optargs {
                     $result = $abbrev{$result} if defined $abbrev{$result};
                 }
 
-                my $new_class = $class . '::' . $result =~ s/-/_/gr;
+                ( my $new_class = $class . '::' . $result ) =~ s/-/_/g;
 
                 if ( exists $command{$new_class} ) {
                     $class = $new_class;
@@ -856,7 +859,7 @@ OptArgs2 - command-line argument and option processor
 
 =head1 VERSION
 
-0.0.1_2 (2016-05-10)
+0.0.2 (2016-05-18)
 
 =head1 SYNOPSIS
 
