@@ -531,7 +531,7 @@ sub _usage_tree {
     my $style = shift;
     my $depth = shift || '';
 
-    my $str = $self->usage($style) =~ s/^/$depth/gsmr;
+    ( my $str = $self->usage($style) ) =~ s/^/$depth/gsm;
 
     foreach my $subcmd ( sort { $a->name cmp $b->name } @{ $self->subcmds } ) {
         $str .= $subcmd->_usage_tree( $style, $depth . '    ' );
