@@ -11,6 +11,7 @@
 
     Bug Fixes:
         - One more /r fixup
+        - Build lib/Getopt/Args2.pm from Build.PL
 
     Dependencies:
         - None.
