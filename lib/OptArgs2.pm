@@ -4,7 +4,7 @@ sub OptArgs2::STYLE_NORMAL  { 2 }
 sub OptArgs2::STYLE_FULL    { 3 }
 
 package OptArgs2::Mo;
-our $VERSION = '0.0.2';
+our $VERSION = '0.0.4';
 
 BEGIN {
 #<<< do not perltidy
@@ -23,7 +23,7 @@ use overload
   '""'     => 'as_string',
   fallback => 1;
 
-our $VERSION = '0.0.2';
+our $VERSION = '0.0.4';
 
 sub new {
     my $proto = shift;
@@ -56,7 +56,7 @@ use warnings;
 use OptArgs2::Mo;
 use Carp ();
 
-our $VERSION = '0.0.2';
+our $VERSION = '0.0.4';
 
 sub result {
     my $self = shift;
@@ -91,7 +91,7 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.2';
+our $VERSION = '0.0.4';
 
 has abbrev => ( is => 'ro', );
 
@@ -161,7 +161,7 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.2';
+our $VERSION = '0.0.4';
 
 extends 'OptArgs2::Arg';
 
@@ -174,7 +174,7 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.2';
+our $VERSION = '0.0.4';
 
 has alias => ( is => 'ro', );
 
@@ -314,7 +314,7 @@ use OptArgs2::Mo;
 use List::Util qw/max/;
 use Scalar::Util qw/weaken/;
 
-our $VERSION = '0.0.2';
+our $VERSION = '0.0.4';
 
 sub BUILD {
     my $self = shift;
@@ -531,7 +531,7 @@ sub _usage_tree {
     my $style = shift;
     my $depth = shift || '';
 
-    my $str = $self->usage($style) =~ s/^/$depth/gsmr;
+    ( my $str = $self->usage($style) ) =~ s/^/$depth/gsm;
 
     foreach my $subcmd ( sort { $a->name cmp $b->name } @{ $self->subcmds } ) {
         $str .= $subcmd->_usage_tree( $style, $depth . '    ' );
@@ -556,7 +556,7 @@ use Getopt::Long qw/GetOptionsFromArray/;
 use Exporter qw/import/;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.2';
+our $VERSION = '0.0.4';
 our @EXPORT  = (qw/arg class_optargs cmd opt optargs subcmd/);
 
 my %command;
@@ -859,7 +859,7 @@ OptArgs2 - command-line argument and option processor
 
 =head1 VERSION
 
-0.0.2 (2016-05-18)
+0.0.4 (2016-05-21)
 
 =head1 SYNOPSIS
 

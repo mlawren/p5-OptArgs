@@ -1,3 +1,21 @@
+0.0.4 (2016-05-21)
+
+    API / Behaviour Changes:
+        - None.
+
+    New Features:
+        - None.
+
+    Enhancements:
+        - None.
+
+    Bug Fixes:
+        - One more /r fixup
+        - Build lib/Getopt/Args2.pm from Build.PL
+
+    Dependencies:
+        - None.
+
 0.0.2 (2016-05-18)
 
     Bug Fixes:
