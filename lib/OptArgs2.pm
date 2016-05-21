@@ -318,7 +318,11 @@ our $VERSION = '0.0.5_1';
 
 sub BUILD {
     my $self = shift;
-    $self->name( ( my $x = $self->class ) =~ s/.*:// ) unless $self->name;
+
+    unless ( $self->name ) {
+        ( my $x = $self->class ) =~ s/.*://;
+        $self->name($x);
+    }
 }
 
 has args => (
