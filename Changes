@@ -11,6 +11,7 @@
 
     Bug Fixes:
         - Fix command name handling broken by /r fixes in 0.0.2.
+        - Correctly pass the option value to triggers
 
     Dependencies:
         - None.

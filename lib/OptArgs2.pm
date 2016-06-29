@@ -767,7 +767,7 @@ sub class_optargs {
 
     }
 
-    foreach my $trigger (@trigger) {
+    while ( my $trigger = shift @trigger ) {
         $trigger->( $cmd, shift @trigger );
     }
 
