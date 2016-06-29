@@ -277,7 +277,7 @@ sub name_alias_comment {
             $opt = '[no-]' . $opt;
         }
     }
-    elsif ( $self->isa ne 'Flag' ) {
+    elsif ( $self->isa ne 'Flag' and $self->isa ne 'Counter' ) {
         $opt .= '=' . ( $self->isa_name || $isa2name{ $self->isa } );
     }
 
