@@ -4,7 +4,7 @@ sub OptArgs2::STYLE_NORMAL  { 2 }
 sub OptArgs2::STYLE_FULL    { 3 }
 
 package OptArgs2::Mo;
-our $VERSION = '0.0.4';
+our $VERSION = '0.0.6';
 
 BEGIN {
 #<<< do not perltidy
@@ -23,7 +23,7 @@ use overload
   '""'     => 'as_string',
   fallback => 1;
 
-our $VERSION = '0.0.4';
+our $VERSION = '0.0.6';
 
 sub new {
     my $proto = shift;
@@ -56,7 +56,7 @@ use warnings;
 use OptArgs2::Mo;
 use Carp ();
 
-our $VERSION = '0.0.4';
+our $VERSION = '0.0.6';
 
 sub result {
     my $self = shift;
@@ -91,7 +91,7 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.4';
+our $VERSION = '0.0.6';
 
 has abbrev => ( is => 'ro', );
 
@@ -161,7 +161,7 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.4';
+our $VERSION = '0.0.6';
 
 extends 'OptArgs2::Arg';
 
@@ -174,7 +174,7 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.4';
+our $VERSION = '0.0.6';
 
 has alias => ( is => 'ro', );
 
@@ -277,7 +277,7 @@ sub name_alias_comment {
             $opt = '[no-]' . $opt;
         }
     }
-    elsif ( $self->isa ne 'Flag' ) {
+    elsif ( $self->isa ne 'Flag' and $self->isa ne 'Counter' ) {
         $opt .= '=' . ( $self->isa_name || $isa2name{ $self->isa } );
     }
 
@@ -314,11 +314,15 @@ use OptArgs2::Mo;
 use List::Util qw/max/;
 use Scalar::Util qw/weaken/;
 
-our $VERSION = '0.0.4';
+our $VERSION = '0.0.6';
 
 sub BUILD {
     my $self = shift;
-    $self->name( ( my $x = $self->class ) =~ s/.*:// ) unless $self->name;
+
+    unless ( $self->name ) {
+        ( my $x = $self->class ) =~ s/.*://;
+        $self->name($x);
+    }
 }
 
 has args => (
@@ -556,7 +560,7 @@ use Getopt::Long qw/GetOptionsFromArray/;
 use Exporter qw/import/;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.4';
+our $VERSION = '0.0.6';
 our @EXPORT  = (qw/arg class_optargs cmd opt optargs subcmd/);
 
 my %command;
@@ -763,7 +767,7 @@ sub class_optargs {
 
     }
 
-    foreach my $trigger (@trigger) {
+    while ( my $trigger = shift @trigger ) {
         $trigger->( $cmd, shift @trigger );
     }
 
@@ -859,7 +863,7 @@ OptArgs2 - command-line argument and option processor
 
 =head1 VERSION
 
-0.0.4 (2016-05-21)
+0.0.6 (2016-07-03)
 
 =head1 SYNOPSIS
 

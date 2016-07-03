@@ -1,20 +1,16 @@
+0.0.6 (2016-07-03)
+
+    Bug Fixes:
+        - Fix command name handling broken by /r fixes in 0.0.2.
+        - Correctly pass the option value to triggers
+        - Use "--counter" in usage message for Counter options instead
+          of "--counter="
+
 0.0.4 (2016-05-21)
-
-    API / Behaviour Changes:
-        - None.
-
-    New Features:
-        - None.
-
-    Enhancements:
-        - None.
 
     Bug Fixes:
         - One more /r fixup
         - Build lib/Getopt/Args2.pm from Build.PL
-
-    Dependencies:
-        - None.
 
 0.0.2 (2016-05-18)
 
