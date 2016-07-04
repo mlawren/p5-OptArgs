@@ -13,7 +13,7 @@
         - None.
 
     Dependencies:
-        - None.
+        - Require at least Perl 5.10 for "//=" support.
 
 0.0.6 (2016-07-03)
 

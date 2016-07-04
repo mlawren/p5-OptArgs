@@ -553,6 +553,7 @@ sub usage_tree {
 1;
 
 package OptArgs2;
+use 5.010;
 use strict;
 use warnings;
 use Encode qw/decode/;
