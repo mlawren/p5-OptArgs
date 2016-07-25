@@ -15,7 +15,18 @@ my $builder = Module::Build::Pluggable->new(
     dist_author        => 'Mark Lawrence <nomad@null.net>',
     dist_version       => '0.0.7_1',
     no_index           => {
-        package => [ 'OptArgs2::Result', 'Getopt::Args2::Result' ],
+        package => [
+            qw/
+              OptArgs2::Arg
+              OptArgs2::Cmd
+              OptArgs2::Fallback
+              OptArgs2::Mo
+              OptArgs2::Opt
+              OptArgs2::Result
+              OptArgs2::Util
+              Getopt::Args2::Result
+              /
+        ],
     },
     recursive_test_files => 1,
     add_to_cleanup =>
