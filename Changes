@@ -1,16 +1,7 @@
 0.0.7_1 (yyyy-mm-dd)
 
-    API / Behaviour Changes:
-        - None.
-
     New Features:
         - New "usage()" function
-
-    Enhancements:
-        - None.
-
-    Bug Fixes:
-        - None.
 
     Dependencies:
         - Require at least Perl 5.10 for "//=" support.
