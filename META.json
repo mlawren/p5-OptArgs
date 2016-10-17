@@ -16,7 +16,13 @@
    "name" : "OptArgs2",
    "no_index" : {
       "package" : [
+         "OptArgs2::Arg",
+         "OptArgs2::Cmd",
+         "OptArgs2::Fallback",
+         "OptArgs2::Mo",
+         "OptArgs2::Opt",
          "OptArgs2::Result",
+         "OptArgs2::Util",
          "Getopt::Args2::Result"
       ]
    },
@@ -41,7 +47,8 @@
             "Getopt::Long" : "2.37",
             "I18N::Langinfo" : "0",
             "List::Util" : "0",
-            "Text::Abbrev" : "0"
+            "Text::Abbrev" : "0",
+            "perl" : "5.01"
          }
       },
       "test" : {
@@ -65,6 +72,6 @@
          "url" : "git://github.com/mlawren/p5-OptArgs2.git"
       }
    },
-   "version" : "v0.0.6",
-   "x_serialization_backend" : "JSON::PP version 2.27300"
+   "version" : "v0.0.8",
+   "x_serialization_backend" : "JSON::PP version 2.27400"
 }

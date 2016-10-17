@@ -1,4 +1,5 @@
 #!perl
+use 5.010;
 use strict;
 use warnings;
 use Module::Build;
@@ -12,9 +13,20 @@ my $builder = Module::Build::Pluggable->new(
     create_readme      => 1,
     license            => 'GPL_3',
     dist_author        => 'Mark Lawrence <nomad@null.net>',
-    dist_version       => '0.0.6',
+    dist_version       => '0.0.8',
     no_index           => {
-        package => [ 'OptArgs2::Result', 'Getopt::Args2::Result' ],
+        package => [
+            qw/
+              OptArgs2::Arg
+              OptArgs2::Cmd
+              OptArgs2::Fallback
+              OptArgs2::Mo
+              OptArgs2::Opt
+              OptArgs2::Result
+              OptArgs2::Util
+              Getopt::Args2::Result
+              /
+        ],
     },
     recursive_test_files => 1,
     add_to_cleanup =>

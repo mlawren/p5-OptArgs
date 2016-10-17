@@ -2,7 +2,7 @@ NAME
     OptArgs2 - command-line argument and option processor
 
 VERSION
-    0.0.6 (2016-07-03)
+    0.0.8 (2016-10-17)
 
 SYNOPSIS
         #!/usr/bin/env perl
@@ -571,6 +571,10 @@ FUNCTIONS
             with OptArgs2::STYLE_NORMAL. This is handy if you have
             developer-only or rarely-used commands that you don't want
             cluttering up your normal usage message.
+
+    usage( $class, [STYLE] ) -> Str
+        Only exported on request, this function returns the usage string for
+        the command $class.
 
 SEE ALSO
     Getopt::Long

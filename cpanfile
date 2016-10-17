@@ -7,6 +7,7 @@ on configure => sub {
 };
 
 on runtime => sub {
+    requires 'perl'         => 5.010;
     requires 'Carp'         => 0;
     requires 'Encode'       => 2.24;
     requires 'Getopt::Long' => 2.37;

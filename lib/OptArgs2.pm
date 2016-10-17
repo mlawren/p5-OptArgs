@@ -4,7 +4,7 @@ sub OptArgs2::STYLE_NORMAL  { 2 }
 sub OptArgs2::STYLE_FULL    { 3 }
 
 package OptArgs2::Mo;
-our $VERSION = '0.0.6';
+our $VERSION = '0.0.8';
 
 BEGIN {
 #<<< do not perltidy
@@ -23,7 +23,7 @@ use overload
   '""'     => 'as_string',
   fallback => 1;
 
-our $VERSION = '0.0.6';
+our $VERSION = '0.0.8';
 
 sub new {
     my $proto = shift;
@@ -56,7 +56,7 @@ use warnings;
 use OptArgs2::Mo;
 use Carp ();
 
-our $VERSION = '0.0.6';
+our $VERSION = '0.0.8';
 
 sub result {
     my $self = shift;
@@ -91,7 +91,7 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.6';
+our $VERSION = '0.0.8';
 
 has abbrev => ( is => 'ro', );
 
@@ -161,7 +161,7 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.6';
+our $VERSION = '0.0.8';
 
 extends 'OptArgs2::Arg';
 
@@ -174,7 +174,7 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.6';
+our $VERSION = '0.0.8';
 
 has alias => ( is => 'ro', );
 
@@ -314,7 +314,7 @@ use OptArgs2::Mo;
 use List::Util qw/max/;
 use Scalar::Util qw/weaken/;
 
-our $VERSION = '0.0.6';
+our $VERSION = '0.0.8';
 
 sub BUILD {
     my $self = shift;
@@ -553,6 +553,7 @@ sub usage_tree {
 1;
 
 package OptArgs2;
+use 5.010;
 use strict;
 use warnings;
 use Encode qw/decode/;
@@ -560,8 +561,9 @@ use Getopt::Long qw/GetOptionsFromArray/;
 use Exporter qw/import/;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.6';
-our @EXPORT  = (qw/arg class_optargs cmd opt optargs subcmd/);
+our $VERSION   = '0.0.8';
+our @EXPORT    = (qw/arg class_optargs cmd opt optargs subcmd/);
+our @EXPORT_OK = (qw/usage/);
 
 my %command;
 
@@ -853,6 +855,16 @@ sub subcmd {
     return $command{$parent_class}->add_cmd( $command{$class} );
 }
 
+sub usage {
+    my $class = shift || Carp::confess('usage($CLASS,[$style])');
+    my $style = shift;
+
+    Carp::confess("command not found: $class")
+      unless exists $command{$class};
+
+    return $command{$class}->usage($style);
+}
+
 1;
 
 __END__
@@ -863,7 +875,7 @@ OptArgs2 - command-line argument and option processor
 
 =head1 VERSION
 
-0.0.6 (2016-07-03)
+0.0.8 (2016-10-17)
 
 =head1 SYNOPSIS
 
@@ -1389,7 +1401,6 @@ message. See XXX befow for the structure this subref receives.
 
 =back
 
-
 =item opt( $name, %parameters )
 
 Define a command option, for example:
@@ -1541,6 +1552,11 @@ rarely-used commands that you don't want cluttering up your normal
 usage message.
 
 =back
+
+=item usage( $class, [STYLE] ) -> Str
+
+Only exported on request, this function returns the usage string for
+the command C<$class>.
 
 =back
 
