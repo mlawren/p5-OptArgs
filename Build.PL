@@ -13,7 +13,7 @@ my $builder = Module::Build::Pluggable->new(
     create_readme      => 1,
     license            => 'GPL_3',
     dist_author        => 'Mark Lawrence <nomad@null.net>',
-    dist_version       => '0.0.8',
+    dist_version       => '0.0.9_1',
     no_index           => {
         package => [
             qw/
