@@ -561,8 +561,9 @@ use Getopt::Long qw/GetOptionsFromArray/;
 use Exporter qw/import/;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.7_1';
-our @EXPORT  = (qw/arg class_optargs cmd opt optargs subcmd/);
+our $VERSION   = '0.0.7_1';
+our @EXPORT    = (qw/arg class_optargs cmd opt optargs subcmd/);
+our @EXPORT_OK = (qw/usage/);
 
 my %command;
 
@@ -852,6 +853,16 @@ sub subcmd {
     );
 
     return $command{$parent_class}->add_cmd( $command{$class} );
+}
+
+sub usage {
+    my $class = shift || Carp::confess('usage($CLASS,[$style])');
+    my $style = shift;
+
+    Carp::confess("command not found: $class")
+      unless exists $command{$class};
+
+    return $command{$class}->usage($style);
 }
 
 1;
@@ -1390,7 +1401,6 @@ message. See XXX befow for the structure this subref receives.
 
 =back
 
-
 =item opt( $name, %parameters )
 
 Define a command option, for example:
@@ -1542,6 +1552,11 @@ rarely-used commands that you don't want cluttering up your normal
 usage message.
 
 =back
+
+=item usage( $class, [STYLE] ) -> Str
+
+Only exported on request, this function returns the usage string for
+the command C<$class>.
 
 =back
 
