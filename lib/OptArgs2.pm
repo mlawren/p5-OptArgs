@@ -449,44 +449,44 @@ sub usage {
     my @uargs;
     my $last_sub;
     if (@args) {
-        $last_sub = $args[$#args]->isa eq 'SubCmd' ? pop @args : undef;
 
-        if ($last_sub) {
-            push( @uargs,
-                [ '  ' . ucfirst( $last_sub->name ) . ':', $last_sub->comment ]
-            );
-        }
-        else {
-            push( @uargs, [ '  Arguments:', '' ] );
-        }
-
+        my $i = 0;
         foreach my $arg (@args) {
-            my ( $n, $c ) = $arg->name_comment;
-            push( @uargs, [ '    ' . uc($n), $c ] );
-        }
+            if ( $arg->isa eq 'SubCmd' ) {
+                push( @uargs,
+                    [ '  ' . ucfirst( $arg->name ) . ':', $arg->comment ] );
+                my @sorted_subs =
+                  sort { $a->name cmp $b->name }
+                  grep { $style == OptArgs2::STYLE_FULL or !$_->hidden }
+                  @{ $arg->cmd->subcmds },
+                  $arg->fallback ? $arg->fallback : ();
 
-        if ($last_sub) {
-            my @sorted_subs =
-              sort { $a->name cmp $b->name }
-              grep { $style == OptArgs2::STYLE_FULL or !$_->hidden }
-              @{ $last_sub->cmd->subcmds },
-              $last_sub->fallback ? $last_sub->fallback : ();
-
-            my $prefix = length( $last_sub->comment ) ? '  ' : '';
-            foreach my $subcmd (@sorted_subs) {
-                push(
-                    @uargs,
-                    [
-                        '    '
-                          . (
-                            ref $subcmd eq 'OptArgs2::Fallback'
-                            ? uc( $subcmd->name )
-                            : $subcmd->name
-                          ),
-                        $prefix . $subcmd->comment
-                    ]
-                );
+                my $prefix = length( $arg->comment ) ? '  ' : '';
+                foreach my $subcmd (@sorted_subs) {
+                    push(
+                        @uargs,
+                        [
+                            '    '
+                              . (
+                                ref $subcmd eq 'OptArgs2::Fallback'
+                                ? uc( $subcmd->name )
+                                : $subcmd->name
+                              ),
+                            $prefix . $subcmd->comment
+                        ]
+                    );
+                }
             }
+            elsif ( !$i ) {
+                push( @uargs, [ '  Arguments:', '' ] );
+                my ( $n, $c ) = $arg->name_comment;
+                push( @uargs, [ '    ' . uc($n), $c ] );
+            }
+            else {
+                my ( $n, $c ) = $arg->name_comment;
+                push( @uargs, [ '    ' . uc($n), $c ] ) if length($c);
+            }
+            $i++;
         }
     }
 
