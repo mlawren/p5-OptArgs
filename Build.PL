@@ -6,6 +6,8 @@ use Module::Build;
 use Module::Build::Compat;
 use Module::Build::Pluggable 'CPANfile';
 
+our $VERSION = '0.0.9_1';
+
 my $builder = Module::Build::Pluggable->new(
     module_name        => 'OptArgs2',
     create_license     => 1,
@@ -13,7 +15,7 @@ my $builder = Module::Build::Pluggable->new(
     create_readme      => 1,
     license            => 'GPL_3',
     dist_author        => 'Mark Lawrence <nomad@null.net>',
-    dist_version       => '0.0.9_1',
+    dist_version       => $VERSION,
     no_index           => {
         package => [
             qw/
