@@ -93,8 +93,6 @@ use OptArgs2::Mo;
 
 our $VERSION = '0.0.9_1';
 
-has abbrev => ( is => 'ro', );
-
 has cmd => (
     is       => 'rw',
     weak_ref => 1,
@@ -325,6 +323,8 @@ sub BUILD {
     }
 }
 
+has abbrev => ( is => 'rw', );
+
 has args => (
     is      => 'ro',
     default => sub { [] },
@@ -386,6 +386,7 @@ sub add_cmd {
 
     push( @{ $self->subcmds }, $subcmd );
     $subcmd->parent($self);
+    $subcmd->abbrev( $self->abbrev );
 
     # A hack until Mo gets weaken support
     weaken $subcmd->{parent};
@@ -623,13 +624,13 @@ sub class_optargs {
 
     # Start with the parents options
     map { $_->run_optargs } $cmd->parents, $cmd;
-    my @config = map { @{ $_->opts } } $cmd->parents, $cmd;
-    push( @config, @{ $cmd->args } );
+    my @opts = map { @{ $_->opts } } $cmd->parents, $cmd;
+    my @args = @{ $cmd->args };
 
-    while ( my $try = shift @config ) {
-        my $result;
+  OPTARGS: while ( @opts or @args ) {
 
-        if ( $try->SUPER::isa('OptArgs2::Opt') ) {
+        while ( my $try = shift @opts ) {
+            my $result;
             if ( exists $source_hash->{ $try->name } ) {
                 $result = delete $source_hash->{ $try->name };
             }
@@ -637,12 +638,46 @@ sub class_optargs {
                 GetOptionsFromArray( $source, $try->getopt => \$result );
             }
 
-            if ( defined $result and my $ref = $try->trigger ) {
-                push( @trigger, $ref, $result );
+            if ( defined $result ) {
+                $optargs->{ $try->name } = $result;
+                if ( my $ref = $try->trigger ) {
+                    push( @trigger, $ref, $result );
+                }
+            }
+            elsif ( defined $try->default ) {
+                push( @coderef_default_keys, $try->name )
+                  if ref $try->default eq 'CODE';
+                $optargs->{ $try->name } = $result = $try->default;
             }
         }
-        elsif ( $try->SUPER::isa('OptArgs2::Arg') ) {
 
+        # Sub command check
+        if ( @$source and my @subcmds = $cmd->subcmds ) {
+            my $result = $source->[0];
+            if ( $cmd->abbrev ) {
+                require Text::Abbrev;
+                my %abbrev = Text::Abbrev::abbrev( map { $_->name } @subcmds );
+                $result = $abbrev{$result} // $result;
+            }
+
+            ( my $new_class = $class . '::' . $result ) =~ s/-/_/g;
+
+            if ( exists $command{$new_class} ) {
+                shift @$source;
+                $class = $new_class;
+                $cmd   = $command{$new_class};
+                $cmd->run_optargs;
+                push( @opts, @{ $cmd->opts } );
+
+                # Ignoring any remaining arguments
+                @args = @{ $cmd->args };
+
+                next OPTARGS;
+            }
+        }
+
+        while ( my $try = shift @args ) {
+            my $result;
             if (@$source) {
 
                 push(
@@ -670,8 +705,8 @@ sub class_optargs {
 
                 if ( $try->greedy ) {
                     my @later;
-                    if ( @config and @$source > @config ) {
-                        push( @later, pop @$source ) for @config;
+                    if ( @args and @$source > @args ) {
+                        push( @later, pop @$source ) for @args;
                     }
 
                     if ( $try->isa eq 'ArrayRef' ) {
@@ -711,62 +746,16 @@ sub class_optargs {
                 next;
             }
 
-            if ( $result and $try->isa eq 'SubCmd' ) {
-
-                # look up abbreviated words
-                if ( $try->abbrev ) {
-                    require Text::Abbrev;
-                    my %abbrev =
-                      Text::Abbrev::abbrev( map { $_->name }
-                          @{ $cmd->subcmds } );
-                    $result = $abbrev{$result} if defined $abbrev{$result};
-                }
-
-                ( my $new_class = $class . '::' . $result ) =~ s/-/_/g;
-
-                if ( exists $command{$new_class} ) {
-                    $class = $new_class;
-                    $cmd   = $command{$new_class};
-                    $cmd->run_optargs;
-
-                    # Ignoring any remaining arguments
-                    @config =
-                      grep { ref($_)->SUPER::isa('OptArgs2::Opt') } @config;
-                    push( @config, @{ $cmd->opts }, @{ $cmd->args } );
-                }
-                elsif ( $try->fallback ) {
-                    unshift @$source, $result;
-
-                    #                        $try->{fallback}->{type} = 'arg';
-                    unshift( @config, $try->fallback );
-                    next;
-                }
-                else {
-                    push(
-                        @errors,
-                        OptArgs2::Util->result(
-                            'Parse::SubCmdNotFound',
-                            'error: unknown '
-                              . uc( $try->name )
-                              . qq{ "$result"\n\n}
-                              . $cmd->usage
-                        )
-                    );
-                }
-
-                $result = undef;
+            if ( defined $result ) {
+                $optargs->{ $try->name } = $result;
             }
-        }
+            elsif ( defined $try->default ) {
+                push( @coderef_default_keys, $try->name )
+                  if ref $try->default eq 'CODE';
+                $optargs->{ $try->name } = $result = $try->default;
+            }
 
-        if ( defined $result ) {
-            $optargs->{ $try->name } = $result;
         }
-        elsif ( defined $try->default ) {
-            push( @coderef_default_keys, $try->name )
-              if ref $try->default eq 'CODE';
-            $optargs->{ $try->name } = $result = $try->default;
-        }
-
     }
 
     while ( my $trigger = shift @trigger ) {
@@ -1264,11 +1253,6 @@ The C<arg()> function accepts the following parameters:
 
 =over
 
-=item abbrev
-
-Valid for arguments of type 'SubCmd' only. When set to true then
-subcommands can be abbreviated, up to their shortest, unique values.
-
 =item comment
 
 Required. Used to generate the usage/help message.
@@ -1364,6 +1348,11 @@ A display name of the command. Optional - if it is not provided then the
 last part of the command name is used is usage messages.
 
 =over
+
+=item abbrev
+
+When set to true then subcommands can be abbreviated, up to their
+shortest, unique values.
 
 =item comment
 
