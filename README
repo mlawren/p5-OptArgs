@@ -2,7 +2,7 @@ NAME
     OptArgs2 - command-line argument and option processor
 
 VERSION
-    0.0.8 (2016-10-17)
+    0.0.9 (2016-12-03)
 
 SYNOPSIS
         #!/usr/bin/env perl
@@ -204,11 +204,11 @@ DESCRIPTION
             #     demo foo ACTION [OPTIONS...]
             #     demo bar [OPTIONS...]
 
-        An argument of type 'SubCmd' indicates subcommands can occur in that
-        position. The command hierarchy is based upon the natural
-        parent/child structure of the class names. This definition can be
-        done in your main script, or in one or more separate packages or
-        plugins, as you like.
+        An argument of type 'SubCmd' is an explicit indication that
+        subcommands can occur in that position. The command hierarchy is
+        based upon the natural parent/child structure of the class names.
+        This definition can be done in your main script, or in one or more
+        separate packages or plugins, as you like.
 
     Parsing
         The "class_optargs()" function is called instead of "optargs()" to
@@ -353,11 +353,6 @@ FUNCTIONS
 
         The "arg()" function accepts the following parameters:
 
-        abbrev
-            Valid for arguments of type 'SubCmd' only. When set to true then
-            subcommands can be abbreviated, up to their shortest, unique
-            values.
-
         comment
             Required. Used to generate the usage/help message.
 
@@ -431,6 +426,10 @@ FUNCTIONS
     cmd( $class, %parameters ) -> OptArgs2::Cmd
         Define a top-level command identified by $class which is typically a
         Perl package name. The following parameters are accepted:
+
+        abbrev
+            When set to true then subcommands can be abbreviated, up to
+            their shortest, unique values.
 
         comment
             A description of the command. Required.

@@ -43,5 +43,5 @@ resources:
   homepage: https://github.com/mlawren/p5-OptArgs2
   license: http://www.gnu.org/licenses/gpl-3.0.txt
   repository: git://github.com/mlawren/p5-OptArgs2.git
-version: v0.0.8
+version: v0.0.9
 x_serialization_backend: 'CPAN::Meta::YAML version 0.012'

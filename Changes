@@ -1,3 +1,10 @@
+0.0.9 (2016-12-03)
+
+    Enhancements:
+        - Sub commands are always called and no longer depend on a
+          particular SubCmd arg type. The arg isa='SubCmd' type is now
+          simply a usage pressentation instruction.
+
 0.0.8 (2016-10-17)
 
     New Features:
