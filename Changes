@@ -7,7 +7,9 @@
         - None.
 
     Enhancements:
-        - None.
+        - Sub commands are always called and no longer depend on a
+          particular SubCmd arg type. The arg isa='SubCmd' type is now
+          simply a usage pressentation instruction.
 
     Bug Fixes:
         - None.
