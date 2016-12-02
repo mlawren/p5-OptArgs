@@ -448,9 +448,9 @@ sub usage {
 
     # Build arguments
     my @uargs;
-    my $last_sub;
-    if (@args) {
+    my $have_subcmd;
 
+    if (@args) {
         my $i = 0;
         foreach my $arg (@args) {
             if ( $arg->isa eq 'SubCmd' ) {
@@ -477,6 +477,8 @@ sub usage {
                         ]
                     );
                 }
+
+                $have_subcmd++;
             }
             elsif ( !$i ) {
                 push( @uargs, [ '  Arguments:', '' ] );
@@ -488,6 +490,22 @@ sub usage {
                 push( @uargs, [ '    ' . uc($n), $c ] ) if length($c);
             }
             $i++;
+        }
+    }
+
+    my @sargs;
+    if ( !$have_subcmd ) {
+        my @sorted_subs =
+          sort { $a->name cmp $b->name }
+          grep { $style == OptArgs2::STYLE_FULL or !$_->hidden }
+          @{ $self->subcmds };
+
+        if (@sorted_subs) {
+            push( @sargs, [ '  Sub-Commands:', '' ] );
+
+            foreach my $subcmd (@sorted_subs) {
+                push( @sargs, [ '    ' . $subcmd->name, $subcmd->comment ] );
+            }
         }
     }
 
@@ -509,13 +527,21 @@ sub usage {
     }
 
     # Width calculation for args and opts combined
-    my $w1 = max( map { length $_->[0] } @uargs, @uopts );
+    my $w1 = max( map { length $_->[0] } @uargs, @sargs, @uopts );
     my $format = '%-' . $w1 . "s   %s\n";
 
     # Output Arguments
     if (@uargs) {
         $usage .= "\n";
         foreach my $row (@uargs) {
+            $usage .= sprintf( $format, @$row );
+        }
+    }
+
+    # Output Subcommands
+    if (@sargs) {
+        $usage .= "\n";
+        foreach my $row (@sargs) {
             $usage .= sprintf( $format, @$row );
         }
     }
@@ -1088,10 +1114,11 @@ of the Perl class that implements the (sub-)command.
     #     demo foo ACTION [OPTIONS...]
     #     demo bar [OPTIONS...]
 
-An argument of type 'SubCmd' indicates subcommands can occur in that
-position. The command hierarchy is based upon the natural parent/child
-structure of the class names.  This definition can be done in your main
-script, or in one or more separate packages or plugins, as you like.
+An argument of type 'SubCmd' is an explicit indication that subcommands
+can occur in that position. The command hierarchy is based upon the
+natural parent/child structure of the class names.  This definition can
+be done in your main script, or in one or more separate packages or
+plugins, as you like.
 
 =item Parsing
 
