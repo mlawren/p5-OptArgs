@@ -1,4 +1,4 @@
-0.0.9_1 (yyyy-mm-dd)
+0.0.9 (yyyy-mm-dd)
 
     Enhancements:
         - Sub commands are always called and no longer depend on a
