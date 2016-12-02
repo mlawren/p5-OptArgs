@@ -1,21 +1,9 @@
 0.0.9_1 (yyyy-mm-dd)
 
-    API / Behaviour Changes:
-        - None.
-
-    New Features:
-        - None.
-
     Enhancements:
         - Sub commands are always called and no longer depend on a
           particular SubCmd arg type. The arg isa='SubCmd' type is now
           simply a usage pressentation instruction.
-
-    Bug Fixes:
-        - None.
-
-    Dependencies:
-        - None.
 
 0.0.8 (2016-10-17)
 
