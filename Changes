@@ -10,7 +10,7 @@
         - Output Sub-Commands *after* Options in usage message
 
     Bug Fixes:
-        - None.
+        - Remove Getopts/Args2.pm from MANIFEST.SKIP
 
     Dependencies:
         - None.

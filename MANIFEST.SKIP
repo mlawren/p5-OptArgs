@@ -72,9 +72,6 @@
 # Avoid archives of this distribution
 \bOptArgs2-v[\d\.\_]+
 
-# generated files
-\bArgs2.pm$
-
 \.perltidy
 \.podtidy
 \.envrc
