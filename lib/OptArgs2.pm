@@ -538,18 +538,18 @@ sub usage {
         }
     }
 
-    # Output Subcommands
-    if (@sargs) {
-        $usage .= "\n";
-        foreach my $row (@sargs) {
-            $usage .= sprintf( $format, @$row );
-        }
-    }
-
     # Output Options
     if (@uopts) {
         $usage .= "\n";
         foreach my $row (@uopts) {
+            $usage .= sprintf( $format, @$row );
+        }
+    }
+
+    # Output Subcommands
+    if (@sargs) {
+        $usage .= "\n";
+        foreach my $row (@sargs) {
             $usage .= sprintf( $format, @$row );
         }
     }

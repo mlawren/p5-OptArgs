@@ -7,7 +7,7 @@
         - None.
 
     Enhancements:
-        - None.
+        - Output Sub-Commands *after* Options in usage message
 
     Bug Fixes:
         - None.
