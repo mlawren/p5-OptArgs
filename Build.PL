@@ -6,7 +6,7 @@ use Module::Build;
 use Module::Build::Compat;
 use Module::Build::Pluggable 'CPANfile';
 
-our $VERSION = '0.0.10';
+our $VERSION = '0.0.11_1';
 
 my $builder = Module::Build::Pluggable->new(
     module_name        => 'OptArgs2',
