@@ -227,11 +227,6 @@ sub new_from {
         $ref->{trigger} = sub { die shift->usage(OptArgs2::STYLE_FULL) };
     }
 
-    if ( $ref->{isa} eq 'Flag' and exists $ref->{default} ) {
-        return OptArgs2::Util->croak( 'Define::FlagNoDefault',
-            'isa:Flag cannot have default' );
-    }
-
     if ( !exists $isa2getopt{ $ref->{isa} } ) {
         return OptArgs2::Util->croak( 'Define::IsaInvalid',
             'invalid isa "%s" for opt "%s"',
