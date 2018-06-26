@@ -12,6 +12,7 @@
           what the reason may have been for the restriction. I also
           can't think of a valid one now, and it is sometimes useful to
           set a Flag value based on %ENV.
+        - Convert command_names to command-names in messages
 
     Bug Fixes:
         - Remove Getopts/Args2.pm from MANIFEST.SKIP

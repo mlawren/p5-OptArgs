@@ -314,6 +314,7 @@ sub BUILD {
 
     unless ( $self->name ) {
         ( my $x = $self->class ) =~ s/.*://;
+        $x =~ s/_/-/g;
         $self->name($x);
     }
 }
