@@ -16,7 +16,8 @@
         - None.
 
     Packaging:
-        - None.
+        - Ensure Getopt::Args::* utility packages are not indexed on
+          CPAN.
 
 0.0.10 (2018-06-26)
 

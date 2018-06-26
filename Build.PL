@@ -26,7 +26,13 @@ my $builder = Module::Build::Pluggable->new(
               OptArgs2::Opt
               OptArgs2::Result
               OptArgs2::Util
+              Getopt::Args2::Arg
+              Getopt::Args2::Cmd
+              Getopt::Args2::Fallback
+              Getopt::Args2::Mo
+              Getopt::Args2::Opt
               Getopt::Args2::Result
+              Getopt::Args2::Util
               /
         ],
     },
