@@ -309,16 +309,6 @@ use Scalar::Util qw/weaken/;
 
 our $VERSION = '0.0.11_1';
 
-sub BUILD {
-    my $self = shift;
-
-    unless ( $self->name ) {
-        ( my $x = $self->class ) =~ s/.*://;
-        $x =~ s/_/-/g;
-        $self->name($x);
-    }
-}
-
 has abbrev => ( is => 'rw', );
 
 has args => (
@@ -338,7 +328,14 @@ has comment => (
 
 has hidden => ( is => 'ro', );
 
-has name => ( is => 'rw', );
+has name => (
+    is      => 'rw',
+    default => sub {
+        ( my $x = shift->class ) =~ s/.*://;
+        $x =~ s/_/-/g;
+        $x;
+    },
+);
 
 has optargs => ( is => 'rw', );
 
