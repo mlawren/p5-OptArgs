@@ -25,14 +25,6 @@
 \bpm_to_blib$
 \bblibdirs\.ts$         # 6.18 through 6.25 generated this
 
-# Avoid Module::Build generated and utility files.
-\bBuild$
-\b_build/
-\bBuild.bat$
-\bBuild.COM$
-\bBUILD.COM$
-\bbuild.com$
-
 # Avoid temp and backup files.
 ~$
 \.old$
