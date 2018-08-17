@@ -15,7 +15,7 @@ on runtime => sub {
 };
 
 on test => sub {
-    requires 'IO::Capture::Stdout'     => 0;
-    requires 'POSIX'                   => 0;
-    requires 'Test2::Bundle::Extended' => 0;
+    requires 'IO::Capture::Stdout' => 0;
+    requires 'POSIX'               => 0;
+    requires 'Test2::V0'           => 0;
 };
