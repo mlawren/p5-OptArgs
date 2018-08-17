@@ -143,8 +143,13 @@ my %arg2getopt = (
 
 sub BUILD {
     my $self = shift;
-    $self->fallback( OptArgs2::Fallback->new( %{ $self->fallback } ) )
-      if $self->fallback;
+    if ( my $fb = $self->fallback ) {
+        OptArgs2::Util->croak( 'Arg::FallbackHashRef',
+            'fallback must be a HASH ref' )
+          unless 'HASH' eq ref $fb;
+
+        $self->fallback( OptArgs2::Fallback->new( %{ $self->fallback } ) );
+    }
 }
 
 sub name_comment {
