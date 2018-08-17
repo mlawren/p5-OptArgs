@@ -7,17 +7,22 @@
         - None.
 
     Enhancements:
-        - None.
+        - Set @CARP_NOT correctly to indicate where OptArgs2 callers
+          are making errors.
 
     Bug Fixes:
         - None.
 
     Dependencies:
-        - None.
+        - Tests depend on Test2::V0 instead of old Bundle
 
     Packaging:
         - Ensure Getopt::Args::* utility packages are not indexed on
           CPAN.
+        - Migrate back to ExtUtils::MakeMaker
+        - Keep README up to date using githook-perltidy's .readme_from
+          and track it in Git again so that Github shows something
+          reasonable again.
 
 0.0.10 (2018-06-26)
 
