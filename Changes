@@ -1,10 +1,4 @@
-0.0.11_1 (yyyy-mm-dd)
-
-    API / Behaviour Changes:
-        - None.
-
-    New Features:
-        - None.
+0.0.11 (yyyy-mm-dd)
 
     Enhancements:
         - Set @CARP_NOT correctly to indicate where OptArgs2 callers
