@@ -148,7 +148,11 @@ sub BUILD {
             'fallback must be a HASH ref' )
           unless 'HASH' eq ref $fb;
 
-        $self->fallback( OptArgs2::Fallback->new( %{ $self->fallback } ) );
+        $self->fallback(
+            OptArgs2::Fallback->new(
+                %$fb, required => $self->required,
+            )
+        );
     }
 }
 
@@ -711,6 +715,31 @@ sub class_optargs {
 
         while ( my $try = shift @args ) {
             my $result;
+
+            if ( $try->isa eq 'SubCmd' ) {
+                if ( my $new_arg = $try->fallback ) {
+                    $try = $new_arg;
+                }
+                elsif ( $try->required ) {
+                    push(
+                        @errors,
+                        OptArgs2::Util->result(
+                            'Parse::SubCmdRequired', $cmd->usage
+                        )
+                    );
+                    last OPTARGS;
+                }
+                elsif (@$source) {
+                    push(
+                        @errors,
+                        OptArgs2::Util->result(
+                            'Parse::UnknownSubCmd', $cmd->usage
+                        )
+                    );
+                    last OPTARGS;
+                }
+            }
+
             if (@$source) {
 
                 push(

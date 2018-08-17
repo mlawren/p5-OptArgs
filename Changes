@@ -11,7 +11,8 @@
           are making errors.
 
     Bug Fixes:
-        - None.
+        - Arguments that didn't match known sub-commands would fail to
+          raise errors. Reported by Mario Domgoergen (mdom at Github).
 
     Dependencies:
         - Tests depend on Test2::V0 instead of old Bundle
