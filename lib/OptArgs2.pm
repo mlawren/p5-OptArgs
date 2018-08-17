@@ -67,21 +67,30 @@ sub croak {
     my $self   = shift;
     my $result = OptArgs2::Result->new(@_);
 
-    {
-        # Internal packages we don't want to see for user-related errors
-        local @OptArgs2::Util::CARP_NOT = (
-            qw/
-              OptArgs2
-              OptArgs2::Arg
-              OptArgs2::Cmd
-              OptArgs2::Opt
-              OptArgs2::Util
-              /
-        );
+    # Internal packages we don't want to see for user-related errors
+    local (
+        @OptArgs2::CARP_NOT,      @OptArgs2::Arg::CARP_NOT,
+        @OptArgs2::Cmd::CARP_NOT, @OptArgs2::Fallback::CARP_NOT,
+        @OptArgs2::Opt::CARP_NOT, @OptArgs2::Mo::CARP_NOT,
+        @OptArgs2::Util::CARP_NOT,
+    );
 
-        # Carp::croak has a bug when first argument is a reference
-        Carp::croak( '', $result );
-    }
+    @OptArgs2::CARP_NOT         = @OptArgs2::Arg::CARP_NOT =
+      @OptArgs2::Cmd::CARP_NOT  = @OptArgs2::Fallback::CARP_NOT =
+      @OptArgs2::Opt::CARP_NOT  = @OptArgs2::Mo::CARP_NOT =
+      @OptArgs2::Util::CARP_NOT = (
+        qw/
+          OptArgs2
+          OptArgs2::Arg
+          OptArgs2::Cmd
+          OptArgs2::Opt
+          OptArgs2::Mo
+          OptArgs2::Util
+          /
+      );
+
+    # Carp::croak has a bug when first argument is a reference
+    Carp::croak( '', $result );
 }
 
 1;
