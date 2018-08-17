@@ -1,4 +1,4 @@
-0.0.11 (yyyy-mm-dd)
+0.0.11 (2018-08-18)
 
     Enhancements:
         - Set @CARP_NOT correctly to indicate where OptArgs2 callers
