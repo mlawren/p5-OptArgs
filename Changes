@@ -7,7 +7,7 @@
         - None.
 
     Enhancements:
-        - None.
+        - Refactor error handling to make it clearer and simpler.
 
     Bug Fixes:
         - None.
