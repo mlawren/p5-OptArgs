@@ -36,5 +36,7 @@ opt quiet => (
     alias   => 'q',
 );
 
-my $opts = optargs;
-print Dumper($opts) =~ s/VAR1/opts/r;
+my $opts = eval { optargs };
+my $err = $@;
+print $INC{'OptArgs2.pm'}, "\n";
+print $err ? '(' . ( ref $err ) . ")\n$err" : Dumper($opts) =~ s/VAR1/opts/r;

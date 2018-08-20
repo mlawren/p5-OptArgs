@@ -31,7 +31,8 @@ sub confess {
 
 sub croak {
     my $self   = shift;
-    my $result = OptArgs2::Result->new(@_);
+    my $err    = shift;
+    my $result = OptArgs2::Result->new( 'Error::' . $err, @_ );
 
     # Internal packages we don't want to see for user-related errors
     local (
@@ -59,7 +60,8 @@ sub croak {
 
 sub error {
     my $self = shift;
-    die OptArgs2::Result->new(@_);
+    my $err  = shift;
+    die OptArgs2::Result->new( 'Error::' . $err, @_ );
 }
 
 sub result {
@@ -80,7 +82,7 @@ our $VERSION = '0.0.12_1';
 sub new {
     my $proto = shift;
     my $type  = shift || Carp::croak( $proto . '->new($TYPE,[@args])' );
-    my $class = $proto . '::' . $type;
+    my $class = 'OptArgs2::' . $type;
 
     {
         no strict 'refs';
@@ -90,7 +92,7 @@ sub new {
 }
 
 sub as_string {
-    ( my $type = ref( $_[0] ) ) =~ s/^OptArgs2::Result::(.*)/$1/;
+    ( my $type = ref( $_[0] ) ) =~ s/^OptArgs2::(.*)/$1/;
     my @x = @{ $_[0] };
     if ( my $str = shift @x ) {
         return sprintf( "$str (%s)", @x, $type )
@@ -151,7 +153,7 @@ my %arg2getopt = (
 sub BUILD {
     my $self = shift;
     if ( my $fb = $self->fallback ) {
-        $self->croak( 'Arg::FallbackHashRef', 'fallback must be a HASH ref' )
+        $self->croak( 'FallbackNotHashref', 'fallback must be a HASH ref' )
           unless 'HASH' eq ref $fb;
 
         $self->fallback(
@@ -244,7 +246,7 @@ sub new_from {
     my $ref   = {@_};
 
     if ( delete $ref->{ishelp} ) {
-        return $proto->croak( 'Define::IshelpTrigger',
+        return $proto->croak( 'IshelpTriggerConflict',
             'ishelp and trigger conflict' )
           if exists $ref->{trigger};
 
@@ -252,8 +254,7 @@ sub new_from {
     }
 
     if ( !exists $isa2getopt{ $ref->{isa} } ) {
-        return $proto->croak( 'Define::IsaInvalid',
-            'invalid isa "%s" for opt "%s"',
+        return $proto->croak( 'InvalidIsa', 'invalid isa "%s" for opt "%s"',
             $ref->{isa}, $ref->{name} );
     }
 
@@ -456,7 +457,7 @@ sub usage {
     $usage .= ' [OPTIONS...]' if @opts;
     $usage .= "\n";
 
-    return $self->result( 'Usage::Summary', $usage )
+    return $self->result( 'SummaryUsage', $usage )
       if $style == OptArgs2::STYLE_SUMMARY;
 
     # Synopsis
@@ -571,7 +572,10 @@ sub usage {
         }
     }
 
-    return $self->result( 'Usage::Full', 'usage: ' . $usage . "\n" );
+    return $self->result(
+        $style =
+          OptArgs2::STYLE_FULL ? 'FullUsage' : 'NormalUsage',
+        'usage: ' . $usage . "\n" );
 }
 
 sub _usage_tree {
@@ -591,7 +595,7 @@ sub _usage_tree {
 sub usage_tree {
     my $self = shift;
     my $style = shift || OptArgs2::STYLE_SUMMARY;
-    return $self->result( 'Usage::Tree', $self->_usage_tree($style) );
+    return $self->result( 'TreeUsage', $self->_usage_tree($style) );
 }
 
 1;
@@ -609,7 +613,7 @@ our $VERSION   = '0.0.12_1';
 our @EXPORT    = (qw/arg class_optargs cmd opt optargs subcmd/);
 our @EXPORT_OK = (qw/usage/);
 
-my $self = __PACKAGE__;
+my $PKG = __PACKAGE__;
 my %COMMAND;
 
 sub _default_command {
@@ -627,10 +631,10 @@ sub arg {
 
 sub class_optargs {
     my $class = shift
-      || $self->croak( 'Parse::CmdRequired', 'class_optargs($CMD,[@argv])' );
+      || $PKG->croak( 'Usage', 'class_optargs($CMD,[@argv])' );
 
     my $cmd = $COMMAND{$class}
-      || $self->croak( 'Parse::CmdNotFound',
+      || $PKG->croak( 'CmdNotFound',
         'command class not found: ' . $class );
 
     my $source      = \@_;
@@ -653,7 +657,7 @@ sub class_optargs {
     }
 
     map {
-        $self->croak( 'Parse::Undefined', '_optargs argument undefined!' )
+        $PKG->croak( 'UndefOptArg', '_optargs argument undefined!' )
           if !defined $_
     } @$source;
 
@@ -726,11 +730,11 @@ sub class_optargs {
                     $try = $new_arg;
                 }
                 elsif ( $try->required ) {
-                    push( @errors, [ 'Parse::SubCmdRequired', $cmd->usage ] );
+                    push( @errors, [ 'SubCmdRequired', $cmd->usage ] );
                     last OPTARGS;
                 }
                 elsif (@$source) {
-                    push( @errors, [ 'Parse::UnknownSubCmd', $cmd->usage ] );
+                    push( @errors, [ 'UnknownSubCmd', $cmd->usage ] );
                     last OPTARGS;
                 }
             }
@@ -740,7 +744,7 @@ sub class_optargs {
                 push(
                     @errors,
                     [
-                        'Parse::UnknownOption',
+                        'UnknownOption',
                         qq{error: unknown option "$source->[0]"\n\n}
                           . $cmd->usage
                     ]
@@ -749,7 +753,7 @@ sub class_optargs {
                 push(
                     @errors,
                     [
-                        'Parse::UnknownOption',
+                        'UnknownOption',
                         qq{error: unknown option "$source->[0]"\n\n}
                           . $cmd->usage
                     ]
@@ -792,57 +796,57 @@ sub class_optargs {
                 }
 
                 # TODO: type check using Param::Utils?
-            }
-            elsif ( exists $source_hash->{ $try->name } ) {
-                $result = delete $source_hash->{ $try->name };
-            }
-            elsif ( $try->required ) {
-                push( @errors, [ 'Parse::ArgRequired', $cmd->usage ] );
-                next;
-            }
-
-            if ( defined $result ) {
-                $optargs->{ $try->name } = $result;
-            }
-            elsif ( defined $try->default ) {
-                push( @coderef_default_keys, $try->name )
-                  if ref $try->default eq 'CODE';
-                $optargs->{ $try->name } = $result = $try->default;
-            }
-
-        }
+    }
+    elsif ( exists $source_hash->{ $try->name } ) {
+        $result = delete $source_hash->{ $try->name };
+    }
+    elsif ( $try->required ) {
+        push( @errors, [ 'ArgRequired', $cmd->usage ] );
+        next;
     }
 
-    while ( my $trigger = shift @trigger ) {
-        $trigger->( $cmd, shift @trigger );
+    if ( defined $result ) {
+        $optargs->{ $try->name } = $result;
+    }
+    elsif ( defined $try->default ) {
+        push( @coderef_default_keys, $try->name )
+          if ref $try->default eq 'CODE';
+        $optargs->{ $try->name } = $result = $try->default;
     }
 
-    if (@errors) {
-        $self->error( @{ $errors[0] } );
-    }
-    elsif (@$source) {
-        $self->error( 'Parse::UnexpectedOptArgs',
-            "error: unexpected option(s) or argument(s): @$source\n\n"
-              . $cmd->usage );
-    }
-    elsif ( my @unexpected = keys %$source_hash ) {
-        $self->error( 'Parse::UnexpectedHashOptArgs',
-            "error: unexpected HASH options or arguments: @unexpected\n\n"
-              . $cmd->usage );
-    }
+}
+}
 
-    # Re-calculate the default if it was a subref
-    foreach my $key (@coderef_default_keys) {
-        $optargs->{$key} = $optargs->{$key}->( {%$optargs} );
-    }
+while ( my $trigger = shift @trigger ) {
+  $trigger->( $cmd, shift @trigger );
+}
 
-    return ( $cmd->class, $optargs );
+if (@errors) {
+  $PKG->error( @{ $errors[0] } );
+}
+elsif (@$source) {
+  $PKG->error( 'UnexpectedOptArg',
+      "error: unexpected option(s) or argument(s): @$source\n\n"
+        . $cmd->usage );
+}
+elsif ( my @unexpected = keys %$source_hash ) {
+  $PKG->error( 'UnexpectedHashOptArg',
+      "error: unexpected HASH option(s) or argument(s): @unexpected\n\n"
+        . $cmd->usage );
+}
+
+# Re-calculate the default if it was a subref
+foreach my $key (@coderef_default_keys) {
+  $optargs->{$key} = $optargs->{$key}->( {%$optargs} );
+}
+
+return ( $cmd->class, $optargs );
 }
 
 sub cmd {
-    my $class = shift || $self->confess('cmd($CLASS,@args)');
+    my $class = shift || $PKG->confess('cmd($CLASS,@args)');
 
-    $self->croak( 'Define::CommandDefined', "command already defined: $class" )
+    $PKG->croak( 'CmdExists', "command already defined: $class" )
       if exists $COMMAND{$class};
 
     my $cmd = OptArgs2::Cmd->new( class => $class, @_ );
@@ -873,20 +877,18 @@ sub optargs {
 }
 
 sub subcmd {
-    my $class =
-      shift || $self->croak( 'Define::Usage', 'subcmd($CLASS,%args)' );
+    my $class = shift || $PKG->croak( 'Usage', 'subcmd($CLASS,%args)' );
 
-    $self->croak( 'Define::SubcommandDefined',
-        "subcommand already defined: $class" )
+    $PKG->croak( 'SubCmdExists', "subcommand already defined: $class" )
       if exists $COMMAND{$class};
 
-    $self->croak( 'Define::SubcmdNoParent',
+    $PKG->croak( 'MissingParentCmd',
         "no '::' in class '$class' - must have a parent" )
       unless $class =~ m/::/;
 
     ( my $parent_class = $class ) =~ s/(.*)::.*/$1/;
 
-    $self->croak( 'Define::ParentNotFound',
+    $PKG->croak( 'ParentCmdNotFound',
         "parent class not found: " . $parent_class )
       unless exists $COMMAND{$parent_class};
 
@@ -899,10 +901,10 @@ sub subcmd {
 }
 
 sub usage {
-    my $class = shift || $self->confess('usage($CLASS,[$style])');
+    my $class = shift || $PKG->confess('usage($CLASS,[$style])');
     my $style = shift;
 
-    $self->confess("command not found: $class")
+    $PKG->confess("command not found: $class")
       unless exists $COMMAND{$class};
 
     return $COMMAND{$class}->usage($style);

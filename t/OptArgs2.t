@@ -12,7 +12,7 @@ like dies {
         comment => 'comment',
     );
 },
-  qr/Define::IshelpTrigger/,
+  qr/IshelpTriggerConflict/,
   'ishelp and trigger conflict';
 
 done_testing;
