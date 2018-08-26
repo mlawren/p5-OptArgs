@@ -29,7 +29,5 @@
     - Use X->new_from(%parameters) in place of BUILDARGS
     - Croak when two greedy arguments are defined
 
-- Why doesn't CARP_NOT work?
-
 - If UTF8 arguments becomes an issue somewhere take a look at
   Encode::Locale.
