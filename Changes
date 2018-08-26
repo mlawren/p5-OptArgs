@@ -8,6 +8,7 @@
 
     Enhancements:
         - Refactor error handling to make it clearer and simpler.
+        - Report all caller (user) errors where they occur
 
     Bug Fixes:
         - None.

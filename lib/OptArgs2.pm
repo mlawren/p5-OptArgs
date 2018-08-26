@@ -38,18 +38,21 @@ sub croak {
     local (
         @OptArgs2::CARP_NOT,      @OptArgs2::Arg::CARP_NOT,
         @OptArgs2::Cmd::CARP_NOT, @OptArgs2::Fallback::CARP_NOT,
-        @OptArgs2::Opt::CARP_NOT, @OptArgs2::Mo::CARP_NOT
+        @OptArgs2::Opt::CARP_NOT, @OptArgs2::Mo::CARP_NOT,
+        @OptArgs2::Mod::Object::CARP_NOT
     );
 
-    @OptArgs2::CARP_NOT        = @OptArgs2::Arg::CARP_NOT =
-      @OptArgs2::Cmd::CARP_NOT = @OptArgs2::Fallback::CARP_NOT =
-      @OptArgs2::Opt::CARP_NOT = @OptArgs2::Mo::CARP_NOT = (
+    @OptArgs2::CARP_NOT                = @OptArgs2::Arg::CARP_NOT =
+      @OptArgs2::Cmd::CARP_NOT         = @OptArgs2::Fallback::CARP_NOT =
+      @OptArgs2::Opt::CARP_NOT         = @OptArgs2::Mo::CARP_NOT =
+      @OptArgs2::Mod::Object::CARP_NOT = (
         qw/
           OptArgs2
           OptArgs2::Arg
           OptArgs2::Cmd
           OptArgs2::Opt
           OptArgs2::Mo
+          OptArgs2::Mo::Object
           /
       );
 
