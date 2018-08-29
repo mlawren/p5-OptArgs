@@ -701,7 +701,7 @@ sub class_optargs {
         }
 
         # Sub command check
-        if ( @$source and my @subcmds = $cmd->subcmds ) {
+        if ( @$source and my @subcmds = @{ $cmd->subcmds } ) {
             my $result = $source->[0];
             if ( $cmd->abbrev ) {
                 require Text::Abbrev;
