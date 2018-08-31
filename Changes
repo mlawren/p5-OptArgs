@@ -11,7 +11,9 @@
         - Report all caller (user) errors where they occur
 
     Bug Fixes:
-        - None.
+        - The command abbreviation feature has never worked due to an
+          arrayref dereferencing mistake. Discovered and fixed by Mario
+          Domgoergen (mdom at Github).
 
     Dependencies:
         - None.
