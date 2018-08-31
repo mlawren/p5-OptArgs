@@ -1,10 +1,4 @@
-0.0.12_1 (yyyy-mm-dd)
-
-    API / Behaviour Changes:
-        - None.
-
-    New Features:
-        - None.
+0.0.12_1 (2018-08-31)
 
     Enhancements:
         - Refactor error handling to make it clearer and simpler.
@@ -14,12 +8,6 @@
         - The command abbreviation feature has never worked due to an
           arrayref dereferencing mistake. Discovered and fixed by Mario
           Domgoergen (mdom at Github).
-
-    Dependencies:
-        - None.
-
-    Packaging:
-        - None.
 
 0.0.11 (2018-08-18)
 

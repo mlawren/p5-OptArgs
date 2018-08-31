@@ -923,7 +923,7 @@ OptArgs2 - command-line argument and option processor
 
 =head1 VERSION
 
-0.0.12_1 (yyyy-mm-dd)
+0.0.12_1 (2018-08-31)
 
 =head1 SYNOPSIS
 
