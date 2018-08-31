@@ -2,7 +2,7 @@ NAME
     OptArgs2 - command-line argument and option processor
 
 VERSION
-    0.0.11 (2018-08-18)
+    0.0.12_1 (2018-08-31)
 
 SYNOPSIS
         #!/usr/bin/env perl
@@ -597,7 +597,7 @@ AUTHOR
     Mark Lawrence <nomad@null.net>
 
 LICENSE
-    Copyright 2016 Mark Lawrence <nomad@null.net>
+    Copyright 2016-2018 Mark Lawrence <nomad@null.net>
 
     This program is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the Free

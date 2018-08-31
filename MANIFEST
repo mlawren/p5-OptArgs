@@ -1,7 +1,6 @@
 .readme_from
 Changes
 cpanfile
-error
 example/demo
 example/simple
 lib/Getopt/Args2.pm
@@ -9,6 +8,7 @@ lib/OptArgs2.pm
 Makefile.PL
 MANIFEST			This list of files
 README
+t/abbrev.t
 t/OptArgs2.t
 t/subcommand.t
 TODO

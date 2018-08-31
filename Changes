@@ -1,3 +1,14 @@
+0.0.12_1 (2018-08-31)
+
+    Enhancements:
+        - Refactor error handling to make it clearer and simpler.
+        - Report all caller (user) errors where they occur
+
+    Bug Fixes:
+        - The command abbreviation feature has never worked due to an
+          arrayref dereferencing mistake. Discovered and fixed by Mario
+          Domgoergen (mdom at Github).
+
 0.0.11 (2018-08-18)
 
     Enhancements:
