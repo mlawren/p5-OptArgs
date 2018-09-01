@@ -576,8 +576,7 @@ sub usage {
     }
 
     return $self->result(
-        $style =
-          OptArgs2::STYLE_FULL ? 'FullUsage' : 'NormalUsage',
+        $style == OptArgs2::STYLE_FULL ? 'FullUsage' : 'NormalUsage',
         'usage: ' . $usage . "\n" );
 }
 
