@@ -37,6 +37,5 @@ opt quiet => (
 );
 
 my $opts = eval { optargs };
-my $err = $@;
-print $INC{'OptArgs2.pm'}, "\n";
-print $err ? '(' . ( ref $err ) . ")\n$err" : Dumper($opts) =~ s/VAR1/opts/r;
+die Dumper($@) if $@;
+print Dumper($opts);
