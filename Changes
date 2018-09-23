@@ -17,7 +17,7 @@
         - None.
 
     Packaging:
-        - None.
+        - Stop including ".readme_from" file in distribution
 
 0.0.12_1 (2018-08-31)
 
