@@ -4,15 +4,17 @@ use warnings;
 use OptArgs2;
 use Test2::V0;
 
-like dies {
+my $e;
+
+$e = dies {
     opt one => (
         isa     => 'Flag',
         ishelp  => 1,
         trigger => sub { },
         comment => 'comment',
     );
-},
-  qr/IshelpTriggerConflict/,
-  'ishelp and trigger conflict';
+};
+
+isa_ok $e, 'OptArgs2::Error::IshelpTriggerConflict';
 
 done_testing;
