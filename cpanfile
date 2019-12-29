@@ -14,6 +14,10 @@ on runtime => sub {
     requires 'Text::Abbrev' => 0;
 };
 
+on develop => sub {
+    requires 'App::githook::perltidy' => 'v0.12.0';
+};
+
 on test => sub {
     requires 'IO::Capture::Stdout' => 0;
     requires 'POSIX'               => 0;
