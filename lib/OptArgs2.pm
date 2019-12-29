@@ -756,16 +756,14 @@ sub class_optargs {
                     shift @$source while @$source;
                     push( @$source, @later );
                 }
+                elsif ( $try->isa eq 'ArrayRef' ) {
+                    $result = [ shift @$source ];
+                }
+                elsif ( $try->isa eq 'HashRef' ) {
+                    $result = { split /=/, shift @$source };
+                }
                 else {
-                    if ( $try->isa eq 'ArrayRef' ) {
-                        $result = [ shift @$source ];
-                    }
-                    elsif ( $try->isa eq 'HashRef' ) {
-                        $result = { split /=/, shift @$source };
-                    }
-                    else {
-                        $result = shift @$source;
-                    }
+                    $result = shift @$source;
                 }
 
                 # TODO: type check using Param::Utils?
