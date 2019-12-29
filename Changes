@@ -7,7 +7,7 @@
         - None.
 
     Enhancements:
-        - None.
+        - Various minor code refactoring improvements.
 
     Bug Fixes:
         - Fix a ==/= comparison/assignment error in the usage()
