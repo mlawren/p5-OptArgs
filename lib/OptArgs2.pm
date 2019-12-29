@@ -1,7 +1,7 @@
 # constants
-sub OptArgs2::STYLE_SUMMARY { 1 }
-sub OptArgs2::STYLE_NORMAL  { 2 }
-sub OptArgs2::STYLE_FULL    { 3 }
+sub OptArgs2::STYLE_SUMMARY() { 1 }
+sub OptArgs2::STYLE_NORMAL()  { 2 }
+sub OptArgs2::STYLE_FULL()    { 3 }
 
 package OptArgs2::Mo;
 our $VERSION = '0.0.12';
@@ -434,7 +434,7 @@ sub run_optargs {
 }
 
 sub usage {
-    my $self = shift;
+    my $self  = shift;
     my $style = shift || $self->usage_style;
 
     $self->run_optargs;
@@ -541,14 +541,14 @@ sub usage {
         }
 
         # Width calculation: turn 3 option fields into 2:
-        my $w1 = max( map { length $_->[0] } @uopts );
+        my $w1  = max( map { length $_->[0] } @uopts );
         my $fmt = '%-' . $w1 . "s %s";
 
         @uopts = map { [ sprintf( $fmt, $_->[0], $_->[1] ), $_->[2] ] } @uopts;
     }
 
     # Width calculation for args and opts combined
-    my $w1 = max( map { length $_->[0] } @uargs, @sargs, @uopts );
+    my $w1     = max( map { length $_->[0] } @uargs, @sargs, @uopts );
     my $format = '%-' . $w1 . "s   %s\n";
 
     # Output Arguments
@@ -595,7 +595,7 @@ sub _usage_tree {
 }
 
 sub usage_tree {
-    my $self = shift;
+    my $self  = shift;
     my $style = shift || OptArgs2::STYLE_SUMMARY;
     return $self->result( 'TreeUsage', $self->_usage_tree($style) );
 }
@@ -636,8 +636,7 @@ sub class_optargs {
       || $PKG->croak( 'Usage', 'class_optargs($CMD,[@argv])' );
 
     my $cmd = $COMMAND{$class}
-      || $PKG->croak( 'CmdNotFound',
-        'command class not found: ' . $class );
+      || $PKG->croak( 'CmdNotFound', 'command class not found: ' . $class );
 
     my $source      = \@_;
     my $source_hash = {};
@@ -655,7 +654,7 @@ sub class_optargs {
     }
     else {
         $source_hash = { map { %$_ } grep { ref $_ eq 'HASH' } @$source };
-        $source = [ grep { ref $_ ne 'HASH' } @$source ];
+        $source      = [ grep { ref $_ ne 'HASH' } @$source ];
     }
 
     map {
@@ -798,51 +797,51 @@ sub class_optargs {
                 }
 
                 # TODO: type check using Param::Utils?
+            }
+            elsif ( exists $source_hash->{ $try->name } ) {
+                $result = delete $source_hash->{ $try->name };
+            }
+            elsif ( $try->required ) {
+                push( @errors, [ 'ArgRequired', $cmd->usage ] );
+                next;
+            }
+
+            if ( defined $result ) {
+                $optargs->{ $try->name } = $result;
+            }
+            elsif ( defined $try->default ) {
+                push( @coderef_default_keys, $try->name )
+                  if ref $try->default eq 'CODE';
+                $optargs->{ $try->name } = $result = $try->default;
+            }
+
+        }
     }
-    elsif ( exists $source_hash->{ $try->name } ) {
-        $result = delete $source_hash->{ $try->name };
-    }
-    elsif ( $try->required ) {
-        push( @errors, [ 'ArgRequired', $cmd->usage ] );
-        next;
+
+    while ( my $trigger = shift @trigger ) {
+        $trigger->( $cmd, shift @trigger );
     }
 
-    if ( defined $result ) {
-        $optargs->{ $try->name } = $result;
+    if (@errors) {
+        $PKG->error( @{ $errors[0] } );
     }
-    elsif ( defined $try->default ) {
-        push( @coderef_default_keys, $try->name )
-          if ref $try->default eq 'CODE';
-        $optargs->{ $try->name } = $result = $try->default;
+    elsif (@$source) {
+        $PKG->error( 'UnexpectedOptArg',
+            "error: unexpected option(s) or argument(s): @$source\n\n"
+              . $cmd->usage );
+    }
+    elsif ( my @unexpected = keys %$source_hash ) {
+        $PKG->error( 'UnexpectedHashOptArg',
+            "error: unexpected HASH option(s) or argument(s): @unexpected\n\n"
+              . $cmd->usage );
     }
 
-}
-}
+    # Re-calculate the default if it was a subref
+    foreach my $key (@coderef_default_keys) {
+        $optargs->{$key} = $optargs->{$key}->( {%$optargs} );
+    }
 
-while ( my $trigger = shift @trigger ) {
-  $trigger->( $cmd, shift @trigger );
-}
-
-if (@errors) {
-  $PKG->error( @{ $errors[0] } );
-}
-elsif (@$source) {
-  $PKG->error( 'UnexpectedOptArg',
-      "error: unexpected option(s) or argument(s): @$source\n\n"
-        . $cmd->usage );
-}
-elsif ( my @unexpected = keys %$source_hash ) {
-  $PKG->error( 'UnexpectedHashOptArg',
-      "error: unexpected HASH option(s) or argument(s): @unexpected\n\n"
-        . $cmd->usage );
-}
-
-# Re-calculate the default if it was a subref
-foreach my $key (@coderef_default_keys) {
-  $optargs->{$key} = $optargs->{$key}->( {%$optargs} );
-}
-
-return ( $cmd->class, $optargs );
+    return ( $cmd->class, $optargs );
 }
 
 sub cmd {
