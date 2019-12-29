@@ -713,29 +713,30 @@ sub class_optargs {
             }
 
             if (@$source) {
-
-                push(
-                    @errors,
-                    [
-                        'UnknownOption',
-                        qq{error: unknown option "$source->[0]"\n\n}
-                          . $cmd->usage
-                    ]
-                ) if $source->[0] =~ m/^--\S/;
-
-                push(
-                    @errors,
-                    [
-                        'UnknownOption',
-                        qq{error: unknown option "$source->[0]"\n\n}
-                          . $cmd->usage
-                    ]
+                if (
+                    $try->isa ne 'OptArgRef'
+                    and (
+                        ( $source->[0] =~ m/^--\S/ )
+                        or (
+                            $source->[0] =~ m/^-\S/
+                            and !(
+                                $source->[0] =~ m/^-\d/
+                                and (  $try->isa ne 'Num'
+                                    or $try->isa ne 'Int' )
+                            )
+                        )
+                    )
                   )
-                  if $source->[0] =~ m/^-\S/
-                  and !(
-                    $source->[0] =~ m/^-\d/ and ( $try->isa ne 'Num'
-                        or $try->isa ne 'Int' )
-                  );
+                {
+                    push(
+                        @errors,
+                        [
+                            'UnknownOption',
+                            qq{error: unknown option "$source->[0]"\n\n}
+                              . $cmd->usage
+                        ]
+                    );
+                }
 
                 if ( $try->greedy ) {
                     my @later;
@@ -743,7 +744,7 @@ sub class_optargs {
                         push( @later, pop @$source ) for @args;
                     }
 
-                    if ( $try->isa eq 'ArrayRef' ) {
+                    if ( $try->isa eq 'ArrayRef' or $try->isa eq 'OptArgRef' ) {
                         $result = [@$source];
                     }
                     elsif ( $try->isa eq 'HashRef' ) {
@@ -756,7 +757,7 @@ sub class_optargs {
                     shift @$source while @$source;
                     push( @$source, @later );
                 }
-                elsif ( $try->isa eq 'ArrayRef' ) {
+                elsif ( $try->isa eq 'ArrayRef' or $try->isa eq 'OptArgRef' ) {
                     $result = [ shift @$source ];
                 }
                 elsif ( $try->isa eq 'HashRef' ) {
@@ -1326,6 +1327,11 @@ following table:
      'ArrayRef'      's@'
      'HashRef'       's%'
      'SubCmd'        '=s'
+     'OptArgRef'     's@'
+
+An I<OptArgRef> isa is an I<ArrayRef> that doesn't undergo checks for
+unexpected options. It exists to capture options and arguments which
+get passed back into I<class_optargs> again.
 
 =item required
 

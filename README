@@ -394,6 +394,12 @@ FUNCTIONS
                  'ArrayRef'      's@'
                  'HashRef'       's%'
                  'SubCmd'        '=s'
+                 'OptArgRef'     's@'
+
+            An *OptArgRef* isa is an *ArrayRef* that doesn't undergo
+            checks for unexpected options. It exists to capture options
+            and arguments which get passed back into *class_optargs*
+            again.
 
         required
             Set to a true value when the caller must specify this

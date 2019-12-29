@@ -4,7 +4,9 @@
         - None.
 
     New Features:
-        - None.
+        - New 'OptArgRef' arg type to support command aliases.  I.e.
+          capturing options and arguments that are passed back into
+          class_optargs() again.
 
     Enhancements:
         - Various minor code refactoring improvements.
