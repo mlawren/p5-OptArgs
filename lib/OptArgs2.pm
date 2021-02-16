@@ -658,6 +658,7 @@ sub class_optargs {
             }
 
             if ( defined $result ) {
+                $result = !$result if $try->isa eq 'Bool' and $try->default;
                 $optargs->{ $try->name } = $result;
                 if ( my $ref = $try->trigger ) {
                     push( @trigger, $ref, $result );

@@ -14,6 +14,7 @@
     Bug Fixes:
         - Fix a ==/= comparison/assignment error in the usage()
           function introduced by 2347144c.
+        - Bool option with true default turned off when --no-bool used.
 
     Dependencies:
         - None.
