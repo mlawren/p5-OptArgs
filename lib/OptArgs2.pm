@@ -220,11 +220,10 @@ sub new_from {
     my $ref   = {@_};
 
     if ( delete $ref->{ishelp} ) {
-        return OptArgs2::Result->croak( 'IshelpTriggerConflict',
-            'ishelp and trigger conflict' )
-          if exists $ref->{trigger};
-
-        $ref->{trigger} = sub { die shift->usage(OptArgs2::STYLE_FULL) };
+        $ref->{isa}     //= 'Flag';
+        $ref->{alias}   //= substr $ref->{name}, 0, 1;
+        $ref->{comment} //= 'print a usage message and exit';
+        $ref->{trigger} //= sub { die shift->usage(OptArgs2::STYLE_FULL) };
     }
 
     if ( !exists $isa2getopt{ $ref->{isa} } ) {
@@ -1495,20 +1494,21 @@ presentation for the 'isa' parameter.
 
 =item ishelp
 
-When true creates a trigger parameter that generates a usage message
-exception. In other words it is just a shortcut for the following:
+When true it sets the option to behave like a typical C<--help> would
+by displaying a usage message and exiting.  It is basically a shortcut
+for the following:
 
     opt help => (
         isa     => 'Flag',
-        alias   => 'h',
-        comment => 'print help message and exit',
+        alias   => 'h',   # first character of the opt name
+        comment => 'print a usage message and exit',
         trigger => sub {
             my ( $cmd, $value ) = @_;
             die $cmd->usage(OptArgs2::STYLE_FULL);
         }
     );
 
-Note that this option conflicts with the trigger parameter.
+You can override any of the above with your own parameters.
 
 =item show_default
 

@@ -1,7 +1,7 @@
 0.0.12 (yyyy-mm-dd)
 
     API / Behaviour Changes:
-        - None.
+        - Opt 'ishelp' no longer conflicts with 'trigger'
 
     New Features:
         - New 'OptArgRef' arg type to support command aliases.  I.e.
@@ -10,6 +10,7 @@
 
     Enhancements:
         - Various minor code refactoring improvements.
+        - Opt 'ishelp' now does what the documentation implies.
 
     Bug Fixes:
         - Fix a ==/= comparison/assignment error in the usage()
