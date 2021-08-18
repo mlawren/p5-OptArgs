@@ -1,3 +1,5 @@
+- search for unknown opts before calling default subs
+
 - Roles:
 
     cmd_role 'role_name' => (
