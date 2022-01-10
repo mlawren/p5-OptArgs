@@ -1,3 +1,6 @@
+- Fix --version example to use $cmd->name instead of just $cmd (or else
+  pass $basename as additional argument to the trigger)
+
 - search for unknown opts before calling default subs
 
 - Roles:
