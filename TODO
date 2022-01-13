@@ -1,3 +1,5 @@
+- Send --help (and --version?) output to STDOUT, paged?
+
 - Fix --version example to use $cmd->name instead of just $cmd (or else
   pass $basename as additional argument to the trigger)
 
