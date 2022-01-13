@@ -35,12 +35,12 @@ WriteMakefile(
         },
         resources => {
             bugtracker =>
-              { web => 'https//github.com/mlawren/p5-OptArgs2/issues', },
-            homepage   => 'https//github.com/mlawren/p5-OptArgs2',
+              { web => 'https//github.com/mlawren/p5-OptArgs/issues', },
+            homepage   => 'https//github.com/mlawren/p5-OptArgs',
             repository => {
                 type => 'git',
-                url  => 'ssh://git@github.com/mlawren/p5-OptArgs2.git',
-                web  => 'https//github.com/mlawren/p5-OptArgs2',
+                url  => 'ssh://git@github.com/mlawren/p5-OptArgs.git',
+                web  => 'https//github.com/mlawren/p5-OptArgs',
             }
         },
     },
