@@ -190,6 +190,8 @@ has default => ( is => 'ro', );
 
 has getopt => ( is => 'ro', );
 
+has required => ( is => 'ro', );
+
 has hidden => ( is => 'ro', );
 
 has isa => (
@@ -714,6 +716,18 @@ sub class_optargs {
                 else {
                     $optargs->{$name} = $result;
                 }
+            }
+            elsif ( $try->required ) {
+                $name =~ s/_/-/g;
+                push(
+                    @errors,
+                    [
+                        'OptRequired',
+                        qq{error: missing required option "--$name"\n\n}
+                          . $cmd->usage
+                    ]
+                );
+                next;
             }
         }
 
@@ -1509,6 +1523,11 @@ If this is a subroutine reference it will be called with a hashref
 containg all option/argument values after parsing the source has
 finished.  The value to be set must be returned, and any changes to the
 hashref are ignored.
+
+=item required
+
+Set to a true value when the caller must specify this option.
+This requirement can be satified with the 'default' parameter.
 
 =item hidden
 
