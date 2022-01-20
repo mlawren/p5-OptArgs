@@ -112,7 +112,10 @@ has name => (
 
 has required => ( is => 'ro', );
 
-has show_default => ( is => 'ro', );
+has show_default => (
+    is      => 'ro',
+    default => 1,
+);
 
 my %arg2getopt = (
     'Str'      => '=s',
@@ -203,7 +206,10 @@ has name => (
 
 has trigger => ( is => 'ro', );
 
-has show_default => ( is => 'ro', );
+has show_default => (
+    is      => 'ro',
+    default => 1,
+);
 
 my %isa2getopt = (
     'ArrayRef' => '=s@',
@@ -1095,7 +1101,7 @@ This now produces the following usage output:
         MESSAGE            the message to paint on the item
  
       options:
-        --colour=STR, -c   the colour to use [default: blue]
+        --colour=STR, -c   the colour to use [blue]
         --quiet,      -q   output nothing while working
 
 The command line is parsed first for arguments, then for options, in
@@ -1380,7 +1386,9 @@ Conflicts with the 'default' parameter.
 
 =item show_default
 
-If set to a true value then usage messages will show the default value.
+Usage messages display the default value of the arg if it has one. If
+you don't want this, perhaps because it is an expensive operation, you
+can set C<show_default> to 0 or undef.
 
 =back
 
@@ -1552,7 +1560,9 @@ You can override any of the above with your own parameters.
 
 =item show_default
 
-If set to a true value then usage messages will show the default value.
+Usage messages display the default value of the opt if it has one. If
+you don't want this, perhaps because it is an expensive operation, you
+can set C<show_default> to 0 or undef.
 
 =item trigger
 
