@@ -139,14 +139,15 @@ sub BUILD {
 }
 
 sub name_comment {
-    my $self = shift;
-
-    $self->default( $self->default->( {%$self} ) )
-      if 'CODE' eq ref $self->default;
+    my $self  = shift;
+    my $value = shift;
 
     my $comment = $self->comment;
-    if ( $self->show_default && defined( my $value = $self->default ) ) {
-        $comment .= ' [default: ' . $value . ']';
+    if (   $self->show_default
+        && ( $self->isa !~ m/Bool|Flag/ )
+        && defined $value )
+    {
+        $comment .= ' [' . $value . ']';
     }
 
     return $self->name, $comment;
@@ -255,17 +256,15 @@ my %isa2name = (
 );
 
 sub name_alias_comment {
-    my $self = shift;
-
-    $self->default( $self->default->( {%$self} ) )
-      if 'CODE' eq ref $self->default;
+    my $self  = shift;
+    my $value = shift;
 
     ( my $opt = $self->name ) =~ s/_/-/g;
     if ( $self->isa eq 'Bool' ) {
-        if ( $self->default ) {
+        if ($value) {
             $opt = 'no-' . $opt;
         }
-        elsif ( not defined $self->default ) {
+        elsif ( not defined $value ) {
             $opt = '[no-]' . $opt;
         }
     }
@@ -285,9 +284,12 @@ sub name_alias_comment {
     }
 
     my $comment = $self->comment;
-    if ( $self->show_default && defined( my $value = $self->default ) ) {
+    if (   $self->show_default
+        && ( $self->isa !~ m/Bool|Flag/ )
+        && defined $value )
+    {
         $value = $value ? 'true' : 'false' if $self->isa eq 'Bool';
-        $comment .= ' [default: ' . $value . ']';
+        $comment .= ' [' . $value . ']';
     }
 
     return $opt, $alias, $comment;
@@ -353,6 +355,8 @@ has subcmds => (
     default => sub { [] },
 );
 
+has _values => ( is => 'rw', default => sub { {} } );
+
 has usage_style => (
     is      => 'rw',
     default => OptArgs2::STYLE_NORMAL,
@@ -398,6 +402,7 @@ sub parents {
 
 sub run_optargs {
     my $self = shift;
+    map { $_->run_optargs } $self->parents;
     return unless ref $self->optargs eq 'CODE';
     local $CURRENT = $self;
     $self->optargs->();
@@ -415,6 +420,19 @@ sub usage {
     my @args    = @{ $self->args };
     my @opts    = sort { $a->name cmp $b->name } map { @{ $_->opts } } @parents,
       $self;
+
+    my $optargs = $self->_values;
+    foreach my $x ( @args, @opts ) {
+        next if exists $optargs->{ $x->name };
+        my $default = $x->default // next;
+        if ( 'CODE' eq ref $default ) {
+            tie $optargs->{ $x->name }, 'OptArgs2::CODE2optarg', $optargs,
+              $x->name, $default;
+        }
+        else {
+            $optargs->{ $x->name } = $default;
+        }
+    }
 
     # Summary line
     $usage .= join( ' ', map { $_->name } @parents ) . ' ' if @parents;
@@ -474,11 +492,13 @@ sub usage {
             }
             elsif ( !$i ) {
                 push( @uargs, [ '  Arguments:', '' ] );
-                my ( $n, $c ) = $arg->name_comment;
+                my ( $n, $c ) =
+                  $arg->name_comment( $optargs->{ $arg->name } // undef );
                 push( @uargs, [ '    ' . uc($n), $c ] );
             }
             else {
-                my ( $n, $c ) = $arg->name_comment;
+                my ( $n, $c ) =
+                  $arg->name_comment( $optargs->{ $arg->name } // undef );
                 push( @uargs, [ '    ' . uc($n), $c ] ) if length($c);
             }
             $i++;
@@ -507,7 +527,8 @@ sub usage {
         push( @uopts, [ "  Options:", '', '' ] );
         foreach my $opt (@opts) {
             next if $style != OptArgs2::STYLE_FULL and $opt->hidden;
-            my ( $n, $a, $c ) = $opt->name_alias_comment;
+            my ( $n, $a, $c ) =
+              $opt->name_alias_comment( $optargs->{ $opt->name } // undef );
             push( @uopts, [ '    ' . $n, $a, $c ] );
         }
 
@@ -573,6 +594,23 @@ sub usage_tree {
 
 1;
 
+package OptArgs2::CODE2optarg;
+use Carp;
+use strict;
+
+sub TIESCALAR {
+    my $class = shift;
+    ( 3 == @_ ) or Carp::croak 'args: optargs,name,sub';
+    return bless [@_], $class;
+}
+
+sub FETCH {
+    my $self = shift;
+    my ( $optargs, $name, $sub ) = @$self;
+    untie $optargs->{$name};
+    $optargs->{$name} = $sub->($optargs);
+}
+
 package OptArgs2;
 use 5.010;
 use strict;
@@ -636,12 +674,12 @@ sub class_optargs {
     Getopt::Long::Configure(qw/pass_through no_auto_abbrev no_ignore_case/);
 
     my $optargs = {};
-    my @coderef_default_keys;
     my @trigger;
     my @errors;
 
+    $cmd->run_optargs;
+
     # Start with the parents options
-    map { $_->run_optargs } $cmd->parents, $cmd;
     my @opts = map { @{ $_->opts } } $cmd->parents, $cmd;
     my @args = @{ $cmd->args };
 
@@ -649,24 +687,27 @@ sub class_optargs {
 
         while ( my $try = shift @opts ) {
             my $result;
-            if ( exists $source_hash->{ $try->name } ) {
-                $result = delete $source_hash->{ $try->name };
+            my $name = $try->name;
+
+            if ( exists $source_hash->{$name} ) {
+                $result = delete $source_hash->{$name};
             }
             else {
                 GetOptionsFromArray( $source, $try->getopt => \$result );
             }
 
-            if ( defined $result ) {
-                $result = !$result if $try->isa eq 'Bool' and $try->default;
-                $optargs->{ $try->name } = $result;
-                if ( my $ref = $try->trigger ) {
-                    push( @trigger, $ref, $result );
+            push( @trigger, $try->trigger )
+              if defined $result and $try->trigger;
+
+            if ( defined( $result //= $try->default ) ) {
+                if ( 'CODE' eq ref $result ) {
+                    tie $optargs->{$name}, 'OptArgs2::CODE2optarg', $optargs,
+                      $name,
+                      $result;
                 }
-            }
-            elsif ( defined $try->default ) {
-                push( @coderef_default_keys, $try->name )
-                  if ref $try->default eq 'CODE';
-                $optargs->{ $try->name } = $result = $try->default;
+                else {
+                    $optargs->{$name} = $result;
+                }
             }
         }
 
@@ -711,6 +752,8 @@ sub class_optargs {
                     last OPTARGS;
                 }
             }
+
+            my $name = $try->name;
 
             if (@$source) {
                 if (
@@ -769,29 +812,31 @@ sub class_optargs {
 
                 # TODO: type check using Param::Utils?
             }
-            elsif ( exists $source_hash->{ $try->name } ) {
-                $result = delete $source_hash->{ $try->name };
+            elsif ( exists $source_hash->{$name} ) {
+                $result = delete $source_hash->{$name};
             }
             elsif ( $try->required ) {
                 push( @errors, [ 'ArgRequired', $cmd->usage ] );
                 next;
             }
 
-            if ( defined $result ) {
-                $optargs->{ $try->name } = $result;
+            if ( defined( $result //= $try->default ) ) {
+                if ( 'CODE' eq ref $result ) {
+                    tie $optargs->{$name}, 'OptArgs2::CODE2optarg', $optargs,
+                      $name,
+                      $result;
+                }
+                else {
+                    $optargs->{$name} = $result;
+                }
             }
-            elsif ( defined $try->default ) {
-                push( @coderef_default_keys, $try->name )
-                  if ref $try->default eq 'CODE';
-                $optargs->{ $try->name } = $result = $try->default;
-            }
-
         }
     }
 
-    while ( my $trigger = shift @trigger ) {
-        $trigger->( $cmd, shift @trigger );
-    }
+    $cmd->_values($optargs);
+    local $CURRENT = $cmd;
+
+    map { $_->( $cmd, $optargs ) } @trigger;
 
     if (@errors) {
         die OptArgs2::Result->usage( @{ $errors[0] } );
@@ -805,11 +850,6 @@ sub class_optargs {
         die OptArgs2::Result->usage( 'UnexpectedHashOptArg',
             "error: unexpected HASH option(s) or argument(s): @unexpected\n\n"
               . $cmd->usage );
-    }
-
-    # Re-calculate the default if it was a subref
-    foreach my $key (@coderef_default_keys) {
-        $optargs->{$key} = $optargs->{$key}->( {%$optargs} );
     }
 
     return ( $cmd->class, $optargs );

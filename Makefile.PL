@@ -16,6 +16,7 @@ WriteMakefile(
         no_index    => {
             package => [
                 qw/
+                  OptArgs2::CODE2optarg
                   OptArgs2::Arg
                   OptArgs2::Cmd
                   OptArgs2::Fallback
