@@ -502,6 +502,9 @@ sub usage {
                 push( @uargs, [ '  Arguments:', '' ] );
                 my ( $n, $c ) =
                   $arg->name_comment( $optargs->{ $arg->name } // undef );
+                if ( $arg->required ) {
+                    $c .= ' [required]';
+                }
                 push( @uargs, [ '    ' . uc($n), $c ] );
             }
             else {
