@@ -704,6 +704,19 @@ sub class_optargs {
                 GetOptionsFromArray( $source, $try->getopt => \$result );
             }
 
+            if ( not defined $result and $try->required ) {
+                $name =~ s/_/-/g;
+                push(
+                    @errors,
+                    [
+                        'OptRequired',
+                        qq{error: missing required option "--$name"\n\n}
+                          . $cmd->usage
+                    ]
+                );
+                next;
+            }
+
             push( @trigger, $try->trigger )
               if defined $result and $try->trigger;
 
@@ -716,18 +729,6 @@ sub class_optargs {
                 else {
                     $optargs->{$name} = $result;
                 }
-            }
-            elsif ( $try->required ) {
-                $name =~ s/_/-/g;
-                push(
-                    @errors,
-                    [
-                        'OptRequired',
-                        qq{error: missing required option "--$name"\n\n}
-                          . $cmd->usage
-                    ]
-                );
-                next;
             }
         }
 
@@ -1527,7 +1528,7 @@ hashref are ignored.
 =item required
 
 Set to a true value when the caller must specify this option.
-This requirement can be satified with the 'default' parameter.
+Conflicts with the 'default' parameter.
 
 =item hidden
 
