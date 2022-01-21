@@ -533,10 +533,13 @@ sub usage {
     my @uopts;
     if (@opts) {
         push( @uopts, [ "  Options:", '', '' ] );
+        my @opts =
+          sort { ( $b->required || 0 ) <=> ( $a->required || 0 ) } @opts;
         foreach my $opt (@opts) {
             next if $style != OptArgs2::STYLE_FULL and $opt->hidden;
             my ( $n, $a, $c ) =
               $opt->name_alias_comment( $optargs->{ $opt->name } // undef );
+            $c .= $opt->required ? ' [required]' : '';
             push( @uopts, [ '    ' . $n, $a, $c ] );
         }
 
