@@ -29,6 +29,13 @@ opt help => (
     ishelp  => 1,
 );
 
+opt required => (
+    isa      => 'Str',
+    alias    => 'r',
+    comment  => 'a very necessary option',
+    required => 1,
+);
+
 opt quiet => (
     isa     => 'Flag',
     comment => 'work quietly',
