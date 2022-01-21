@@ -131,7 +131,6 @@ DESCRIPTION
         opt colour => (
             isa           => 'Str',
             default       => 'blue',
-            show_default  => 1,
             comment       => 'the colour to use',
         );
 
@@ -480,6 +479,11 @@ FUNCTIONS
             hashref containg all option/argument values after parsing
             the source has finished. The value to be set must be
             returned, and any changes to the hashref are ignored.
+
+        required
+            Set to a true value when the caller must specify this
+            option. This requirement can be satified with the 'default'
+            parameter.
 
         hidden
             When true this option will not appear in usage messages

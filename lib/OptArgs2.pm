@@ -1102,7 +1102,6 @@ might make sense here:
     opt colour => (
         isa           => 'Str',
         default       => 'blue',
-        show_default  => 1,
         comment       => 'the colour to use',
     );
 
@@ -1526,8 +1525,8 @@ hashref are ignored.
 
 =item required
 
-Set to a true value when the caller must specify this option.
-This requirement can be satified with the 'default' parameter.
+Set to a true value when the caller must specify this option. This
+requirement can be satified with the 'default' parameter.
 
 =item hidden
 
