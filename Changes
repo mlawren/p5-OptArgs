@@ -8,6 +8,7 @@
         - New 'OptArgRef' arg type to support command aliases.  I.e.
           capturing options and arguments that are passed back into
           class_optargs() again.
+        - Pipe the output of 'ishelp' (i.e. --help) to a pager
 
     Enhancements:
         - Various minor code refactoring improvements.

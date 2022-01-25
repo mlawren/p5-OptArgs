@@ -620,6 +620,8 @@ sub _usage {
     $msg .= "\n\n" if length $msg;
 
     if ( $type eq 'Help' ) {
+        require OptArgs2::Pager;
+        my $pager = OptArgs2::Pager->new;
         print $msg . $OptArgs2::CURRENT->usage(OptArgs2::STYLE_FULL);
         my $nl = "\n";
         die bless \$nl, $pkg;
@@ -1443,7 +1445,8 @@ into UTF-8 (if necessary) from whatever L<I18N::Langinfo> says your
 current locale codeset is.
 
 Throws an error / usage exception object (typically C<OptArgs2::Usage>)
-for missing or invalid arguments/options.
+for missing or invalid arguments/options. Uses L<OptArgs2::Pager> for
+'ishelp' output.
 
 Returns the following two values:
 
@@ -1687,7 +1690,7 @@ the command C<$class>.
 
 =head1 SEE ALSO
 
-L<Getopt::Long>
+L<OptArgs2::Pager>, L<Getopt::Long>
 
 This module is duplicated on CPAN as L<Getopt::Args2>, to cover both
 its original name and yet still be found in the mess that is Getopt::*.

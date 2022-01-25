@@ -422,6 +422,7 @@ FUNCTIONS
 
         Throws an error / usage exception object (typically
         "OptArgs2::Usage") for missing or invalid arguments/options.
+        Uses OptArgs2::Pager for 'ishelp' output.
 
         Returns the following two values:
 
@@ -602,7 +603,7 @@ FUNCTIONS
         for the command $class.
 
 SEE ALSO
-    Getopt::Long
+    OptArgs2::Pager, Getopt::Long
 
     This module is duplicated on CPAN as Getopt::Args2, to cover both
     its original name and yet still be found in the mess that is
