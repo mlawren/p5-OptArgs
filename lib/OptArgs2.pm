@@ -1,7 +1,20 @@
 # constants
+package OptArgs2;
 sub OptArgs2::STYLE_SUMMARY() { 1 }
 sub OptArgs2::STYLE_NORMAL()  { 2 }
 sub OptArgs2::STYLE_FULL()    { 3 }
+
+our $CURRENT;
+our %isa2name = (
+    'ArrayRef' => 'Str',
+    'Bool'     => '',
+    'Counter'  => '',
+    'Flag'     => '',
+    'HashRef'  => 'Str',
+    'Int'      => 'Int',
+    'Num'      => 'Num',
+    'Str'      => 'Str',
+);
 
 package OptArgs2::Mo;
 our $VERSION = '0.0.12';
@@ -58,6 +71,8 @@ has fallback => ( is => 'rw', );
 
 has isa => ( required => 1, );
 
+has isa_name => ( is => 'rw', );
+
 has getopt => ( is => 'rw', );
 
 has greedy => ( is => 'ro', );
@@ -97,19 +112,26 @@ sub BUILD {
     }
 }
 
-sub name_comment {
+sub name_alias_type_comment {
     my $self  = shift;
     my $value = shift;
 
     my $comment = $self->comment;
-    if (   $self->show_default
-        && ( $self->isa !~ m/Bool|Flag/ )
-        && defined $value )
-    {
+    if ( $self->show_default && defined $value ) {
         $comment .= ' [' . $value . ']';
     }
 
-    return $self->name, $comment;
+    my $deftype = '';
+    if ( $self->show_default and defined $value ) {
+        $deftype = '[' . $value . ']';
+    }
+    else {
+        $deftype = $self->isa_name // $OptArgs2::isa2name{ $self->isa }
+          // OptArgs2::_croak( 'InvalidIsa',
+            'invalid isa type: ' . $self->isa );
+    }
+
+    return $self->name, '', $deftype, $self->comment;
 }
 
 1;
@@ -209,18 +231,7 @@ sub new_from {
     return $proto->new(%$ref);
 }
 
-my %isa2name = (
-    'ArrayRef' => 'STR',
-    'Bool'     => '',
-    'Counter'  => '',
-    'Flag'     => '',
-    'HashRef'  => 'STR',
-    'Int'      => 'INT',
-    'Num'      => 'NUM',
-    'Str'      => 'STR',
-);
-
-sub name_alias_comment {
+sub name_alias_type_comment {
     my $self  = shift;
     my $value = shift;
 
@@ -233,33 +244,28 @@ sub name_alias_comment {
             $opt = '[no-]' . $opt;
         }
     }
-    elsif ( $self->isa ne 'Flag' and $self->isa ne 'Counter' ) {
-        $opt .= '=' . ( $self->isa_name || $isa2name{ $self->isa } );
-    }
-
     $opt = '--' . $opt;
 
-    my $alias = $self->alias;
+    my $alias = $self->alias // '';
     if ( length $alias ) {
-        $alias = '-' . $alias;
         $opt .= ',';
-    }
-    else {
-        $alias = '';
+        $alias = '-' . $alias;
     }
 
-    my $comment = $self->comment;
-    if (   $self->show_default
-        && ( $self->isa !~ m/Bool|Flag/ )
-        && defined $value )
-    {
-        $value = $value ? 'true' : 'false' if $self->isa eq 'Bool';
-        $comment .= ' [' . $value . ']';
+    my $deftype = '';
+    if ( $self->isa ne 'Flag' and $self->isa ne 'Counter' ) {
+        if ( $self->show_default and defined $value ) {
+            $deftype = '[' . $value . ']';
+        }
+        else {
+            $deftype = $self->isa_name // $OptArgs2::isa2name{ $self->isa }
+              // OptArgs2::_croak( 'InvalidIsa',
+                'invalid isa type: ' . $self->isa );
+        }
     }
 
-    return $opt, $alias, $comment;
+    return $opt, $alias, $deftype, $self->comment;
 }
-
 1;
 
 package OptArgs2::Cmd;
@@ -327,8 +333,6 @@ has usage_style => (
     default => OptArgs2::STYLE_NORMAL,
 );
 
-our $CURRENT;
-
 sub add_arg {
     my $self = shift;
     my $arg  = shift;
@@ -369,7 +373,7 @@ sub run_optargs {
     my $self = shift;
     map { $_->run_optargs } $self->parents;
     return unless ref $self->optargs eq 'CODE';
-    local $CURRENT = $self;
+    local $OptArgs2::CURRENT = $self;
     $self->optargs->();
     $self->optargs(undef);
 }
@@ -432,8 +436,13 @@ sub usage {
         my $i = 0;
         foreach my $arg (@args) {
             if ( $arg->isa eq 'SubCmd' ) {
-                push( @uargs,
-                    [ '  ' . ucfirst( $arg->name ) . ':', $arg->comment ] );
+                push(
+                    @uargs,
+                    [
+                        '  ' . ucfirst( $arg->name ) . ':',
+                        '', '', $arg->comment
+                    ]
+                );
                 my @sorted_subs =
                   sort { $a->name cmp $b->name }
                   grep { $style == OptArgs2::STYLE_FULL or !$_->hidden }
@@ -451,6 +460,7 @@ sub usage {
                                 ? uc( $subcmd->name )
                                 : $subcmd->name
                               ),
+                            '', '',
                             $prefix . $subcmd->comment
                         ]
                     );
@@ -458,16 +468,12 @@ sub usage {
 
                 $have_subcmd++;
             }
-            elsif ( !$i ) {
-                push( @uargs, [ '  Arguments:', '' ] );
-                my ( $n, $c ) =
-                  $arg->name_comment( $optargs->{ $arg->name } // undef );
-                push( @uargs, [ '    ' . uc($n), $c ] );
-            }
-            else {
-                my ( $n, $c ) =
-                  $arg->name_comment( $optargs->{ $arg->name } // undef );
-                push( @uargs, [ '    ' . uc($n), $c ] ) if length($c);
+            elsif ( 'OptArgRef' ne $arg->isa ) {
+                push( @uargs, [ '  Arguments:', '', '', '' ] ) if !$i;
+                my ( $n, $a, $t, $c ) =
+                  $arg->name_alias_type_comment( $optargs->{ $arg->name }
+                      // undef );
+                push( @uargs, [ '    ' . uc($n), $a, $t, $c ] );
             }
             $i++;
         }
@@ -481,10 +487,11 @@ sub usage {
           @{ $self->subcmds };
 
         if (@sorted_subs) {
-            push( @sargs, [ '  Sub-Commands:', '' ] );
+            push( @sargs, [ '  Sub-Commands:', '', '', '' ] );
 
             foreach my $subcmd (@sorted_subs) {
-                push( @sargs, [ '    ' . $subcmd->name, $subcmd->comment ] );
+                push( @sargs,
+                    [ '    ' . $subcmd->name, '', '', $subcmd->comment ] );
             }
         }
     }
@@ -492,24 +499,21 @@ sub usage {
     # Build options
     my @uopts;
     if (@opts) {
-        push( @uopts, [ "  Options:", '', '' ] );
+        push( @uopts, [ "  Options:", '', '', '' ] );
         foreach my $opt (@opts) {
             next if $style != OptArgs2::STYLE_FULL and $opt->hidden;
-            my ( $n, $a, $c ) =
-              $opt->name_alias_comment( $optargs->{ $opt->name } // undef );
-            push( @uopts, [ '    ' . $n, $a, $c ] );
+            my ( $n, $a, $t, $c ) =
+              $opt->name_alias_type_comment( $optargs->{ $opt->name }
+                  // undef );
+            push( @uopts, [ '    ' . $n, $a, $t, $c ] );
         }
-
-        # Width calculation: turn 3 option fields into 2:
-        my $w1  = max( map { length $_->[0] } @uopts );
-        my $fmt = '%-' . $w1 . "s %s";
-
-        @uopts = map { [ sprintf( $fmt, $_->[0], $_->[1] ), $_->[2] ] } @uopts;
     }
 
     # Width calculation for args and opts combined
     my $w1     = max( map { length $_->[0] } @uargs, @sargs, @uopts );
-    my $format = '%-' . $w1 . "s   %s\n";
+    my $w2     = max( map { length $_->[1] } @uargs, @sargs, @uopts );
+    my $w3     = max( map { length $_->[2] } @uargs, @sargs, @uopts );
+    my $format = "%-${w1}s %-${w2}s %-${w3}s  %s\n";
 
     # Output Arguments
     if (@uargs) {
@@ -595,13 +599,14 @@ sub _usage {
     my $msg  = shift // '';
 
     my %types = (
-        ArgRequired    => undef,
-        Help           => undef,
-        HelpTree       => undef,
-        OptRequired    => undef,
-        OptUnknown     => undef,
-        SubCmdRequired => undef,
-        SubCmdUnknown  => undef,
+        ArgRequired      => undef,
+        Help             => undef,
+        HelpTree         => undef,
+        OptRequired      => undef,
+        OptUnknown       => undef,
+        SubCmdRequired   => undef,
+        SubCmdUnknown    => undef,
+        UnexpectedOptArg => undef,
     );
 
     Carp::croak("unknown usage type: $type") unless exists $types{$type};
@@ -615,12 +620,12 @@ sub _usage {
     $msg .= "\n\n" if length $msg;
 
     if ( $type eq 'Help' ) {
-        print $msg . $OptArgs2::Cmd::CURRENT->usage(OptArgs2::STYLE_FULL);
+        print $msg . $OptArgs2::CURRENT->usage(OptArgs2::STYLE_FULL);
         my $nl = "\n";
         die bless \$nl, $pkg;
     }
 
-    my $usage = $msg . $OptArgs2::Cmd::CURRENT->usage . "\n";
+    my $usage = $msg . $OptArgs2::CURRENT->usage . "\n";
     die bless \$usage, $pkg;
 }
 
@@ -675,8 +680,8 @@ sub _default_command {
 sub arg {
     my $name = shift;
 
-    $OptArgs2::Cmd::CURRENT //= _default_command(caller);
-    $OptArgs2::Cmd::CURRENT->add_arg( OptArgs2::Arg->new( name => $name, @_ ) );
+    $OptArgs2::CURRENT //= _default_command(caller);
+    $OptArgs2::CURRENT->add_arg( OptArgs2::Arg->new( name => $name, @_ ) );
 }
 
 sub class_optargs {
@@ -751,8 +756,7 @@ sub class_optargs {
             elsif ( $try->required ) {
                 $name =~ s/_/-/g;
                 $error //= [
-                    'OptRequired',
-                    qq{error: missing required option "--$name"\n\n}
+                    'OptRequired', qq{error: missing required option "--$name"}
                 ];
                 last OPTARGS;
             }
@@ -818,10 +822,8 @@ sub class_optargs {
                     )
                   )
                 {
-                    $error //= [
-                        'OptUnknown',
-                        qq{error: unknown option "$source->[0]"\n\n}
-                    ];
+                    $error //= [ 'OptUnknown',
+                        qq{error: unknown option "$source->[0]"} ];
                     last OPTARGS;
                 }
 
@@ -880,18 +882,18 @@ sub class_optargs {
     if (@$source) {
         $error //= [
             'UnexpectedOptArg',
-            "error: unexpected option(s) or argument(s): @$source\n\n"
+            "error: unexpected option(s) or argument(s): @$source"
         ];
     }
     elsif ( my @unexpected = keys %$source_hash ) {
         $error //= [
             'UnexpectedHashOptArg',
-            "error: unexpected HASH option(s) or argument(s): @unexpected\n\n"
+            "error: unexpected HASH option(s) or argument(s): @unexpected"
         ];
     }
 
     $cmd->_values($optargs);
-    local $OptArgs2::Cmd::CURRENT = $cmd;
+    local $OptArgs2::CURRENT = $cmd;
 
     map { $_->( $cmd, $optargs ) } @trigger;
     OptArgs2::_usage(@$error) if $error;
@@ -924,9 +926,8 @@ sub cmd {
 sub opt {
     my $name = shift;
 
-    $OptArgs2::Cmd::CURRENT //= _default_command(caller);
-    $OptArgs2::Cmd::CURRENT->add_opt(
-        OptArgs2::Opt->new_from( name => $name, @_ ) );
+    $OptArgs2::CURRENT //= _default_command(caller);
+    $OptArgs2::CURRENT->add_opt( OptArgs2::Opt->new_from( name => $name, @_ ) );
 }
 
 sub optargs {
@@ -1337,12 +1338,12 @@ The remaining types are presented as follows:
 
     Name        Type        isa_name        Presentation
     ----        ----        --------        ------------
-    option      ArrayRef    -               --option=STR
-    option      HashRef     -               --option=STR
-    option      Int         -               --option=INT
-    option      Num         -               --option=NUM
-    option      Str         -               --option=STR
-    option      *           XX              --option=XX
+    option      ArrayRef    -               --option Str
+    option      HashRef     -               --option Str
+    option      Int         -               --option Int
+    option      Num         -               --option Num
+    option      Str         -               --option Str
+    option      *           XX              --option XX
 
 Defaults TO BE COMPLETED.
 
@@ -1415,6 +1416,11 @@ following table:
 An I<OptArgRef> isa is an I<ArrayRef> that doesn't undergo checks for
 unexpected options. It exists to capture options and arguments which
 get passed back into I<class_optargs> again.
+
+=item isa_name
+
+When provided this parameter will be presented instead of the generic
+presentation for the 'isa' parameter.
 
 =item required
 

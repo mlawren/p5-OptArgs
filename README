@@ -330,12 +330,12 @@ DESCRIPTION
 
         Name        Type        isa_name        Presentation
         ----        ----        --------        ------------
-        option      ArrayRef    -               --option=STR
-        option      HashRef     -               --option=STR
-        option      Int         -               --option=INT
-        option      Num         -               --option=NUM
-        option      Str         -               --option=STR
-        option      *           XX              --option=XX
+        option      ArrayRef    -               --option Str
+        option      HashRef     -               --option Str
+        option      Int         -               --option Int
+        option      Num         -               --option Num
+        option      Str         -               --option Str
+        option      *           XX              --option XX
 
     Defaults TO BE COMPLETED.
 
@@ -399,6 +399,10 @@ FUNCTIONS
             checks for unexpected options. It exists to capture options
             and arguments which get passed back into *class_optargs*
             again.
+
+        isa_name
+            When provided this parameter will be presented instead of
+            the generic presentation for the 'isa' parameter.
 
         required
             Set to a true value when the caller must specify this

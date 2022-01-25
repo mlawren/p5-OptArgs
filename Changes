@@ -14,6 +14,7 @@
         - Opt 'ishelp' now does what the documentation implies.
         - Support default values relying on other default values
         - Rework internal error reporting and usage generation
+        - New usage layout showing default values
 
     Bug Fixes:
         - Fix a ==/= comparison/assignment error in the usage()
