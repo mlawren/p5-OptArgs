@@ -32,12 +32,11 @@ no warnings;my$M=__PACKAGE__.'::';*{$M.Object::new}=sub{my$c=shift;my$s=bless{@_
 1;
 
 package OptArgs2::CODE2optarg;
-use Carp;
 use strict;
 
 sub TIESCALAR {
     my $class = shift;
-    ( 3 == @_ ) or Carp::croak 'args: optargs,name,sub';
+    ( 3 == @_ ) or Optargs2::_croak( 'Usage', 'args: optargs,name,sub' );
     return bless [@_], $class;
 }
 
@@ -565,7 +564,7 @@ use overload
   bool     => sub { 1 },
   '""'     => sub { ${ $_[0] } },
   fallback => 1;
-use Carp ();
+require Carp;
 use Encode qw/decode/;
 use Getopt::Long qw/GetOptionsFromArray/;
 use Exporter qw/import/;
