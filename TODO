@@ -1,3 +1,5 @@
+- Check for multiple use of the same alias character
+
 - Send --help (and --version?) output to STDOUT, paged?
 
 - Fix --version example to use $cmd->name instead of just $cmd (or else
