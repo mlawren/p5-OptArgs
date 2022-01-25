@@ -24,7 +24,7 @@ subcmd 'c1::s1' => (
 );
 
 $e = dies { ( $class, $opts ) = class_optargs( 'c1', 's' ) };
-like ref $e, qr/UnknownSubCmd/, 'unknown SubCmd without abbrev';
+like ref $e, qr/SubCmdUnknown/, 'unknown SubCmd without abbrev';
 
 cmd 'c2' => (
     comment => 'the base command',

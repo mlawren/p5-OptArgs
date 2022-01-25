@@ -13,6 +13,7 @@
         - Various minor code refactoring improvements.
         - Opt 'ishelp' now does what the documentation implies.
         - Support default values relying on other default values
+        - Rework internal error reporting and usage generation
 
     Bug Fixes:
         - Fix a ==/= comparison/assignment error in the usage()
