@@ -14,6 +14,7 @@ our %isa2name = (
     'Int'      => 'Int',
     'Num'      => 'Num',
     'Str'      => 'Str',
+    'SubCmd'   => 'Str',
 );
 
 package OptArgs2::Mo;
@@ -258,15 +259,24 @@ sub name_alias_type_comment {
     }
 
     my $deftype = '';
-    if ( $self->isa ne 'Flag' and $self->isa ne 'Counter' ) {
-        if ( $self->show_default and defined $value ) {
-            $deftype = '[' . $value . ']';
+    if ( defined $value and $self->show_default ) {
+        if ( $self->isa eq 'Flag' ) {
+            $deftype = '(set)';
+        }
+        elsif ( $self->isa eq 'Bool' ) {
+            $deftype = '(' . ( $value ? 'true' : 'false' ) . ')';
+        }
+        elsif ( $self->isa eq 'Counter' ) {
+            $deftype = '(' . $value . ')';
         }
         else {
-            $deftype = $self->isa_name // $OptArgs2::isa2name{ $self->isa }
-              // OptArgs2::_croak( 'InvalidIsa',
-                'invalid isa type: ' . $self->isa );
+            $deftype = '[' . $value . ']';
         }
+    }
+    else {
+        $deftype = $self->isa_name // $OptArgs2::isa2name{ $self->isa }
+          // OptArgs2::_croak( 'InvalidIsa',
+            'invalid isa type: ' . $self->isa );
     }
 
     my $comment = $self->comment;
@@ -337,7 +347,7 @@ has subcmds => (
     default => sub { [] },
 );
 
-has _values => ( is => 'rw', default => sub { {} } );
+has _values => ( is => 'rw' );
 
 has usage_style => (
     is      => 'rw',
@@ -402,17 +412,6 @@ sub usage {
       $self;
 
     my $optargs = $self->_values;
-    foreach my $x ( @args, @opts ) {
-        next if exists $optargs->{ $x->name };
-        my $default = $x->default // next;
-        if ( 'CODE' eq ref $default ) {
-            tie $optargs->{ $x->name }, 'OptArgs2::CODE2optarg', $optargs,
-              $x->name, $default;
-        }
-        else {
-            $optargs->{ $x->name } = $default;
-        }
-    }
 
     # Summary line
     $usage .= join( ' ', map { $_->name } @parents ) . ' ' if @parents;
@@ -447,20 +446,19 @@ sub usage {
         my $i = 0;
         foreach my $arg (@args) {
             if ( $arg->isa eq 'SubCmd' ) {
-                push(
-                    @uargs,
-                    [
-                        '  ' . ucfirst( $arg->name ) . ':',
-                        '', '', $arg->comment
-                    ]
-                );
+                my ( $n, $al, undef, $c ) =
+                  $arg->name_alias_type_comment( $optargs->{ $arg->name }
+                      // undef );
+                push( @uargs, [ '  ' . ucfirst($n) . ':', $al, '', $c ] );
                 my @sorted_subs =
-                  sort { $a->name cmp $b->name }
+                  map  { $_->[1] }
+                  sort { $a->[0] cmp $b->[0] }
+                  map  { [ $_->name, $_ ] }
                   grep { $style == OptArgs2::STYLE_FULL or !$_->hidden }
                   @{ $arg->cmd->subcmds },
                   $arg->fallback ? $arg->fallback : ();
 
-                my $prefix = length( $arg->comment ) ? '  ' : '';
+                my $prefix = '';    #length( $arg->comment ) ? '  ' : '';
                 foreach my $subcmd (@sorted_subs) {
                     push(
                         @uargs,
@@ -490,23 +488,6 @@ sub usage {
         }
     }
 
-    my @sargs;
-    if ( !$have_subcmd ) {
-        my @sorted_subs =
-          sort { $a->name cmp $b->name }
-          grep { $style == OptArgs2::STYLE_FULL or !$_->hidden }
-          @{ $self->subcmds };
-
-        if (@sorted_subs) {
-            push( @sargs, [ '  Sub-Commands:', '', '', '' ] );
-
-            foreach my $subcmd (@sorted_subs) {
-                push( @sargs,
-                    [ '    ' . $subcmd->name, '', '', $subcmd->comment ] );
-            }
-        }
-    }
-
     # Build options
     my @uopts;
     if (@opts) {
@@ -521,9 +502,9 @@ sub usage {
     }
 
     # Width calculation for args and opts combined
-    my $w1     = max( map { length $_->[0] } @uargs, @sargs, @uopts );
-    my $w2     = max( map { length $_->[1] } @uargs, @sargs, @uopts );
-    my $w3     = max( map { length $_->[2] } @uargs, @sargs, @uopts );
+    my $w1     = max( map { length $_->[0] } @uargs, @uopts );
+    my $w2     = max( map { length $_->[1] } @uargs, @uopts );
+    my $w3     = max( map { length $_->[2] } @uargs, @uopts );
     my $format = "%-${w1}s %-${w2}s %-${w3}s  %s\n";
 
     # Output Arguments
@@ -538,14 +519,6 @@ sub usage {
     if (@uopts) {
         $usage .= "\n";
         foreach my $row (@uopts) {
-            $usage .= sprintf( $format, @$row );
-        }
-    }
-
-    # Output Subcommands
-    if (@sargs) {
-        $usage .= "\n";
-        foreach my $row (@sargs) {
             $usage .= sprintf( $format, @$row );
         }
     }
@@ -606,8 +579,8 @@ our @EXPORT_OK = (qw/usage/);
 my %COMMAND;
 
 sub _usage {
-    my $type = shift // Carp::croak('usage: _usage($TYPE, [$msg])');
-    my $msg  = shift // '';
+    my $type  = shift // Carp::croak('usage: _usage($TYPE, [$msg])');
+    my $usage = shift // '';
 
     my %types = (
         ArgRequired      => undef,
@@ -621,6 +594,7 @@ sub _usage {
     );
 
     Carp::croak("unknown usage type: $type") unless exists $types{$type};
+
     my $pkg = 'OptArgs2::Usage::' . $type;
 
     {
@@ -628,17 +602,20 @@ sub _usage {
         *{ $pkg . '::ISA' } = [__PACKAGE__];
     }
 
-    $msg .= "\n\n" if length $msg;
+    $usage .= "\n\n" if length $usage;
+    $usage .= $OptArgs2::CURRENT->usage(
+        $type eq 'Help' ? OptArgs2::STYLE_FULL : OptArgs2::STYLE_NORMAL );
 
-    if ( $type eq 'Help' ) {
+    if ( -t STDOUT or $type =~ m/^Help/ ) {
         require OptArgs2::Pager;
-        my $pager = OptArgs2::Pager->new;
-        print $msg . $OptArgs2::CURRENT->usage(OptArgs2::STYLE_FULL);
+        OptArgs2::Pager->on;
+        print $usage;
+        OptArgs2::Pager->off;    # closes input to pager which should flush
         my $nl = "\n";
         die bless \$nl, $pkg;
     }
 
-    my $usage = $msg . $OptArgs2::CURRENT->usage . "\n";
+    #    $usage .= "\n";
     die bless \$usage, $pkg;
 }
 
@@ -672,6 +649,7 @@ sub _croak {
           OptArgs2
           OptArgs2::Arg
           OptArgs2::Cmd
+          OptArgs2::Fallback
           OptArgs2::Opt
           OptArgs2::Mo
           OptArgs2::Mo::Object
@@ -680,9 +658,8 @@ sub _croak {
 
     my $msg =
       ( shift // $types{$type} // "($pkg)" ) . ' ' . Carp::shortmess('');
-    bless \$msg, $pkg;
 
-    die $msg;
+    die bless \$msg, $pkg;
 }
 
 sub _default_command {
@@ -754,10 +731,9 @@ sub class_optargs {
                 GetOptionsFromArray( $source, $try->getopt => \$result );
             }
 
-            push( @trigger, $try->trigger )
-              if defined $result and $try->trigger;
-
             if ( defined( $result //= $try->default ) ) {
+                push( @trigger, $try->trigger ) if $try->trigger;
+
                 if ( 'CODE' eq ref $result ) {
                     tie $optargs->{$name}, 'OptArgs2::CODE2optarg', $optargs,
                       $name,
@@ -772,7 +748,6 @@ sub class_optargs {
                 $error //= [
                     'OptRequired', qq{error: missing required option "--$name"}
                 ];
-                last OPTARGS;
             }
         }
 
@@ -836,9 +811,8 @@ sub class_optargs {
                     )
                   )
                 {
-                    $error //= [ 'OptUnknown',
-                        qq{error: unknown option "$source->[0]"} ];
-                    last OPTARGS;
+                    my $o = shift @$source;
+                    $error //= [ 'OptUnknown', qq{error: unknown option "$o"} ];
                 }
 
                 if ( $try->greedy ) {
@@ -875,12 +849,11 @@ sub class_optargs {
             elsif ( exists $source_hash->{$name} ) {
                 $result = delete $source_hash->{$name};
             }
-            elsif ( $try->required ) {
-                $error //= ['ArgRequired'];
-                last OPTARGS;
-            }
 
             if ( defined( $result //= $try->default ) ) {
+
+              #                push( @trigger, $try->trigger ) if $try->trigger;
+
                 if ( 'CODE' eq ref $result ) {
                     tie $optargs->{$name}, 'OptArgs2::CODE2optarg', $optargs,
                       $name,
@@ -889,6 +862,9 @@ sub class_optargs {
                 else {
                     $optargs->{$name} = $result;
                 }
+            }
+            elsif ( $try->required ) {
+                $error //= ['ArgRequired'];
             }
         }
     }
@@ -907,9 +883,10 @@ sub class_optargs {
     }
 
     $cmd->_values($optargs);
-    local $OptArgs2::CURRENT = $cmd;
 
+    local $OptArgs2::CURRENT = $cmd;
     map { $_->( $cmd, $optargs ) } @trigger;
+
     OptArgs2::_usage(@$error) if $error;
 
     return ( $cmd->class, $optargs );
