@@ -71,18 +71,15 @@ sub open {
     local $ENV{LESS} = $ENV{LESS} // '-FXeR';
     local $ENV{MORE} = $ENV{MORE} // '-FXer' unless $^O eq 'MSWin32';
 
-    my $pid = CORE::open( $self->fh, '|-', $pager )
+    $self->pid( CORE::open( $self->fh, '|-', $pager ) )
       or Carp::croak "Could not pipe to PAGER ('$pager'): $!\n";
 
     binmode( $self->fh, $self->encoding ? $self->encoding : () )
       or Carp::cluck "Could not set bindmode: $!";
 
+    $self->fh->autoflush(1);
+
     select $self->fh;
-    $| = 1;
-
-    $self->pid($pid);
-
-    return;
 }
 
 sub close {
