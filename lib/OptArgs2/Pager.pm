@@ -95,6 +95,18 @@ sub DESTROY {
     $self->close;
 }
 
+my $pager;
+
+sub on {
+    my $class = shift;
+    $pager //= $class->new(@_);
+    $pager->open;
+}
+
+sub off {
+    $pager->close if $pager;
+}
+
 1;
 
 __END__
@@ -111,13 +123,26 @@ OptArgs2::Pager - pipe output to a system (text) pager
 
 =head1 SYNOPSIS
 
+    # If you want to test this synopsis example you will
+    # want to prevent OptArgs2::Pager setting default
+    # environment values which cause pagers to exit on short
+    # inputs
+    # $ENV{LESS} = $ENV{MORE} = '';
+
     use OptArgs2::Pager;
 
-    my $pager = OptArgs2::Pager->new;
+    # Functions
+    OptArgs2::Pager->on;
     print "This text goes to a pager\n";
 
+    OptArgs2::Pager->off;
+    print "This text goes directly to STDOUT\n";
+
+    # Scoped
+    my $pager = OptArgs2::Pager->new;
+    print "Back to a pager\n";
     undef $pager;
-    print "This text goes to STDOUT\n";
+    print "Back to STDOUT\n";
 
 =head1 DESCRIPTION
 
@@ -127,6 +152,17 @@ there.
 
 When the pager object goes out of scope the previous default filehandle
 is selected again.
+
+=head1 FUNCTIONS
+
+=head2 OptArgs2::Pager->on(%ARGS)
+
+Creates a (global singleton) pager using C<%ARGS> (passed directly to
+C<new()> below) and keeps it alive until C<off()> is called.
+
+=head2 OptArgs2::Pager->off()
+
+Stops the global pager.
 
 =head1 CONSTRUCTOR
 
