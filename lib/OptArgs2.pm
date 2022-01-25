@@ -126,7 +126,13 @@ sub name_alias_type_comment {
             'invalid isa type: ' . $self->isa );
     }
 
-    return $self->name, '', $deftype, $self->comment;
+    my $comment = $self->comment;
+    if ( $self->required ) {
+        $comment .= ' ' if length $comment;
+        $comment .= '[required]';
+    }
+
+    return $self->name, '', $deftype, $comment;
 }
 
 1;
@@ -259,7 +265,13 @@ sub name_alias_type_comment {
         }
     }
 
-    return $opt, $alias, $deftype, $self->comment;
+    my $comment = $self->comment;
+    if ( $self->required ) {
+        $comment .= ' ' if length $comment;
+        $comment .= '[required]';
+    }
+
+    return $opt, $alias, $deftype, $comment;
 }
 1;
 
