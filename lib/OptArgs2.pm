@@ -577,7 +577,7 @@ sub _usage_tree {
 sub usage_tree {
     my $self  = shift;
     my $style = shift || OptArgs2::STYLE_SUMMARY;
-    return OptArgs2::_usage( 'TREE', $self->_usage_tree($style) );
+    return OptArgs2::_usage( 'HelpTree', $self->_usage_tree($style) );
 }
 
 package OptArgs2;
