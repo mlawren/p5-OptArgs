@@ -100,6 +100,10 @@ my %arg2getopt = (
 
 sub BUILD {
     my $self = shift;
+
+    OptArgs2::_croak( 'Conflict', q{'default' and 'required' conflict} )
+      if $self->required and defined $self->default;
+
     if ( my $fb = $self->fallback ) {
         OptArgs2::_croak( 'FallbackNotHashref', 'fallback must be a HASH ref' )
           unless 'HASH' eq ref $fb;
@@ -645,6 +649,7 @@ sub _croak {
     my %types = (
         CmdExists          => undef,
         CmdNotFound        => undef,
+        Conflict           => undef,
         FallbackNotHashref => undef,
         InvalidIsa         => undef,
         ParentCmdNotFound  => undef,
@@ -1371,7 +1376,7 @@ Define a command argument, for example:
         default  => '-',
         greedy   => 0,
         isa      => 'Str',
-        required => 1,
+        # required => 1,
     );
 
 The C<arg()> function accepts the following parameters:
@@ -1556,17 +1561,18 @@ Required. Used to generate the usage/help message.
 
 =item default
 
-The value set when the option is not used.
+The value set when the option is not given. Conflicts with the
+'required' parameter.
 
 If this is a subroutine reference it will be called with a hashref
-containg all option/argument values after parsing the source has
+containing all option/argument values after parsing the source has
 finished.  The value to be set must be returned, and any changes to the
 hashref are ignored.
 
 =item required
 
-Set to a true value when the caller must specify this option. This
-requirement can be satified with the 'default' parameter.
+Set to a true value when the caller must specify this option. Conflicts
+with the 'default' parameter.
 
 =item hidden
 

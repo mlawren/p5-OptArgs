@@ -3,6 +3,8 @@
     API / Behaviour Changes:
         - Opt 'ishelp' no longer conflicts with 'trigger'
         - Set 'show_default' to true by default
+        - The 'default' and 'required' parameters are no longer allowed
+          together.
 
     New Features:
         - New 'OptArgRef' arg type to support command aliases.  I.e.
