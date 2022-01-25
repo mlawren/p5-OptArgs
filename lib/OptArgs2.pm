@@ -116,11 +116,6 @@ sub name_alias_type_comment {
     my $self  = shift;
     my $value = shift;
 
-    my $comment = $self->comment;
-    if ( $self->show_default && defined $value ) {
-        $comment .= ' [' . $value . ']';
-    }
-
     my $deftype = '';
     if ( $self->show_default and defined $value ) {
         $deftype = '[' . $value . ']';
