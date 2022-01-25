@@ -23,7 +23,7 @@
         - Bool option with true default turned off when --no-bool used.
 
     Dependencies:
-        - None.
+        - File::Which for new OptArgs2::Pager module.
 
     Packaging:
         - Stop including ".readme_from" file in distribution
