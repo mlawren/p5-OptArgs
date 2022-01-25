@@ -126,7 +126,7 @@ subcmd 'demo::arg::greedy::str' => (
             isa     => 'Str',
             comment => 'isa: Str, name: bbb',
             default => 'some text',
-
+            greedy  => 1,
         );
     },
 );
@@ -216,10 +216,10 @@ subcmd 'demo::opt' => (
     comment => 'options',
     optargs => sub {
 
-        arg required => (
-            isa      => 'Str',
-            comment  => 'isa: Str, name: required',
-            default  => 'some text',
+        opt req => (
+            alias    => 'r',
+            isa      => 'Flag',
+            comment  => 'isa: Flag, name: req',
             required => 1,
         );
 
@@ -336,6 +336,9 @@ subcmd 'demo::opt' => (
 );
 
 my ( $cmd, $opts ) = eval { class_optargs('demo') };
+my $err = $@;
+my $ref = ref $err;
+die "$err\n$ref\n" if $ref;
+die $err           if $err;
 
-die Dumper($@) if $@;
 print Dumper( bless $opts, $cmd );
