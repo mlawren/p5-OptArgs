@@ -521,17 +521,30 @@ FUNCTIONS
             the generic presentation for the 'isa' parameter.
 
         ishelp
-            When true it sets the option to behave like a typical
-            "--help" would by displaying a usage message and exiting. It
-            is basically a shortcut for the following:
+            Makes the option behave like a typical "--help", that
+            displays a usage message and exits before errors are
+            generated. Typically used alone as follows:
+
+                opt help => (
+                    ishelp => OptArgs2::STYLE_HELP,
+                );
+
+                opt help_tree => (
+                    ishelp => OptArgs2::STYLE_HELPTREE,
+                    alias  => 'T', # or 'undef' if you don't want an alias
+                );
+
+            The first option above is similar to this longhand version:
 
                 opt help => (
                     isa     => 'Flag',
                     alias   => 'h',   # first character of the opt name
                     comment => 'print a usage message and exit',
                     trigger => sub {
-                        my ( $cmd, $value ) = @_;
-                        die $cmd->usage(OptArgs2::STYLE_FULL);
+                        # Start a pager for long messages
+                        print OptArgs2::usage(undef, OptArgs2::STYLE_HELP);
+                        # Stop the pager
+                        exit;
                     }
                 );
 
@@ -597,10 +610,10 @@ FUNCTIONS
         following:
 
         hidden
-            Hide the existence of this subcommand in usage messages
-            created with OptArgs2::STYLE_NORMAL. This is handy if you
-            have developer-only or rarely-used commands that you don't
-            want cluttering up your normal usage message.
+            Hide the existence of this subcommand in non-help usage
+            messages. This is handy if you have developer-only or
+            rarely-used commands that you don't want cluttering up your
+            normal usage message.
 
     usage( $class, [STYLE] ) -> Str
         Only exported on request, this function returns the usage string

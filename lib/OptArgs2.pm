@@ -1,8 +1,15 @@
 # constants
 package OptArgs2;
-sub OptArgs2::STYLE_SUMMARY() { 1 }
-sub OptArgs2::STYLE_NORMAL()  { 2 }
-sub OptArgs2::STYLE_FULL()    { 3 }
+
+sub STYLE_USAGE()    { 'Usage' }   # unused, but could be considered the default
+sub STYLE_HELP()     { 'Help' }
+sub STYLE_HELPTREE() { 'HelpTree' }
+sub STYLE_HELPSUMMARY() { 'HelpSummary' }
+
+# Backwards comatibility
+sub STYLE_FULL()    { STYLE_HELP }
+sub STYLE_TREE()    { STYLE_HELPTREE }
+sub STYLE_SUMMARY() { STYLE_HELPSUMMARY }
 
 our $CURRENT;
 our %isa2name = (
@@ -210,13 +217,25 @@ my %isa2getopt = (
 sub new_from {
     my $proto = shift;
     my $ref   = {@_};
+    use feature 'state';
 
-    if ( delete $ref->{ishelp} ) {
+    if ( my $type = delete $ref->{ishelp} ) {
+        state %ishelp = (
+            OptArgs2::STYLE_USAGE       => undef,
+            OptArgs2::STYLE_HELP        => undef,
+            OptArgs2::STYLE_HELPSUMMARY => undef,
+            OptArgs2::STYLE_HELPTREE    => undef,
+        );
+        $type = OptArgs2::STYLE_HELP if $type eq 1;
+        OptArgs2::_croak( 'InvalidIshelp', 'invalid ishelp "%s" for opt "%s"',
+            $type, $ref->{name} )
+          unless exists $ishelp{$type};
+
         $ref->{isa}     //= 'Flag';
         $ref->{alias}   //= substr $ref->{name}, 0, 1;
-        $ref->{comment} //= 'print a usage message and exit';
+        $ref->{comment} //= 'print a full help message and exit';
         $ref->{trigger} //= sub {
-            OptArgs2::_usage('Help');
+            OptArgs2::_usage($type);
         };
     }
 
@@ -348,11 +367,6 @@ has subcmds => (
 
 has _values => ( is => 'rw' );
 
-has usage_style => (
-    is      => 'rw',
-    default => OptArgs2::STYLE_NORMAL,
-);
-
 sub add_arg {
     my $self = shift;
     my $arg  = shift;
@@ -398,10 +412,30 @@ sub run_optargs {
     $self->optargs(undef);
 }
 
+sub _usage_tree {
+    my $self  = shift;
+    my $depth = shift || '';
+
+    ( my $str = $self->usage(OptArgs2::STYLE_HELPSUMMARY) ) =~ s/^/$depth/gsm;
+
+    foreach my $subcmd ( sort { $a->name cmp $b->name } @{ $self->subcmds } ) {
+        $str .= $subcmd->_usage_tree( $depth . '    ' );
+    }
+
+    return $str;
+}
+
 sub usage {
     my $self  = shift;
-    my $style = shift || $self->usage_style;
+    my $style = shift || OptArgs2::STYLE_USAGE;
     my $usage = '';
+
+    if ( $style eq OptArgs2::STYLE_HELPTREE ) {
+        $usage = $self->_usage_tree;
+        no strict 'refs';
+        @OptArgs2::HelpTree::ISA = ('OptArgs2');
+        return bless \$usage, 'OptArgs2::HelpTree';
+    }
 
     $self->run_optargs;
 
@@ -427,15 +461,15 @@ sub usage {
     $usage .= ' [OPTIONS...]' if @opts;
     $usage .= "\n";
 
-    if ( $style == OptArgs2::STYLE_SUMMARY ) {
+    if ( $style eq OptArgs2::STYLE_HELPSUMMARY ) {
         no strict 'refs';
-        @OptArgs2::UsageSummary::ISA = ('OptArgs2');
-        return bless \$usage, 'OptArgs2::UsageSummary';
+        @OptArgs2::HelpSummary::ISA = ('OptArgs2');
+        return bless \$usage, 'OptArgs2::HelpSummary';
     }
 
     # Synopsis
     $usage .= "\n  Synopsis:\n    " . $self->comment . "\n"
-      if $style == OptArgs2::STYLE_FULL and length $self->comment;
+      if $style eq OptArgs2::STYLE_HELP and length $self->comment;
 
     # Build arguments
     my @uargs;
@@ -453,7 +487,7 @@ sub usage {
                   map  { $_->[1] }
                   sort { $a->[0] cmp $b->[0] }
                   map  { [ $_->name, $_ ] }
-                  grep { $style == OptArgs2::STYLE_FULL or !$_->hidden }
+                  grep { $style eq OptArgs2::STYLE_HELP or !$_->hidden }
                   @{ $arg->cmd->subcmds },
                   $arg->fallback ? $arg->fallback : ();
 
@@ -492,7 +526,7 @@ sub usage {
     if (@opts) {
         push( @uopts, [ "  Options:", '', '', '' ] );
         foreach my $opt (@opts) {
-            next if $style != OptArgs2::STYLE_FULL and $opt->hidden;
+            next if $style ne OptArgs2::STYLE_HELP and $opt->hidden;
             my ( $n, $a, $t, $c ) =
               $opt->name_alias_type_comment( $optargs->{ $opt->name }
                   // undef );
@@ -524,7 +558,7 @@ sub usage {
 
     $usage = 'usage: ' . $usage;
 
-    if ( $style == OptArgs2::STYLE_FULL ) {
+    if ( $style eq OptArgs2::STYLE_HELP ) {
         no strict 'refs';
         @OptArgs2::UsageFull::ISA = ('OptArgs2');
         return bless \$usage, 'OptArgs2::UsageFull';
@@ -534,26 +568,6 @@ sub usage {
         @OptArgs2::Usage::ISA = ('OptArgs2');
         return bless \$usage, 'OptArgs2::Usage';
     }
-}
-
-sub _usage_tree {
-    my $self  = shift;
-    my $style = shift;
-    my $depth = shift || '';
-
-    ( my $str = $self->usage($style) ) =~ s/^/$depth/gsm;
-
-    foreach my $subcmd ( sort { $a->name cmp $b->name } @{ $self->subcmds } ) {
-        $str .= $subcmd->_usage_tree( $style, $depth . '    ' );
-    }
-
-    return $str;
-}
-
-sub usage_tree {
-    my $self  = shift;
-    my $style = shift || OptArgs2::STYLE_SUMMARY;
-    return OptArgs2::_usage( 'HelpTree', $self->_usage_tree($style) );
 }
 
 package OptArgs2;
@@ -578,12 +592,13 @@ our @EXPORT_OK = (qw/usage/);
 my %COMMAND;
 
 sub _usage {
-    my $type  = shift // Carp::croak('usage: _usage($TYPE, [$msg])');
-    my $usage = shift // '';
+    my $reason = shift // Carp::croak('usage: _usage($REASON, [$msg])');
+    my $usage  = shift // '';
 
-    my %types = (
+    my %reasons = (
         ArgRequired      => undef,
         Help             => undef,
+        HelpSummary      => undef,
         HelpTree         => undef,
         OptRequired      => undef,
         OptUnknown       => undef,
@@ -592,9 +607,10 @@ sub _usage {
         UnexpectedOptArg => undef,
     );
 
-    Carp::croak("unknown usage type: $type") unless exists $types{$type};
+    Carp::croak("unknown usage reason: $reason")
+      unless exists $reasons{$reason};
 
-    my $pkg = 'OptArgs2::Usage::' . $type;
+    my $pkg = 'OptArgs2::Usage::' . $reason;
 
     {
         no strict 'refs';
@@ -602,10 +618,9 @@ sub _usage {
     }
 
     $usage .= "\n\n" if length $usage;
-    $usage .= $OptArgs2::CURRENT->usage(
-        $type eq 'Help' ? OptArgs2::STYLE_FULL : OptArgs2::STYLE_NORMAL );
+    $usage .= $OptArgs2::CURRENT->usage($reason);
 
-    if ( -t STDOUT or $type =~ m/^Help/ ) {
+    if ( -t STDOUT or $reason =~ m/^Help/ ) {
         require OptArgs2::Pager;
         OptArgs2::Pager->on;
         print $usage;
@@ -730,8 +745,11 @@ sub class_optargs {
                 GetOptionsFromArray( $source, $try->getopt => \$result );
             }
 
+            if ( defined($result) and my $t = $try->trigger ) {
+                push @trigger, [ $t, $name ];
+            }
+
             if ( defined( $result //= $try->default ) ) {
-                push( @trigger, $try->trigger ) if $try->trigger;
 
                 if ( 'CODE' eq ref $result ) {
                     tie $optargs->{$name}, 'OptArgs2::CODE2optarg', $optargs,
@@ -884,7 +902,7 @@ sub class_optargs {
     $cmd->_values($optargs);
 
     local $OptArgs2::CURRENT = $cmd;
-    map { $_->( $cmd, $optargs ) } @trigger;
+    map { $_->[0]->( $cmd, $optargs->{ $_->[1] } ) } @trigger;
 
     OptArgs2::_usage(@$error) if $error;
 
@@ -1586,17 +1604,30 @@ presentation for the 'isa' parameter.
 
 =item ishelp
 
-When true it sets the option to behave like a typical C<--help> would
-by displaying a usage message and exiting.  It is basically a shortcut
-for the following:
+Makes the option behave like a typical C<--help>, that displays a usage
+message and exits before errors are generated.  Typically used alone as
+follows:
+
+    opt help => (
+        ishelp => OptArgs2::STYLE_HELP,
+    );
+
+    opt help_tree => (
+        ishelp => OptArgs2::STYLE_HELPTREE,
+        alias  => 'T', # or 'undef' if you don't want an alias
+    );
+
+The first option above is similar to this longhand version:
 
     opt help => (
         isa     => 'Flag',
         alias   => 'h',   # first character of the opt name
         comment => 'print a usage message and exit',
         trigger => sub {
-            my ( $cmd, $value ) = @_;
-            die $cmd->usage(OptArgs2::STYLE_FULL);
+            # Start a pager for long messages
+            print OptArgs2::usage(undef, OptArgs2::STYLE_HELP);
+            # Stop the pager
+            exit;
         }
     );
 
@@ -1667,10 +1698,9 @@ Accepts the same parameters as C<cmd()> in addition to the following:
 
 =item hidden
 
-Hide the existence of this subcommand in usage messages created with
-OptArgs2::STYLE_NORMAL.  This is handy if you have developer-only or
-rarely-used commands that you don't want cluttering up your normal
-usage message.
+Hide the existence of this subcommand in non-help usage messages.  This
+is handy if you have developer-only or rarely-used commands that you
+don't want cluttering up your normal usage message.
 
 =back
 
