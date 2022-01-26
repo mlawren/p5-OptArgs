@@ -32,12 +32,7 @@ opt dump => (
     }
 );
 
-opt help => (
-    isa     => 'Flag',
-    comment => 'print help message and exit',
-    alias   => 'h',
-    ishelp  => 1,
-);
+opt help => ( ishelp => 1 );
 
 opt message => (
     isa     => 'Str',

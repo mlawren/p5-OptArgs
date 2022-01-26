@@ -21,12 +21,7 @@ cmd demo => (
             abbrev   => 1,
         );
 
-        opt help => (
-            isa     => 'Flag',
-            alias   => 'h',
-            comment => 'print full help message and exit',
-            ishelp  => 1,
-        );
+        opt help => ( ishelp => 1 );
 
         opt usage_tree => (
             isa     => 'Flag',

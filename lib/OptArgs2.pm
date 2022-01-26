@@ -983,6 +983,8 @@ OptArgs2 - command-line argument and option processor
         comment  => 'the item to paint',
     );
 
+    opt help => ( ishelp => 1 );
+
     opt quiet => (
         isa     => 'Flag',
         alias   => 'q',
@@ -1067,9 +1069,10 @@ following interactions from the shell:
     usage: paint ITEM [OPTIONS...]
 
       arguments:
-        ITEM          the item to paint
+        ITEM          the item to paint [required]
 
       options:
+        --help,  -h   print a usage message and exit
         --quiet, -q   output nothing while working
 
 The C<optargs()> function parses the command line according to the
@@ -1079,8 +1082,8 @@ thrown containing an automatically generated usage message as shown
 above.  Because B<OptArgs2> fully knows the valid arguments and options
 it can detect a wide range of errors:
 
-    $ ./paint wall message
-    error: unexpected option or argument: red
+    $ ./paint wall Perl is great
+    error: unexpected option or argument: Perl
 
 So let's add that missing argument definition:
 
@@ -1096,10 +1099,11 @@ And then check the usage again:
     usage: paint ITEM [MESSAGE...] [OPTIONS...]
 
       arguments:
-        ITEM          the item to paint
+        ITEM          the item to paint [required]
         MESSAGE       the message to paint on the item
 
       options:
+        --help,  -h   print a usage message and exit
         --quiet, -q   output nothing while working
 
 Note that optional arguments are surrounded by square brackets, and
@@ -1127,7 +1131,7 @@ This now produces the following usage output:
       arguments:
         ITEM               the item to paint
         MESSAGE            the message to paint on the item
- 
+
       options:
         --colour=STR, -c   the colour to use [blue]
         --quiet,      -q   output nothing while working
