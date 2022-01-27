@@ -2,7 +2,7 @@ NAME
     OptArgs2 - command-line argument and option processor
 
 VERSION
-    0.0.12 (yyyy-mm-dd)
+    0.0.12_2 (yyyy-mm-dd)
 
 SYNOPSIS
         #!/usr/bin/env perl
