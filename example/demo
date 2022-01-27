@@ -21,12 +21,7 @@ cmd demo => (
             abbrev   => 1,
         );
 
-        opt help => (
-            isa     => 'Flag',
-            alias   => 'h',
-            comment => 'print full help message and exit',
-            ishelp  => 1,
-        );
+        opt help => ( ishelp => 1 );
 
         opt usage_tree => (
             isa     => 'Flag',
@@ -126,7 +121,7 @@ subcmd 'demo::arg::greedy::str' => (
             isa     => 'Str',
             comment => 'isa: Str, name: bbb',
             default => 'some text',
-
+            greedy  => 1,
         );
     },
 );
@@ -216,198 +211,129 @@ subcmd 'demo::opt' => (
     comment => 'options',
     optargs => sub {
 
-        arg type => (
-            isa      => 'SubCmd',
-            comment  => 'opt type',
+        opt req => (
+            alias    => 'r',
+            isa      => 'Flag',
+            comment  => 'isa: Flag, name: req',
             required => 1,
         );
-    },
-);
 
-subcmd 'demo::opt::arrayref' => (
-    comment => 'ArrayRef option',
-    optargs => sub {
-
-        opt aaa => (
+        opt arrayref => (
             isa     => 'ArrayRef',
-            comment => 'isa: ArrayRef, name: aaa',
-            alias   => 'a',
-        );
-    },
-);
-
-subcmd 'demo::opt::bool' => (
-    comment => 'Bool option',
-    optargs => sub {
-
-        opt aaa => (
-            isa     => 'Bool',
-            comment => 'isa: Bool, name: aaa',
+            comment => 'isa: ArrayRef, name: arrayref',
             alias   => 'a',
         );
 
-        opt bbb => (
+        opt bool => (
             isa     => 'Bool',
-            comment => 'isa: Bool, name: bbb',
+            comment => 'isa: Bool, name: bool',
+            alias   => 'a',
+        );
+
+        opt bool_default_0 => (
+            isa     => 'Bool',
+            comment => 'isa: Bool, name: bool_default_0',
             default => 0,
             alias   => 'b',
         );
 
-        opt ccc => (
+        opt bool_default_1 => (
             isa     => 'Bool',
-            comment => 'isa: Bool, name: ccc',
+            comment => 'isa: Bool, name: bool_default_1',
             default => 1,
             alias   => 'c',
         );
 
-    },
-);
-
-subcmd 'demo::opt::counter' => (
-    comment => 'Counter option',
-    optargs => sub {
-
-        opt aaa => (
+        opt counter => (
             isa     => 'Counter',
-            comment => 'isa: Counter, name: aaa',
+            comment => 'isa: Counter, name: counter',
             alias   => 'a',
         );
 
-        opt bbb => (
+        opt counter_default_3 => (
             isa     => 'Counter',
-            comment => 'isa: Counter, name: bbb',
+            comment => 'isa: Counter, name: counter_default_3',
             default => -3,
             alias   => 'b',
         );
-    },
-);
 
-subcmd 'demo::opt::flag' => (
-    comment => 'Flag option',
-    optargs => sub {
-
-        opt aaa => (
+        opt flag => (
             isa     => 'Flag',
-            comment => 'isa: Flag, name: aaa',
+            comment => 'isa: Flag, name: flag',
             alias   => 'a',
         );
 
-        opt no_bbb => (
+        opt no_flag => (
             isa     => 'Flag',
-            comment => 'isa: Flag, name: no_bbb',
+            comment => 'isa: Flag, name: no_flag',
             alias   => 'b',
         );
-    },
-);
 
-subcmd 'demo::opt::hashref' => (
-    comment => 'HashRef option',
-    optargs => sub {
-
-        opt aaa => (
+        opt hashref => (
             isa     => 'HashRef',
-            comment => 'isa: HashRef, name: aaa',
+            comment => 'isa: HashRef, name: hashref',
             alias   => 'a',
         );
 
-        opt bbb => (
+        opt hashref_default => (
             isa     => 'HashRef',
-            comment => 'isa: HashRef, name: bbb',
+            comment => 'isa: HashRef, name: hashref_default',
             default => { x => 1 },
             alias   => 'b',
         );
-    },
-);
 
-subcmd 'demo::opt::int' => (
-    comment => 'Int option',
-    optargs => sub {
-
-        opt aaa => (
+        opt int => (
             isa     => 'Int',
-            comment => 'isa: Int, name: aaa',
+            comment => 'isa: Int, name: int',
             alias   => 'a',
         );
 
-        opt bbb => (
+        opt int_default => (
             isa     => 'Int',
-            comment => 'isa: Int, name: bbb',
+            comment => 'isa: Int, name: int_default',
             default => 5,
             alias   => 'b',
         );
-    },
-);
 
-subcmd 'demo::opt::num' => (
-    comment => 'Num option',
-    optargs => sub {
-
-        opt aaa => (
+        opt num => (
             isa     => 'Num',
-            comment => 'isa: Num, name: aaa',
+            comment => 'isa: Num, name: num',
             alias   => 'a',
         );
 
-        opt bbb => (
+        opt num_default => (
             isa     => 'Num',
-            comment => 'isa: Num, name: bbb',
+            comment => 'isa: Num, name: num_default',
             default => 6,
             alias   => 'b',
         );
-    },
-);
 
-subcmd 'demo::opt::str' => (
-    comment => 'Str option',
-    optargs => sub {
-
-        opt aaa => (
+        opt str => (
             isa     => 'Str',
-            comment => 'isa: Str, name: aaa',
+            comment => 'isa: Str, name: str',
             alias   => 'a',
         );
 
-        opt bbb => (
+        opt str_default => (
             isa     => 'Str',
-            comment => 'isa: Str, name: bbb',
+            comment => 'isa: Str, name: str_default',
             default => 'some text',
             alias   => 'b',
         );
-    },
-);
 
-subcmd 'demo::opt::isa_name' => (
-    comment => 'option with isa_name',
-    optargs => sub {
-
-        opt aaa => (
-            isa     => 'Str',
-            comment => 'isa: Str, name: aaa',
-            alias   => 'a',
-        );
-
-        opt bbb => (
+        opt isa_name => (
             isa      => 'Str',
             isa_name => 'XXX',
-            comment  => 'isa: Str, isa_name: XXX, name: bbb',
+            comment  => 'isa: Str, name: isa_name',
             alias    => 'b',
         );
     },
 );
 
 my ( $cmd, $opts ) = eval { class_optargs('demo') };
+my $err = $@;
+my $ref = ref $err;
+die "$err\n$ref\n" if $ref;
+die $err           if $err;
 
-if ( my $err = $@ ) {
-    if ( ref $err ) {
-        die $err . "(" . ref($err) . ")\n";
-    }
-    else {
-        die $err;
-    }
-}
-else {
-    print "$cmd:\n"
-      . ( Dumper($opts) =~ s/\$VAR1 = (.*);/$1/sr =~ s/^/    /gsmr );
-}
-
-exit;
+print Dumper( bless $opts, $cmd );

@@ -1,3 +1,8 @@
+- Check for multiple use of the same alias character
+
+- Fix --version example to use $cmd->name instead of just $cmd (or else
+  pass $basename as additional argument to the trigger)
+
 - Roles:
 
     cmd_role 'role_name' => (
@@ -16,7 +21,7 @@
 
 - Do not inherit options from parent commands?
 
-- An Enum type
+- An Enum type (or allow callers to use Type::Tiny directly)
     opt things => (
         isa     => 'Enum',
         valid   => [qw/one two three/],

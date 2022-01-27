@@ -32,7 +32,7 @@ is $class, 'c1::s1', 'correct SubCmd';
 is $opts, {}, 'no opts or args';
 
 $e = dies { ( $class, $opts ) = class_optargs( 'c1', 'junk' ) };
-like ref $e, qr/UnknownSubCmd/, 'unknown SubCmd';
+like ref $e, qr/SubCmdUnknown/, 'unknown SubCmd';
 
 cmd 'c2' => (
     comment => 'the base command',

@@ -17,17 +17,34 @@ arg aaa => (
 );
 
 arg bbb => (
-    isa          => 'Str',
-    comment      => 'other some kind of arg',
-    default      => 'meh',
-    show_default => 1,
+    isa     => 'Str',
+    comment => 'other some kind of arg',
+    default => 'meh',
 );
 
-opt help => (
+opt dump => (
     isa     => 'Flag',
-    comment => 'print help message and exit',
-    alias   => 'h',
-    ishelp  => 1,
+    alias   => 'd',
+    comment => 'print result using Data::Dumper',
+    trigger => sub {
+        require Data::Dumper;
+        print Dumper $_[1];
+    }
+);
+
+opt help => ( ishelp => 1 );
+
+opt message => (
+    isa     => 'Str',
+    alias   => 'm',
+    comment => 'possibly very long option',
+);
+
+opt required => (
+    isa      => 'Str',
+    alias    => 'r',
+    comment  => 'a very necessary option',
+    required => 1,
 );
 
 opt quiet => (
@@ -37,6 +54,9 @@ opt quiet => (
 );
 
 my $opts = eval { optargs };
-my $err = $@;
-print $INC{'OptArgs2.pm'}, "\n";
-print $err ? '(' . ( ref $err ) . ")\n$err" : Dumper($opts) =~ s/VAR1/opts/r;
+my $err  = $@;
+my $ref  = ref $err;
+die "$err\n$ref\n" if $ref;
+die $err           if $err;
+
+print Dumper $opts;

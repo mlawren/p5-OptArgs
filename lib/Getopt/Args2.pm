@@ -1,10 +1,31 @@
 # constants
-sub Getopt::Args2::STYLE_SUMMARY { 1 }
-sub Getopt::Args2::STYLE_NORMAL  { 2 }
-sub Getopt::Args2::STYLE_FULL    { 3 }
+package Getopt::Args2;
+
+sub STYLE_USAGE()    { 'Usage' }   # unused, but could be considered the default
+sub STYLE_HELP()     { 'Help' }
+sub STYLE_HELPTREE() { 'HelpTree' }
+sub STYLE_HELPSUMMARY() { 'HelpSummary' }
+
+# Backwards comatibility
+sub STYLE_FULL()    { STYLE_HELP }
+sub STYLE_TREE()    { STYLE_HELPTREE }
+sub STYLE_SUMMARY() { STYLE_HELPSUMMARY }
+
+our $CURRENT;
+our %isa2name = (
+    'ArrayRef' => 'Str',
+    'Bool'     => '',
+    'Counter'  => '',
+    'Flag'     => '',
+    'HashRef'  => 'Str',
+    'Int'      => 'Int',
+    'Num'      => 'Num',
+    'Str'      => 'Str',
+    'SubCmd'   => 'Str',
+);
 
 package Getopt::Args2::Mo;
-our $VERSION = '0.0.12_1';
+our $VERSION = '0.0.12_2';
 
 BEGIN {
 #<<< do not perltidy
@@ -17,102 +38,28 @@ no warnings;my$M=__PACKAGE__.'::';*{$M.Object::new}=sub{my$c=shift;my$s=bless{@_
 }
 1;
 
-package Getopt::Args2::Mo::Object;
+package Getopt::Args2::CODE2optarg;
 use strict;
-use warnings;
 
-our $VERSION = '0.0.12_1';
-
-sub confess {
-    my $self = shift;
-    require Carp;
-    Carp::confess(@_);
-}
-
-sub croak {
-    my $self   = shift;
-    my $err    = shift;
-    my $result = Getopt::Args2::Result->new( 'Error::' . $err, @_ );
-
-    # Internal packages we don't want to see for user-related errors
-    local (
-        @Getopt::Args2::CARP_NOT,      @Getopt::Args2::Arg::CARP_NOT,
-        @Getopt::Args2::Cmd::CARP_NOT, @Getopt::Args2::Fallback::CARP_NOT,
-        @Getopt::Args2::Opt::CARP_NOT, @Getopt::Args2::Mo::CARP_NOT,
-        @Getopt::Args2::Mod::Object::CARP_NOT
-    );
-
-    @Getopt::Args2::CARP_NOT                = @Getopt::Args2::Arg::CARP_NOT =
-      @Getopt::Args2::Cmd::CARP_NOT         = @Getopt::Args2::Fallback::CARP_NOT =
-      @Getopt::Args2::Opt::CARP_NOT         = @Getopt::Args2::Mo::CARP_NOT =
-      @Getopt::Args2::Mod::Object::CARP_NOT = (
-        qw/
-          Getopt::Args2
-          Getopt::Args2::Arg
-          Getopt::Args2::Cmd
-          Getopt::Args2::Opt
-          Getopt::Args2::Mo
-          Getopt::Args2::Mo::Object
-          /
-      );
-
-    # Carp::croak has a bug when first argument is a reference
-    require Carp;
-    Carp::croak( '', $result );
-}
-
-sub error {
-    my $self = shift;
-    my $err  = shift;
-    die Getopt::Args2::Result->new( 'Error::' . $err, @_ );
-}
-
-sub result {
-    my $self = shift;
-    return Getopt::Args2::Result->new(@_);
-}
-
-1;
-
-package Getopt::Args2::Result;
-use overload
-  bool     => sub { 1 },
-  '""'     => 'as_string',
-  fallback => 1;
-
-our $VERSION = '0.0.12_1';
-
-sub new {
-    my $proto = shift;
-    my $type  = shift || Carp::croak( $proto . '->new($TYPE,[@args])' );
-    my $class = 'Getopt::Args2::' . $type;
-
-    {
-        no strict 'refs';
-        *{ $class . '::ISA' } = [$proto];
-    }
+sub TIESCALAR {
+    my $class = shift;
+    ( 3 == @_ ) or Optargs2::_croak( 'Usage', 'args: optargs,name,sub' );
     return bless [@_], $class;
 }
 
-sub as_string {
-    ( my $type = ref( $_[0] ) ) =~ s/^Getopt::Args2::(.*)/$1/;
-    my @x = @{ $_[0] };
-    if ( my $str = shift @x ) {
-        return sprintf( "$str (%s)", @x, $type )
-          unless $str =~ m/\n/;
-        return sprintf( $str, @x );
-    }
-    return ref $_[0];
+sub FETCH {
+    my $self = shift;
+    my ( $optargs, $name, $sub ) = @$self;
+    untie $optargs->{$name};
+    $optargs->{$name} = $sub->($optargs);
 }
-
-1;
 
 package Getopt::Args2::Arg;
 use strict;
 use warnings;
 use Getopt::Args2::Mo;
 
-our $VERSION = '0.0.12_1';
+our $VERSION = '0.0.12_2';
 
 has cmd => (
     is       => 'rw',
@@ -125,11 +72,13 @@ has comment => (
 );
 
 # Can be re-set by CODEref defaults
-has default => ( is => 'rw', );
+has default => ( is => 'ro', );
 
 has fallback => ( is => 'rw', );
 
 has isa => ( required => 1, );
+
+has isa_name => ( is => 'rw', );
 
 has getopt => ( is => 'rw', );
 
@@ -155,8 +104,12 @@ my %arg2getopt = (
 
 sub BUILD {
     my $self = shift;
+
+    Getopt::Args2::_croak( 'Conflict', q{'default' and 'required' conflict} )
+      if $self->required and defined $self->default;
+
     if ( my $fb = $self->fallback ) {
-        $self->croak( 'FallbackNotHashref', 'fallback must be a HASH ref' )
+        Getopt::Args2::_croak( 'FallbackNotHashref', 'fallback must be a HASH ref' )
           unless 'HASH' eq ref $fb;
 
         $self->fallback(
@@ -167,18 +120,27 @@ sub BUILD {
     }
 }
 
-sub name_comment {
-    my $self = shift;
+sub name_alias_type_comment {
+    my $self  = shift;
+    my $value = shift;
 
-    $self->default( $self->default->( {%$self} ) )
-      if 'CODE' eq ref $self->default;
-
-    my $comment = $self->comment;
-    if ( $self->show_default && defined( my $value = $self->default ) ) {
-        $comment .= ' [default: ' . $value . ']';
+    my $deftype = '';
+    if ( $self->show_default and defined $value ) {
+        $deftype = '[' . $value . ']';
+    }
+    else {
+        $deftype = $self->isa_name // $Getopt::Args2::isa2name{ $self->isa }
+          // Getopt::Args2::_croak( 'InvalidIsa',
+            'invalid isa type: ' . $self->isa );
     }
 
-    return $self->name, $comment;
+    my $comment = $self->comment;
+    if ( $self->required ) {
+        $comment .= ' ' if length $comment;
+        $comment .= '[required]';
+    }
+
+    return $self->name, '', $deftype, $comment;
 }
 
 1;
@@ -188,7 +150,7 @@ use strict;
 use warnings;
 use Getopt::Args2::Mo;
 
-our $VERSION = '0.0.12_1';
+our $VERSION = '0.0.12_2';
 
 extends 'Getopt::Args2::Arg';
 
@@ -201,7 +163,7 @@ use strict;
 use warnings;
 use Getopt::Args2::Mo;
 
-our $VERSION = '0.0.12_1';
+our $VERSION = '0.0.12_2';
 
 has alias => ( is => 'ro', );
 
@@ -211,9 +173,11 @@ has comment => (
 );
 
 # Can be re-set by CODEref defaults
-has default => ( is => 'rw', );
+has default => ( is => 'ro', );
 
 has getopt => ( is => 'ro', );
+
+has required => ( is => 'ro', );
 
 has hidden => ( is => 'ro', );
 
@@ -247,17 +211,30 @@ my %isa2getopt = (
 sub new_from {
     my $proto = shift;
     my $ref   = {@_};
+    use feature 'state';
 
-    if ( delete $ref->{ishelp} ) {
-        return $proto->croak( 'IshelpTriggerConflict',
-            'ishelp and trigger conflict' )
-          if exists $ref->{trigger};
+    if ( my $type = delete $ref->{ishelp} ) {
+        state %ishelp = (
+            Getopt::Args2::STYLE_USAGE       => undef,
+            Getopt::Args2::STYLE_HELP        => undef,
+            Getopt::Args2::STYLE_HELPSUMMARY => undef,
+            Getopt::Args2::STYLE_HELPTREE    => undef,
+        );
+        $type = Getopt::Args2::STYLE_HELP if $type eq 1;
+        Getopt::Args2::_croak( 'InvalidIshelp', 'invalid ishelp "%s" for opt "%s"',
+            $type, $ref->{name} )
+          unless exists $ishelp{$type};
 
-        $ref->{trigger} = sub { die shift->usage(Getopt::Args2::STYLE_FULL) };
+        $ref->{isa}     //= 'Flag';
+        $ref->{alias}   //= substr $ref->{name}, 0, 1;
+        $ref->{comment} //= 'print a full help message and exit';
+        $ref->{trigger} //= sub {
+            Getopt::Args2::_usage($type);
+        };
     }
 
     if ( !exists $isa2getopt{ $ref->{isa} } ) {
-        return $proto->croak( 'InvalidIsa', 'invalid isa "%s" for opt "%s"',
+        return Getopt::Args2::_croak( 'InvalidIsa', 'invalid isa "%s" for opt "%s"',
             $ref->{isa}, $ref->{name} );
     }
 
@@ -272,56 +249,56 @@ sub new_from {
     return $proto->new(%$ref);
 }
 
-my %isa2name = (
-    'ArrayRef' => 'STR',
-    'Bool'     => '',
-    'Counter'  => '',
-    'Flag'     => '',
-    'HashRef'  => 'STR',
-    'Int'      => 'INT',
-    'Num'      => 'NUM',
-    'Str'      => 'STR',
-);
-
-sub name_alias_comment {
-    my $self = shift;
-
-    $self->default( $self->default->( {%$self} ) )
-      if 'CODE' eq ref $self->default;
+sub name_alias_type_comment {
+    my $self  = shift;
+    my $value = shift;
 
     ( my $opt = $self->name ) =~ s/_/-/g;
     if ( $self->isa eq 'Bool' ) {
-        if ( $self->default ) {
+        if ($value) {
             $opt = 'no-' . $opt;
         }
-        elsif ( not defined $self->default ) {
+        elsif ( not defined $value ) {
             $opt = '[no-]' . $opt;
         }
     }
-    elsif ( $self->isa ne 'Flag' and $self->isa ne 'Counter' ) {
-        $opt .= '=' . ( $self->isa_name || $isa2name{ $self->isa } );
-    }
-
     $opt = '--' . $opt;
 
-    my $alias = $self->alias;
+    my $alias = $self->alias // '';
     if ( length $alias ) {
-        $alias = '-' . $alias;
         $opt .= ',';
+        $alias = '-' . $alias;
+    }
+
+    my $deftype = '';
+    if ( defined $value and $self->show_default ) {
+        if ( $self->isa eq 'Flag' ) {
+            $deftype = '(set)';
+        }
+        elsif ( $self->isa eq 'Bool' ) {
+            $deftype = '(' . ( $value ? 'true' : 'false' ) . ')';
+        }
+        elsif ( $self->isa eq 'Counter' ) {
+            $deftype = '(' . $value . ')';
+        }
+        else {
+            $deftype = '[' . $value . ']';
+        }
     }
     else {
-        $alias = '';
+        $deftype = $self->isa_name // $Getopt::Args2::isa2name{ $self->isa }
+          // Getopt::Args2::_croak( 'InvalidIsa',
+            'invalid isa type: ' . $self->isa );
     }
 
     my $comment = $self->comment;
-    if ( $self->show_default && defined( my $value = $self->default ) ) {
-        $value = $value ? 'true' : 'false' if $self->isa eq 'Bool';
-        $comment .= ' [default: ' . $value . ']';
+    if ( $self->required ) {
+        $comment .= ' ' if length $comment;
+        $comment .= '[required]';
     }
 
-    return $opt, $alias, $comment;
+    return $opt, $alias, $deftype, $comment;
 }
-
 1;
 
 package Getopt::Args2::Cmd;
@@ -331,11 +308,11 @@ use overload
   bool     => sub { 1 },
   '""'     => sub { shift->class },
   fallback => 1;
-use Getopt::Args2::Mo;
 use List::Util qw/max/;
+use Getopt::Args2::Mo;
 use Scalar::Util qw/weaken/;
 
-our $VERSION = '0.0.12_1';
+our $VERSION = '0.0.12_2';
 
 has abbrev => ( is => 'rw', );
 
@@ -377,17 +354,17 @@ has parent => (
     weak_ref => 1,
 );
 
+has show_default => (
+    is      => 'ro',
+    default => 0,
+);
+
 has subcmds => (
     is      => 'ro',
     default => sub { [] },
 );
 
-has usage_style => (
-    is      => 'rw',
-    default => Getopt::Args2::STYLE_NORMAL,
-);
-
-our $CURRENT;
+has _values => ( is => 'rw' );
 
 sub add_arg {
     my $self = shift;
@@ -427,23 +404,46 @@ sub parents {
 
 sub run_optargs {
     my $self = shift;
+    map { $_->run_optargs } $self->parents;
     return unless ref $self->optargs eq 'CODE';
-    local $CURRENT = $self;
+    local $Getopt::Args2::CURRENT = $self;
     $self->optargs->();
     $self->optargs(undef);
 }
 
+sub _usage_tree {
+    my $self  = shift;
+    my $depth = shift || '';
+
+    ( my $str = $self->usage(Getopt::Args2::STYLE_HELPSUMMARY) ) =~ s/^/$depth/gsm;
+
+    foreach my $subcmd ( sort { $a->name cmp $b->name } @{ $self->subcmds } ) {
+        $str .= $subcmd->_usage_tree( $depth . '    ' );
+    }
+
+    return $str;
+}
+
 sub usage {
-    my $self = shift;
-    my $style = shift || $self->usage_style;
+    my $self  = shift;
+    my $style = shift || Getopt::Args2::STYLE_USAGE;
+    my $usage = '';
+
+    if ( $style eq Getopt::Args2::STYLE_HELPTREE ) {
+        $usage = $self->_usage_tree;
+        no strict 'refs';
+        @Getopt::Args2::HelpTree::ISA = ('Getopt::Args2');
+        return bless \$usage, 'Getopt::Args2::HelpTree';
+    }
 
     $self->run_optargs;
 
-    my $usage   = '';
     my @parents = $self->parents;
     my @args    = @{ $self->args };
     my @opts    = sort { $a->name cmp $b->name } map { @{ $_->opts } } @parents,
       $self;
+
+    my $optargs = $self->_values;
 
     # Summary line
     $usage .= join( ' ', map { $_->name } @parents ) . ' ' if @parents;
@@ -460,12 +460,15 @@ sub usage {
     $usage .= ' [OPTIONS...]' if @opts;
     $usage .= "\n";
 
-    return $self->result( 'SummaryUsage', $usage )
-      if $style == Getopt::Args2::STYLE_SUMMARY;
+    if ( $style eq Getopt::Args2::STYLE_HELPSUMMARY ) {
+        no strict 'refs';
+        @Getopt::Args2::HelpSummary::ISA = ('Getopt::Args2');
+        return bless \$usage, 'Getopt::Args2::HelpSummary';
+    }
 
     # Synopsis
     $usage .= "\n  Synopsis:\n    " . $self->comment . "\n"
-      if $style == Getopt::Args2::STYLE_FULL and length $self->comment;
+      if $style eq Getopt::Args2::STYLE_HELP and length $self->comment;
 
     # Build arguments
     my @uargs;
@@ -475,15 +478,19 @@ sub usage {
         my $i = 0;
         foreach my $arg (@args) {
             if ( $arg->isa eq 'SubCmd' ) {
-                push( @uargs,
-                    [ '  ' . ucfirst( $arg->name ) . ':', $arg->comment ] );
+                my ( $n, $al, undef, $c ) =
+                  $arg->name_alias_type_comment( $optargs->{ $arg->name }
+                      // undef );
+                push( @uargs, [ '  ' . ucfirst($n) . ':', $al, '', $c ] );
                 my @sorted_subs =
-                  sort { $a->name cmp $b->name }
-                  grep { $style == Getopt::Args2::STYLE_FULL or !$_->hidden }
+                  map  { $_->[1] }
+                  sort { $a->[0] cmp $b->[0] }
+                  map  { [ $_->name, $_ ] }
+                  grep { $style eq Getopt::Args2::STYLE_HELP or !$_->hidden }
                   @{ $arg->cmd->subcmds },
                   $arg->fallback ? $arg->fallback : ();
 
-                my $prefix = length( $arg->comment ) ? '  ' : '';
+                my $prefix = '';    #length( $arg->comment ) ? '  ' : '';
                 foreach my $subcmd (@sorted_subs) {
                     push(
                         @uargs,
@@ -494,6 +501,7 @@ sub usage {
                                 ? uc( $subcmd->name )
                                 : $subcmd->name
                               ),
+                            '', '',
                             $prefix . $subcmd->comment
                         ]
                     );
@@ -501,55 +509,35 @@ sub usage {
 
                 $have_subcmd++;
             }
-            elsif ( !$i ) {
-                push( @uargs, [ '  Arguments:', '' ] );
-                my ( $n, $c ) = $arg->name_comment;
-                push( @uargs, [ '    ' . uc($n), $c ] );
-            }
-            else {
-                my ( $n, $c ) = $arg->name_comment;
-                push( @uargs, [ '    ' . uc($n), $c ] ) if length($c);
+            elsif ( 'OptArgRef' ne $arg->isa ) {
+                push( @uargs, [ '  Arguments:', '', '', '' ] ) if !$i;
+                my ( $n, $a, $t, $c ) =
+                  $arg->name_alias_type_comment( $optargs->{ $arg->name }
+                      // undef );
+                push( @uargs, [ '    ' . uc($n), $a, $t, $c ] );
             }
             $i++;
-        }
-    }
-
-    my @sargs;
-    if ( !$have_subcmd ) {
-        my @sorted_subs =
-          sort { $a->name cmp $b->name }
-          grep { $style == Getopt::Args2::STYLE_FULL or !$_->hidden }
-          @{ $self->subcmds };
-
-        if (@sorted_subs) {
-            push( @sargs, [ '  Sub-Commands:', '' ] );
-
-            foreach my $subcmd (@sorted_subs) {
-                push( @sargs, [ '    ' . $subcmd->name, $subcmd->comment ] );
-            }
         }
     }
 
     # Build options
     my @uopts;
     if (@opts) {
-        push( @uopts, [ "  Options:", '', '' ] );
+        push( @uopts, [ "  Options:", '', '', '' ] );
         foreach my $opt (@opts) {
-            next if $style != Getopt::Args2::STYLE_FULL and $opt->hidden;
-            my ( $n, $a, $c ) = $opt->name_alias_comment;
-            push( @uopts, [ '    ' . $n, $a, $c ] );
+            next if $style ne Getopt::Args2::STYLE_HELP and $opt->hidden;
+            my ( $n, $a, $t, $c ) =
+              $opt->name_alias_type_comment( $optargs->{ $opt->name }
+                  // undef );
+            push( @uopts, [ '    ' . $n, $a, $t, $c ] );
         }
-
-        # Width calculation: turn 3 option fields into 2:
-        my $w1 = max( map { length $_->[0] } @uopts );
-        my $fmt = '%-' . $w1 . "s %s";
-
-        @uopts = map { [ sprintf( $fmt, $_->[0], $_->[1] ), $_->[2] ] } @uopts;
     }
 
     # Width calculation for args and opts combined
-    my $w1 = max( map { length $_->[0] } @uargs, @sargs, @uopts );
-    my $format = '%-' . $w1 . "s   %s\n";
+    my $w1     = max( map { length $_->[0] } @uargs, @uopts );
+    my $w2     = max( map { length $_->[1] } @uargs, @uopts );
+    my $w3     = max( map { length $_->[2] } @uargs, @uopts );
+    my $format = "%-${w1}s %-${w2}s %-${w3}s  %s\n";
 
     # Output Arguments
     if (@uargs) {
@@ -567,57 +555,125 @@ sub usage {
         }
     }
 
-    # Output Subcommands
-    if (@sargs) {
-        $usage .= "\n";
-        foreach my $row (@sargs) {
-            $usage .= sprintf( $format, @$row );
-        }
+    $usage = 'usage: ' . $usage;
+
+    if ( $style eq Getopt::Args2::STYLE_HELP ) {
+        no strict 'refs';
+        @Getopt::Args2::Help::ISA = ('Getopt::Args2');
+        return bless \$usage, 'Getopt::Args2::Help';
     }
-
-    return $self->result(
-        $style =
-          Getopt::Args2::STYLE_FULL ? 'FullUsage' : 'NormalUsage',
-        'usage: ' . $usage . "\n" );
-}
-
-sub _usage_tree {
-    my $self  = shift;
-    my $style = shift;
-    my $depth = shift || '';
-
-    ( my $str = $self->usage($style) ) =~ s/^/$depth/gsm;
-
-    foreach my $subcmd ( sort { $a->name cmp $b->name } @{ $self->subcmds } ) {
-        $str .= $subcmd->_usage_tree( $style, $depth . '    ' );
+    else {
+        no strict 'refs';
+        @Getopt::Args2::Usage::ISA = ('Getopt::Args2');
+        return bless \$usage, 'Getopt::Args2::Usage';
     }
-
-    return $str;
 }
-
-sub usage_tree {
-    my $self = shift;
-    my $style = shift || Getopt::Args2::STYLE_SUMMARY;
-    return $self->result( 'TreeUsage', $self->_usage_tree($style) );
-}
-
-1;
 
 package Getopt::Args2;
 use 5.010;
 use strict;
 use warnings;
+use overload
+  bool     => sub { 1 },
+  '""'     => sub { ${ $_[0] } },
+  fallback => 1;
+require Carp;
 use Encode qw/decode/;
 use Getopt::Long qw/GetOptionsFromArray/;
 use Exporter qw/import/;
 use Getopt::Args2::Mo;
 
-our $VERSION   = '0.0.12_1';
+our $VERSION = '0.0.12_2';
+our @CARP_NOT;
 our @EXPORT    = (qw/arg class_optargs cmd opt optargs subcmd/);
 our @EXPORT_OK = (qw/usage/);
 
-my $PKG = __PACKAGE__;
 my %COMMAND;
+
+sub _usage {
+    my $reason = shift // Carp::croak('usage: _usage($REASON, [$msg])');
+    my $usage  = shift // '';
+
+    my %reasons = (
+        ArgRequired      => undef,
+        Help             => undef,
+        HelpSummary      => undef,
+        HelpTree         => undef,
+        OptRequired      => undef,
+        OptUnknown       => undef,
+        SubCmdRequired   => undef,
+        SubCmdUnknown    => undef,
+        UnexpectedOptArg => undef,
+    );
+
+    Carp::croak("unknown usage reason: $reason")
+      unless exists $reasons{$reason};
+
+    my $pkg = 'Getopt::Args2::Usage::' . $reason;
+
+    {
+        no strict 'refs';
+        *{ $pkg . '::ISA' } = [__PACKAGE__];
+    }
+
+    $usage .= "\n\n" if length $usage;
+    $usage .= $Getopt::Args2::CURRENT->usage($reason);
+
+    if ( -t STDOUT or $reason =~ m/^Help/ ) {
+        require Getopt::Args2::Pager;
+        Getopt::Args2::Pager->on;
+        print $usage;
+        Getopt::Args2::Pager->off;    # closes input to pager which should flush
+        my $nl = "\n";
+        die bless \$nl, $pkg;
+    }
+
+    #    $usage .= "\n";
+    die bless \$usage, $pkg;
+}
+
+# Carp::croak can't deal with blessed references so a straight croak in
+# the rest of the code doesn't do what we want, hence this.
+sub _croak {
+    my $type  = shift // Carp::croak('usage: _croak($TYPE, [$msg])');
+    my %types = (
+        CmdExists          => undef,
+        CmdNotFound        => undef,
+        Conflict           => undef,
+        FallbackNotHashref => undef,
+        InvalidIsa         => undef,
+        ParentCmdNotFound  => undef,
+        SubCmdExists       => undef,
+        UndefOptArg        => undef,
+        Usage              => undef,
+    );
+
+    Carp::croak("unknown croak type: $type") unless exists $types{$type};
+
+    my $pkg = 'Getopt::Args2::Error::' . $type;
+
+    {
+        no strict 'refs';
+        *{ $pkg . '::ISA' } = [__PACKAGE__];
+    }
+
+    local @CARP_NOT = (
+        qw/
+          Getopt::Args2
+          Getopt::Args2::Arg
+          Getopt::Args2::Cmd
+          Getopt::Args2::Fallback
+          Getopt::Args2::Opt
+          Getopt::Args2::Mo
+          Getopt::Args2::Mo::Object
+          /
+    );
+
+    my $msg =
+      ( shift // $types{$type} // "($pkg)" ) . ' ' . Carp::shortmess('');
+
+    die bless \$msg, $pkg;
+}
 
 sub _default_command {
     my $caller = shift;
@@ -628,16 +684,22 @@ sub _default_command {
 sub arg {
     my $name = shift;
 
-    $Getopt::Args2::Cmd::CURRENT //= _default_command(caller);
-    $Getopt::Args2::Cmd::CURRENT->add_arg( Getopt::Args2::Arg->new( name => $name, @_ ) );
+    $Getopt::Args2::CURRENT //= _default_command(caller);
+    $Getopt::Args2::CURRENT->add_arg(
+        Getopt::Args2::Arg->new(
+            name         => $name,
+            show_default => $Getopt::Args2::CURRENT->show_default,
+            @_,
+        )
+    );
 }
 
 sub class_optargs {
     my $class = shift
-      || $PKG->croak( 'Usage', 'class_optargs($CMD,[@argv])' );
+      || Getopt::Args2::_croak( 'Usage', 'class_optargs($CMD,[@argv])' );
 
     my $cmd = $COMMAND{$class}
-      || $PKG->croak( 'CmdNotFound',
+      || Getopt::Args2::_croak( 'CmdNotFound',
         'command class not found: ' . $class );
 
     my $source      = \@_;
@@ -656,47 +718,58 @@ sub class_optargs {
     }
     else {
         $source_hash = { map { %$_ } grep { ref $_ eq 'HASH' } @$source };
-        $source = [ grep { ref $_ ne 'HASH' } @$source ];
+        $source      = [ grep { ref $_ ne 'HASH' } @$source ];
     }
 
     map {
-        $PKG->croak( 'UndefOptArg', '_optargs argument undefined!' )
+        Getopt::Args2::_croak( 'UndefOptArg', '_optargs argument undefined!' )
           if !defined $_
     } @$source;
 
     Getopt::Long::Configure(qw/pass_through no_auto_abbrev no_ignore_case/);
 
+    my $error;
     my $optargs = {};
-    my @coderef_default_keys;
     my @trigger;
-    my @errors;
+
+    $cmd->run_optargs;
 
     # Start with the parents options
-    map { $_->run_optargs } $cmd->parents, $cmd;
     my @opts = map { @{ $_->opts } } $cmd->parents, $cmd;
     my @args = @{ $cmd->args };
 
   OPTARGS: while ( @opts or @args ) {
-
         while ( my $try = shift @opts ) {
             my $result;
-            if ( exists $source_hash->{ $try->name } ) {
-                $result = delete $source_hash->{ $try->name };
+            my $name = $try->name;
+
+            if ( exists $source_hash->{$name} ) {
+                $result = delete $source_hash->{$name};
             }
             else {
                 GetOptionsFromArray( $source, $try->getopt => \$result );
             }
 
-            if ( defined $result ) {
-                $optargs->{ $try->name } = $result;
-                if ( my $ref = $try->trigger ) {
-                    push( @trigger, $ref, $result );
+            if ( defined($result) and my $t = $try->trigger ) {
+                push @trigger, [ $t, $name ];
+            }
+
+            if ( defined( $result //= $try->default ) ) {
+
+                if ( 'CODE' eq ref $result ) {
+                    tie $optargs->{$name}, 'Getopt::Args2::CODE2optarg', $optargs,
+                      $name,
+                      $result;
+                }
+                else {
+                    $optargs->{$name} = $result;
                 }
             }
-            elsif ( defined $try->default ) {
-                push( @coderef_default_keys, $try->name )
-                  if ref $try->default eq 'CODE';
-                $optargs->{ $try->name } = $result = $try->default;
+            elsif ( $try->required ) {
+                $name =~ s/_/-/g;
+                $error //= [
+                    'OptRequired', qq{error: missing required option "--$name"}
+                ];
             }
         }
 
@@ -733,39 +806,36 @@ sub class_optargs {
                     $try = $new_arg;
                 }
                 elsif ( $try->required ) {
-                    push( @errors, [ 'SubCmdRequired', $cmd->usage ] );
+                    $error //= ['SubCmdRequired'];
                     last OPTARGS;
                 }
                 elsif (@$source) {
-                    push( @errors, [ 'UnknownSubCmd', $cmd->usage ] );
+                    $error //= ['SubCmdUnknown'];
                     last OPTARGS;
                 }
             }
 
+            my $name = $try->name;
+
             if (@$source) {
-
-                push(
-                    @errors,
-                    [
-                        'UnknownOption',
-                        qq{error: unknown option "$source->[0]"\n\n}
-                          . $cmd->usage
-                    ]
-                ) if $source->[0] =~ m/^--\S/;
-
-                push(
-                    @errors,
-                    [
-                        'UnknownOption',
-                        qq{error: unknown option "$source->[0]"\n\n}
-                          . $cmd->usage
-                    ]
+                if (
+                    $try->isa ne 'OptArgRef'
+                    and (
+                        ( $source->[0] =~ m/^--\S/ )
+                        or (
+                            $source->[0] =~ m/^-\S/
+                            and !(
+                                $source->[0] =~ m/^-\d/
+                                and (  $try->isa ne 'Num'
+                                    or $try->isa ne 'Int' )
+                            )
+                        )
+                    )
                   )
-                  if $source->[0] =~ m/^-\S/
-                  and !(
-                    $source->[0] =~ m/^-\d/ and ( $try->isa ne 'Num'
-                        or $try->isa ne 'Int' )
-                  );
+                {
+                    my $o = shift @$source;
+                    $error //= [ 'OptUnknown', qq{error: unknown option "$o"} ];
+                }
 
                 if ( $try->greedy ) {
                     my @later;
@@ -773,7 +843,7 @@ sub class_optargs {
                         push( @later, pop @$source ) for @args;
                     }
 
-                    if ( $try->isa eq 'ArrayRef' ) {
+                    if ( $try->isa eq 'ArrayRef' or $try->isa eq 'OptArgRef' ) {
                         $result = [@$source];
                     }
                     elsif ( $try->isa eq 'HashRef' ) {
@@ -786,74 +856,72 @@ sub class_optargs {
                     shift @$source while @$source;
                     push( @$source, @later );
                 }
+                elsif ( $try->isa eq 'ArrayRef' or $try->isa eq 'OptArgRef' ) {
+                    $result = [ shift @$source ];
+                }
+                elsif ( $try->isa eq 'HashRef' ) {
+                    $result = { split /=/, shift @$source };
+                }
                 else {
-                    if ( $try->isa eq 'ArrayRef' ) {
-                        $result = [ shift @$source ];
-                    }
-                    elsif ( $try->isa eq 'HashRef' ) {
-                        $result = { split /=/, shift @$source };
-                    }
-                    else {
-                        $result = shift @$source;
-                    }
+                    $result = shift @$source;
                 }
 
                 # TODO: type check using Param::Utils?
+            }
+            elsif ( exists $source_hash->{$name} ) {
+                $result = delete $source_hash->{$name};
+            }
+
+            if ( defined( $result //= $try->default ) ) {
+
+              #                push( @trigger, $try->trigger ) if $try->trigger;
+
+                if ( 'CODE' eq ref $result ) {
+                    tie $optargs->{$name}, 'Getopt::Args2::CODE2optarg', $optargs,
+                      $name,
+                      $result;
+                }
+                else {
+                    $optargs->{$name} = $result;
+                }
+            }
+            elsif ( $try->required ) {
+                $error //= ['ArgRequired'];
+            }
+        }
     }
-    elsif ( exists $source_hash->{ $try->name } ) {
-        $result = delete $source_hash->{ $try->name };
-    }
-    elsif ( $try->required ) {
-        push( @errors, [ 'ArgRequired', $cmd->usage ] );
-        next;
-    }
 
-    if ( defined $result ) {
-        $optargs->{ $try->name } = $result;
+    if (@$source) {
+        $error //= [
+            'UnexpectedOptArg',
+            "error: unexpected option(s) or argument(s): @$source"
+        ];
     }
-    elsif ( defined $try->default ) {
-        push( @coderef_default_keys, $try->name )
-          if ref $try->default eq 'CODE';
-        $optargs->{ $try->name } = $result = $try->default;
+    elsif ( my @unexpected = keys %$source_hash ) {
+        $error //= [
+            'UnexpectedHashOptArg',
+            "error: unexpected HASH option(s) or argument(s): @unexpected"
+        ];
     }
 
-}
-}
+    $cmd->_values($optargs);
 
-while ( my $trigger = shift @trigger ) {
-  $trigger->( $cmd, shift @trigger );
-}
+    local $Getopt::Args2::CURRENT = $cmd;
+    map { $_->[0]->( $cmd, $optargs->{ $_->[1] } ) } @trigger;
 
-if (@errors) {
-  $PKG->error( @{ $errors[0] } );
-}
-elsif (@$source) {
-  $PKG->error( 'UnexpectedOptArg',
-      "error: unexpected option(s) or argument(s): @$source\n\n"
-        . $cmd->usage );
-}
-elsif ( my @unexpected = keys %$source_hash ) {
-  $PKG->error( 'UnexpectedHashOptArg',
-      "error: unexpected HASH option(s) or argument(s): @unexpected\n\n"
-        . $cmd->usage );
-}
+    Getopt::Args2::_usage(@$error) if $error;
 
-# Re-calculate the default if it was a subref
-foreach my $key (@coderef_default_keys) {
-  $optargs->{$key} = $optargs->{$key}->( {%$optargs} );
-}
-
-return ( $cmd->class, $optargs );
+    return ( $cmd->class, $optargs );
 }
 
 sub cmd {
-    my $class = shift || $PKG->confess('cmd($CLASS,@args)');
+    my $class = shift || Getopt::Args2::_croak('cmd($CLASS,@args)');
 
-    $PKG->croak( 'CmdExists', "command already defined: $class" )
+    Getopt::Args2::_croak( 'CmdExists', "command already defined: $class" )
       if exists $COMMAND{$class};
 
     my $cmd = Getopt::Args2::Cmd->new( class => $class, @_ );
-    $COMMAND{$class} = $cmd;
+    $Getopt::Args2::CURRENT = $COMMAND{$class} = $cmd;
 
     # If this check is not performed we end up adding ourselves
     if ( $class =~ m/:/ ) {
@@ -869,9 +937,14 @@ sub cmd {
 sub opt {
     my $name = shift;
 
-    $Getopt::Args2::Cmd::CURRENT //= _default_command(caller);
-    $Getopt::Args2::Cmd::CURRENT->add_opt(
-        Getopt::Args2::Opt->new_from( name => $name, @_ ) );
+    $Getopt::Args2::CURRENT //= _default_command(caller);
+    $Getopt::Args2::CURRENT->add_opt(
+        Getopt::Args2::Opt->new_from(
+            name         => $name,
+            show_default => $Getopt::Args2::CURRENT->show_default,
+            @_,
+        )
+    );
 }
 
 sub optargs {
@@ -880,34 +953,36 @@ sub optargs {
 }
 
 sub subcmd {
-    my $class = shift || $PKG->croak( 'Usage', 'subcmd($CLASS,%args)' );
+    my $class = shift || Getopt::Args2::_croak( 'Usage', 'subcmd($CLASS,%%args)' );
 
-    $PKG->croak( 'SubCmdExists', "subcommand already defined: $class" )
+    Getopt::Args2::_croak( 'SubCmdExists', "subcommand already defined: $class" )
       if exists $COMMAND{$class};
 
-    $PKG->croak( 'MissingParentCmd',
+    Getopt::Args2::_croak( 'ParentCmdNotFound',
         "no '::' in class '$class' - must have a parent" )
       unless $class =~ m/::/;
 
     ( my $parent_class = $class ) =~ s/(.*)::.*/$1/;
 
-    $PKG->croak( 'ParentCmdNotFound',
+    Getopt::Args2::_croak( 'ParentCmdNotFound',
         "parent class not found: " . $parent_class )
       unless exists $COMMAND{$parent_class};
 
-    $COMMAND{$class} = Getopt::Args2::Cmd->new(
-        class => $class,
-        @_
+    return $COMMAND{$parent_class}->add_cmd(
+        $COMMAND{$class} = Getopt::Args2::Cmd->new(
+            class        => $class,
+            show_default => $COMMAND{$parent_class}->show_default,
+            @_
+        )
     );
-
-    return $COMMAND{$parent_class}->add_cmd( $COMMAND{$class} );
 }
 
 sub usage {
-    my $class = shift || $PKG->confess('usage($CLASS,[$style])');
+    my $class = shift
+      || Getopt::Args2::_croak( 'Usage', 'usage($CLASS,[$style])' );
     my $style = shift;
 
-    $PKG->confess("command not found: $class")
+    Getopt::Args2::_croak( 'CmdNotFound', "command not found: $class" )
       unless exists $COMMAND{$class};
 
     return $COMMAND{$class}->usage($style);
@@ -923,7 +998,7 @@ Getopt::Args2 - command-line argument and option processor
 
 =head1 VERSION
 
-0.0.12_1 (2018-08-31)
+0.0.12_2 (2022-01-27)
 
 =head1 SYNOPSIS
 
@@ -935,6 +1010,8 @@ Getopt::Args2 - command-line argument and option processor
         required => 1,
         comment  => 'the item to paint',
     );
+
+    opt help => ( ishelp => 1 );
 
     opt quiet => (
         isa     => 'Flag',
@@ -1020,9 +1097,10 @@ following interactions from the shell:
     usage: paint ITEM [OPTIONS...]
 
       arguments:
-        ITEM          the item to paint
+        ITEM          the item to paint [required]
 
       options:
+        --help,  -h   print a usage message and exit
         --quiet, -q   output nothing while working
 
 The C<optargs()> function parses the command line according to the
@@ -1032,8 +1110,8 @@ thrown containing an automatically generated usage message as shown
 above.  Because B<Getopt::Args2> fully knows the valid arguments and options
 it can detect a wide range of errors:
 
-    $ ./paint wall message
-    error: unexpected option or argument: red
+    $ ./paint wall Perl is great
+    error: unexpected option or argument: Perl
 
 So let's add that missing argument definition:
 
@@ -1049,10 +1127,11 @@ And then check the usage again:
     usage: paint ITEM [MESSAGE...] [OPTIONS...]
 
       arguments:
-        ITEM          the item to paint
+        ITEM          the item to paint [required]
         MESSAGE       the message to paint on the item
 
       options:
+        --help,  -h   print a usage message and exit
         --quiet, -q   output nothing while working
 
 Note that optional arguments are surrounded by square brackets, and
@@ -1070,7 +1149,6 @@ might make sense here:
     opt colour => (
         isa           => 'Str',
         default       => 'blue',
-        show_default  => 1,
         comment       => 'the colour to use',
     );
 
@@ -1081,9 +1159,9 @@ This now produces the following usage output:
       arguments:
         ITEM               the item to paint
         MESSAGE            the message to paint on the item
- 
+
       options:
-        --colour=STR, -c   the colour to use [default: blue]
+        --colour=STR, -c   the colour to use [blue]
         --quiet,      -q   output nothing while working
 
 The command line is parsed first for arguments, then for options, in
@@ -1282,12 +1360,12 @@ The remaining types are presented as follows:
 
     Name        Type        isa_name        Presentation
     ----        ----        --------        ------------
-    option      ArrayRef    -               --option=STR
-    option      HashRef     -               --option=STR
-    option      Int         -               --option=INT
-    option      Num         -               --option=NUM
-    option      Str         -               --option=STR
-    option      *           XX              --option=XX
+    option      ArrayRef    -               --option Str
+    option      HashRef     -               --option Str
+    option      Int         -               --option Int
+    option      Num         -               --option Num
+    option      Str         -               --option Str
+    option      *           XX              --option XX
 
 Defaults TO BE COMPLETED.
 
@@ -1306,7 +1384,7 @@ Define a command argument, for example:
         default  => '-',
         greedy   => 0,
         isa      => 'Str',
-        required => 1,
+        # required => 1,
     );
 
 The C<arg()> function accepts the following parameters:
@@ -1355,6 +1433,16 @@ following table:
      'ArrayRef'      's@'
      'HashRef'       's%'
      'SubCmd'        '=s'
+     'OptArgRef'     's@'
+
+An I<OptArgRef> isa is an I<ArrayRef> that doesn't undergo checks for
+unexpected options. It exists to capture options and arguments which
+get passed back into I<class_optargs> again.
+
+=item isa_name
+
+When provided this parameter will be presented instead of the generic
+presentation for the 'isa' parameter.
 
 =item required
 
@@ -1363,7 +1451,8 @@ Conflicts with the 'default' parameter.
 
 =item show_default
 
-If set to a true value then usage messages will show the default value.
+Boolean to indicate if the default value should be shown in usage
+messages. Overrides the (sub-)command's C<show_default> setting.
 
 =back
 
@@ -1375,7 +1464,8 @@ into UTF-8 (if necessary) from whatever L<I18N::Langinfo> says your
 current locale codeset is.
 
 Throws an error / usage exception object (typically C<Getopt::Args2::Usage>)
-for missing or invalid arguments/options.
+for missing or invalid arguments/options. Uses L<Getopt::Args2::Pager> for
+'ishelp' output.
 
 Returns the following two values:
 
@@ -1423,6 +1513,12 @@ A description of the command. Required.
 A subref containing calls to C<arg()> and C<opt>. Note that options are
 inherited by subcommands so you don't need to define them again in
 child subcommands.
+
+=item show_default
+
+Boolean indicating if default values for options and arguments should
+be shown in usage messages. Can be overriden by sub-commands, args and
+opts. Off by default.
 
 =for comment
 By default this subref is only called on demand when the
@@ -1478,12 +1574,18 @@ Required. Used to generate the usage/help message.
 
 =item default
 
-The value set when the option is not used.
+The value set when the option is not given. Conflicts with the
+'required' parameter.
 
 If this is a subroutine reference it will be called with a hashref
-containg all option/argument values after parsing the source has
+containing all option/argument values after parsing the source has
 finished.  The value to be set must be returned, and any changes to the
 hashref are ignored.
+
+=item required
+
+Set to a true value when the caller must specify this option. Conflicts
+with the 'default' parameter.
 
 =item hidden
 
@@ -1517,24 +1619,39 @@ presentation for the 'isa' parameter.
 
 =item ishelp
 
-When true creates a trigger parameter that generates a usage message
-exception. In other words it is just a shortcut for the following:
+Makes the option behave like a typical C<--help>, that displays a usage
+message and exits before errors are generated.  Typically used alone as
+follows:
+
+    opt help => (
+        ishelp => Getopt::Args2::STYLE_HELP,
+    );
+
+    opt help_tree => (
+        ishelp => Getopt::Args2::STYLE_HELPTREE,
+        alias  => 'T', # or 'undef' if you don't want an alias
+    );
+
+The first option above is similar to this longhand version:
 
     opt help => (
         isa     => 'Flag',
-        alias   => 'h',
-        comment => 'print help message and exit',
+        alias   => 'h',   # first character of the opt name
+        comment => 'print a usage message and exit',
         trigger => sub {
-            my ( $cmd, $value ) = @_;
-            die $cmd->usage(Getopt::Args2::STYLE_FULL);
+            # Start a pager for long messages
+            print Getopt::Args2::usage(undef, Getopt::Args2::STYLE_HELP);
+            # Stop the pager
+            exit;
         }
     );
 
-Note that this option conflicts with the trigger parameter.
+You can override any of the above with your own parameters.
 
 =item show_default
 
-If set to a true value then usage messages will show the default value.
+Boolean to indicate if the default value should be shown in usage
+messages. Overrides the (sub-)command's C<show_default> setting.
 
 =item trigger
 
@@ -1595,10 +1712,9 @@ Accepts the same parameters as C<cmd()> in addition to the following:
 
 =item hidden
 
-Hide the existence of this subcommand in usage messages created with
-Getopt::Args2::STYLE_NORMAL.  This is handy if you have developer-only or
-rarely-used commands that you don't want cluttering up your normal
-usage message.
+Hide the existence of this subcommand in non-help usage messages.  This
+is handy if you have developer-only or rarely-used commands that you
+don't want cluttering up your normal usage message.
 
 =back
 
@@ -1611,7 +1727,7 @@ the command C<$class>.
 
 =head1 SEE ALSO
 
-L<Getopt::Long>
+L<Getopt::Args2::Pager>, L<Getopt::Long>
 
 This module is duplicated on CPAN as L<OptArgs2>, to cover both
 its original name and yet still be found in the mess that is Getopt::*.
@@ -1636,7 +1752,7 @@ Mark Lawrence <nomad@null.net>
 
 =head1 LICENSE
 
-Copyright 2016-2018 Mark Lawrence <nomad@null.net>
+Copyright 2016-2022 Mark Lawrence <nomad@null.net>
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the

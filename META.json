@@ -4,13 +4,13 @@
       "Mark Lawrence <nomad@null.net>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "ExtUtils::MakeMaker version 7.34, CPAN::Meta::Converter version 2.150010",
+   "generated_by" : "ExtUtils::MakeMaker version 7.64, CPAN::Meta::Converter version 2.150010",
    "license" : [
       "gpl_3"
    ],
    "meta-spec" : {
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
-      "version" : "2"
+      "version" : 2
    },
    "name" : "OptArgs2",
    "no_index" : {
@@ -19,6 +19,7 @@
          "inc"
       ],
       "package" : [
+         "OptArgs2::CODE2optarg",
          "OptArgs2::Arg",
          "OptArgs2::Cmd",
          "OptArgs2::Fallback",
@@ -44,7 +45,7 @@
       "configure" : {
          "requires" : {
             "ExtUtils::MakeMaker" : "6.17",
-            "ExtUtils::MakeMaker::CPANfile" : "0.08",
+            "ExtUtils::MakeMaker::CPANfile" : "0.09",
             "File::Spec" : "0"
          }
       },
@@ -52,6 +53,7 @@
          "requires" : {
             "Carp" : "0",
             "Encode" : "2.24",
+            "File::Which" : "0",
             "Getopt::Long" : "2.37",
             "I18N::Langinfo" : "0",
             "List::Util" : "0",
@@ -72,9 +74,9 @@
       "bugtracker" : {},
       "repository" : {
          "type" : "git",
-         "url" : "ssh://git@github.com/mlawren/p5-OptArgs2.git"
+         "url" : "ssh://git@github.com/mlawren/p5-OptArgs.git"
       }
    },
-   "version" : "v0.0.12_1",
-   "x_serialization_backend" : "JSON::PP version 2.27400_02"
+   "version" : "v0.0.12_2",
+   "x_serialization_backend" : "JSON::PP version 4.02"
 }

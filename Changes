@@ -1,3 +1,35 @@
+0.0.12_2 (2022-01-27)
+
+    API / Behaviour Changes:
+        - New 'show_default' feature
+        - Opt 'ishelp' no longer conflicts with 'trigger'
+        - The 'default' and 'required' parameters are no longer allowed
+          together.
+
+    New Features:
+        - New 'OptArgRef' arg type to support command aliases.  I.e.
+          capturing options and arguments that are passed back into
+          class_optargs() again.
+        - Pipe usage messages through a STDOUT pager
+
+    Enhancements:
+        - Various minor code refactoring improvements.
+        - Opt 'ishelp' now does what the documentation implies.
+        - Support default values relying on other default values
+        - Rework internal error reporting and usage generation
+        - New usage layout showing default values
+
+    Bug Fixes:
+        - Fix a ==/= comparison/assignment error in the usage()
+          function introduced by 2347144c.
+        - Bool option with true default turned off when --no-bool used.
+
+    Dependencies:
+        - File::Which for new OptArgs2::Pager module.
+
+    Packaging:
+        - Stop including ".readme_from" file in distribution
+
 0.0.12_1 (2018-08-31)
 
     Enhancements:

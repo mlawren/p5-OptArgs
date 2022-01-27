@@ -8,7 +8,7 @@ WriteMakefile(
     NAME       => 'OptArgs2',
     ABSTRACT   => 'CLI argument and option processing',
     AUTHOR     => 'Mark Lawrence <nomad@null.net>',
-    VERSION    => '0.0.12_1',
+    VERSION    => '0.0.12_2',
     LICENSE    => 'gpl_3',
     test       => { RECURSIVE_TEST_FILES => 1, },
     META_MERGE => {
@@ -16,6 +16,7 @@ WriteMakefile(
         no_index    => {
             package => [
                 qw/
+                  OptArgs2::CODE2optarg
                   OptArgs2::Arg
                   OptArgs2::Cmd
                   OptArgs2::Fallback
@@ -35,12 +36,12 @@ WriteMakefile(
         },
         resources => {
             bugtracker =>
-              { web => 'https//github.com/mlawren/p5-OptArgs2/issues', },
-            homepage   => 'https//github.com/mlawren/p5-OptArgs2',
+              { web => 'https//github.com/mlawren/p5-OptArgs/issues', },
+            homepage   => 'https//github.com/mlawren/p5-OptArgs',
             repository => {
                 type => 'git',
-                url  => 'ssh://git@github.com/mlawren/p5-OptArgs2.git',
-                web  => 'https//github.com/mlawren/p5-OptArgs2',
+                url  => 'ssh://git@github.com/mlawren/p5-OptArgs.git',
+                web  => 'https//github.com/mlawren/p5-OptArgs',
             }
         },
     },
