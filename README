@@ -413,10 +413,9 @@ FUNCTIONS
             argument. Conflicts with the 'default' parameter.
 
         show_default
-            Usage messages display the default value of the arg if it
-            has one. If you don't want this, perhaps because it is an
-            expensive operation, you can set "show_default" to 0 or
-            undef.
+            Boolean to indicate if the default value should be shown in
+            usage messages. Overrides the (sub-)command's "show_default"
+            setting.
 
     class_optargs( $class, [ @argv ] ) -> ($subclass, $opts)
         Parse @ARGV by default (or @argv when given) for the arguments
@@ -459,6 +458,11 @@ FUNCTIONS
             A subref containing calls to "arg()" and "opt". Note that
             options are inherited by subcommands so you don't need to
             define them again in child subcommands.
+
+        show_default
+            Boolean indicating if default values for options and
+            arguments should be shown in usage messages. Can be
+            overriden by sub-commands, args and opts. Off by default.
 
     opt( $name, %parameters )
         Define a command option, for example:
@@ -551,10 +555,9 @@ FUNCTIONS
             You can override any of the above with your own parameters.
 
         show_default
-            Usage messages display the default value of the opt if it
-            has one. If you don't want this, perhaps because it is an
-            expensive operation, you can set "show_default" to 0 or
-            undef.
+            Boolean to indicate if the default value should be shown in
+            usage messages. Overrides the (sub-)command's "show_default"
+            setting.
 
         trigger
             The trigger parameter lets you define a subroutine that is

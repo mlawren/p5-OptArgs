@@ -91,10 +91,7 @@ has name => (
 
 has required => ( is => 'ro', );
 
-has show_default => (
-    is      => 'ro',
-    default => 1,
-);
+has show_default => ( is => 'ro', );
 
 my %arg2getopt = (
     'Str'      => '=s',
@@ -198,10 +195,7 @@ has name => (
 
 has trigger => ( is => 'ro', );
 
-has show_default => (
-    is      => 'ro',
-    default => 1,
-);
+has show_default => ( is => 'ro', );
 
 my %isa2getopt = (
     'ArrayRef' => '=s@',
@@ -358,6 +352,11 @@ has opts => (
 has parent => (
     is       => 'rw',
     weak_ref => 1,
+);
+
+has show_default => (
+    is      => 'ro',
+    default => 0,
 );
 
 has subcmds => (
@@ -686,7 +685,13 @@ sub arg {
     my $name = shift;
 
     $OptArgs2::CURRENT //= _default_command(caller);
-    $OptArgs2::CURRENT->add_arg( OptArgs2::Arg->new( name => $name, @_ ) );
+    $OptArgs2::CURRENT->add_arg(
+        OptArgs2::Arg->new(
+            name         => $name,
+            show_default => $OptArgs2::CURRENT->show_default,
+            @_,
+        )
+    );
 }
 
 sub class_optargs {
@@ -935,7 +940,13 @@ sub opt {
     my $name = shift;
 
     $OptArgs2::CURRENT //= _default_command(caller);
-    $OptArgs2::CURRENT->add_opt( OptArgs2::Opt->new_from( name => $name, @_ ) );
+    $OptArgs2::CURRENT->add_opt(
+        OptArgs2::Opt->new_from(
+            name         => $name,
+            show_default => $OptArgs2::CURRENT->show_default,
+            @_,
+        )
+    );
 }
 
 sub optargs {
@@ -959,12 +970,13 @@ sub subcmd {
         "parent class not found: " . $parent_class )
       unless exists $COMMAND{$parent_class};
 
-    $COMMAND{$class} = OptArgs2::Cmd->new(
-        class => $class,
-        @_
+    return $COMMAND{$parent_class}->add_cmd(
+        $COMMAND{$class} = OptArgs2::Cmd->new(
+            class        => $class,
+            show_default => $COMMAND{$parent_class}->show_default,
+            @_
+        )
     );
-
-    return $COMMAND{$parent_class}->add_cmd( $COMMAND{$class} );
 }
 
 sub usage {
@@ -1441,9 +1453,8 @@ Conflicts with the 'default' parameter.
 
 =item show_default
 
-Usage messages display the default value of the arg if it has one. If
-you don't want this, perhaps because it is an expensive operation, you
-can set C<show_default> to 0 or undef.
+Boolean to indicate if the default value should be shown in usage
+messages. Overrides the (sub-)command's C<show_default> setting.
 
 =back
 
@@ -1504,6 +1515,12 @@ A description of the command. Required.
 A subref containing calls to C<arg()> and C<opt>. Note that options are
 inherited by subcommands so you don't need to define them again in
 child subcommands.
+
+=item show_default
+
+Boolean indicating if default values for options and arguments should
+be shown in usage messages. Can be overriden by sub-commands, args and
+opts. Off by default.
 
 =for comment
 By default this subref is only called on demand when the
@@ -1635,9 +1652,8 @@ You can override any of the above with your own parameters.
 
 =item show_default
 
-Usage messages display the default value of the opt if it has one. If
-you don't want this, perhaps because it is an expensive operation, you
-can set C<show_default> to 0 or undef.
+Boolean to indicate if the default value should be shown in usage
+messages. Overrides the (sub-)command's C<show_default> setting.
 
 =item trigger
 

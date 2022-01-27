@@ -1,8 +1,8 @@
 0.0.12 (yyyy-mm-dd)
 
     API / Behaviour Changes:
+        - New 'show_default' feature
         - Opt 'ishelp' no longer conflicts with 'trigger'
-        - Set 'show_default' to true by default
         - The 'default' and 'required' parameters are no longer allowed
           together.
 
@@ -10,7 +10,7 @@
         - New 'OptArgRef' arg type to support command aliases.  I.e.
           capturing options and arguments that are passed back into
           class_optargs() again.
-        - Pipe the output of 'ishelp' (i.e. --help) to a pager
+        - Pipe usage messages through a STDOUT pager
 
     Enhancements:
         - Various minor code refactoring improvements.
