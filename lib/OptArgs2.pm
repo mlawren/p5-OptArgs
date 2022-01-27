@@ -560,8 +560,8 @@ sub usage {
 
     if ( $style eq OptArgs2::STYLE_HELP ) {
         no strict 'refs';
-        @OptArgs2::UsageFull::ISA = ('OptArgs2');
-        return bless \$usage, 'OptArgs2::UsageFull';
+        @OptArgs2::Help::ISA = ('OptArgs2');
+        return bless \$usage, 'OptArgs2::Help';
     }
     else {
         no strict 'refs';
