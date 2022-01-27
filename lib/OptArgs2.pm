@@ -917,13 +917,11 @@ sub class_optargs {
 sub cmd {
     my $class = shift || OptArgs2::_croak('cmd($CLASS,@args)');
 
-    Carp::carp 'junk' if exists $COMMAND{$class};
-
     OptArgs2::_croak( 'CmdExists', "command already defined: $class" )
       if exists $COMMAND{$class};
 
     my $cmd = OptArgs2::Cmd->new( class => $class, @_ );
-    $COMMAND{$class} = $cmd;
+    $OptArgs2::CURRENT = $COMMAND{$class} = $cmd;
 
     # If this check is not performed we end up adding ourselves
     if ( $class =~ m/:/ ) {
