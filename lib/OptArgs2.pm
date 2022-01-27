@@ -25,7 +25,7 @@ our %isa2name = (
 );
 
 package OptArgs2::Mo;
-our $VERSION = '0.0.12_2';
+our $VERSION = '2.0.0_1';
 
 BEGIN {
 #<<< do not perltidy
@@ -59,7 +59,7 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.12_2';
+our $VERSION = '2.0.0_1';
 
 has cmd => (
     is       => 'rw',
@@ -150,7 +150,7 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.12_2';
+our $VERSION = '2.0.0_1';
 
 extends 'OptArgs2::Arg';
 
@@ -163,7 +163,7 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.12_2';
+our $VERSION = '2.0.0_1';
 
 has alias => ( is => 'ro', );
 
@@ -312,7 +312,7 @@ use List::Util qw/max/;
 use OptArgs2::Mo;
 use Scalar::Util qw/weaken/;
 
-our $VERSION = '0.0.12_2';
+our $VERSION = '2.0.0_1';
 
 has abbrev => ( is => 'rw', );
 
@@ -583,7 +583,7 @@ use Getopt::Long qw/GetOptionsFromArray/;
 use Exporter qw/import/;
 use OptArgs2::Mo;
 
-our $VERSION = '0.0.12_2';
+our $VERSION = '2.0.0_1';
 our @CARP_NOT;
 our @EXPORT    = (qw/arg class_optargs cmd opt optargs subcmd/);
 our @EXPORT_OK = (qw/usage/);
@@ -998,7 +998,7 @@ OptArgs2 - command-line argument and option processor
 
 =head1 VERSION
 
-0.0.12_2 (2022-01-27)
+2.0.0_1 (yyyy-mm-dd)
 
 =head1 SYNOPSIS
 
