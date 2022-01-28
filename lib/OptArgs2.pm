@@ -214,16 +214,16 @@ sub new_from {
     use feature 'state';
 
     if ( my $type = delete $ref->{ishelp} ) {
-        state %ishelp = (
+        state $styles = {
             OptArgs2::STYLE_USAGE       => undef,
             OptArgs2::STYLE_HELP        => undef,
             OptArgs2::STYLE_HELPSUMMARY => undef,
             OptArgs2::STYLE_HELPTREE    => undef,
-        );
+        };
         $type = OptArgs2::STYLE_HELP if $type eq 1;
         OptArgs2::_croak( 'InvalidIshelp', 'invalid ishelp "%s" for opt "%s"',
             $type, $ref->{name} )
-          unless exists $ishelp{$type};
+          unless exists $styles->{$type};
 
         $ref->{isa}     //= 'Flag';
         $ref->{alias}   //= substr $ref->{name}, 0, 1;
