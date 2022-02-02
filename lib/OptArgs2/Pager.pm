@@ -64,7 +64,8 @@ sub BUILD {
 
 sub open {
     my $self = shift;
-    return unless -t $self->orig_fh and !$self->fh->opened;
+    return $self->fh if $self->fh->opened;
+    return unless -t $self->orig_fh;
 
     my $pager = $self->pager || return;
 
