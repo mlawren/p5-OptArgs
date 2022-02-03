@@ -1,7 +1,8 @@
 2.0.0_1 (yyyy-mm-dd)
 
     API / Behaviour Changes:
-        - None.
+        - Changed OptArgs2::Pager on()/off() methods to start_pager(),
+          stop_pager() and page() functions.
 
     New Features:
         - None.
@@ -13,7 +14,7 @@
         - None.
 
     Dependencies:
-        - None.
+        - Exporter::Tidy for OptArgs2::Pager.
 
     Packaging:
         - None.

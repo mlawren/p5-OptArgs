@@ -621,9 +621,7 @@ sub _usage {
 
     if ( -t STDOUT or $reason =~ m/^Help/ ) {
         require OptArgs2::Pager;
-        OptArgs2::Pager->on;
-        print $usage;
-        OptArgs2::Pager->off;    # closes input to pager which should flush
+        OptArgs2::Pager::page($usage);
         my $nl = "\n";
         die bless \$nl, $pkg;
     }

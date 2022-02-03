@@ -5,11 +5,12 @@ on configure => sub {
 };
 
 on runtime => sub {
-    requires 'perl'         => 5.010;
-    requires 'Carp'         => 0;
-    requires 'Encode'       => 2.24;
-    requires 'File::Which'  => 0;
-    requires 'Getopt::Long' => 2.37;
+    requires 'perl'           => 5.010;
+    requires 'Carp'           => 0;
+    requires 'Exporter::Tidy' => 0;
+    requires 'Encode'         => 2.24;
+    requires 'File::Which'    => 0;
+    requires 'Getopt::Long'   => 2.37;
     requires 'I18N::Langinfo' if $^O ne 'MSWin32';
     requires 'List::Util'   => 0;
     requires 'Text::Abbrev' => 0;
