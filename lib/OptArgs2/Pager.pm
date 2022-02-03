@@ -8,6 +8,8 @@ use IO::Handle;
 
 our @CARP_NOT = (__PACKAGE__);
 
+# (possibly) user provided arguments
+
 has auto => (
     is      => 'ro',
     default => 1,
@@ -23,17 +25,19 @@ has pager => (
     default => \&_build_pager,
 );
 
+# attributes
+
 has fh => (
     is      => 'rw',
     default => sub { IO::Handle->new },
 );
 
-has pid => ( is => 'rw' );
-
 has orig_fh => (
     is      => 'ro',
     default => sub { select },
 );
+
+has pid => ( is => 'rw' );
 
 sub _build_pager {
     my $self = shift;
@@ -96,6 +100,7 @@ sub DESTROY {
     $self->close;
 }
 
+# Class functions
 my $pager;
 
 sub on {
