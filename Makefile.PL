@@ -12,8 +12,9 @@ WriteMakefile(
     LICENSE    => 'gpl_3',
     test       => { RECURSIVE_TEST_FILES => 1, },
     META_MERGE => {
-        'meta-spec' => { version => 2 },
-        no_index    => {
+        dynamic_config => 1,
+        'meta-spec'    => { version => 2 },
+        no_index       => {
             package => [
                 qw/
                   OptArgs2::CODE2optarg
