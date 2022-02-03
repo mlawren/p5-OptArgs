@@ -57,6 +57,8 @@ close $fh;
 
 $src =~ s/Getopt::Args2/GETOPT::ARGS2/g;
 $src =~ s/OptArgs2/Getopt::Args2/g;
+$src =~ s/Getopt::Args2::Pager/OptArgs2::Pager/g;
+$src =~ s!Getopt::Args2/Mo!Getopt/Args2/Mo!g;
 $src =~ s/p5-Getopt::Args2/p5-OptArgs2/g;
 $src =~ s/GETOPT::ARGS2/OptArgs2/g;
 
