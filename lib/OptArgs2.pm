@@ -336,9 +336,16 @@ has hidden => ( is => 'ro', );
 has name => (
     is      => 'rw',
     default => sub {
-        ( my $x = shift->class ) =~ s/.*://;
-        $x =~ s/_/-/g;
-        $x;
+        my $x = $_[0]->class;
+        if ( $x eq 'main' ) {
+            require File::Basename;
+            File::Basename::basename($0),;
+        }
+        else {
+            $x =~ s/.*://;
+            $x =~ s/_/-/g;
+            $x;
+        }
     },
 );
 
@@ -692,16 +699,10 @@ sub _croak {
     die bless \$msg, $pkg;
 }
 
-sub _default_command {
-    my $caller = shift;
-    require File::Basename;
-    cmd( $caller, name => File::Basename::basename($0), comment => '', );
-}
-
 sub arg {
     my $name = shift;
 
-    $OptArgs2::CURRENT //= _default_command(caller);
+    $OptArgs2::CURRENT //= cmd( ( scalar caller ), comment => '' );
     $OptArgs2::CURRENT->add_arg(
         OptArgs2::Arg->new(
             name         => $name,
@@ -954,7 +955,7 @@ sub cmd {
 sub opt {
     my $name = shift;
 
-    $OptArgs2::CURRENT //= _default_command(caller);
+    $OptArgs2::CURRENT //= cmd( ( scalar caller ), comment => '' );
     $OptArgs2::CURRENT->add_opt(
         OptArgs2::Opt->new_from(
             name         => $name,
