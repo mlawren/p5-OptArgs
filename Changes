@@ -1,3 +1,17 @@
+2.0.0_1 (2022-02-03)
+
+    API / Behaviour Changes:
+        - Changed OptArgs2::Pager on()/off() methods to start_pager(),
+          stop_pager() and page() functions.
+
+    Enhancements:
+        - Pager will only be started for usage messages with more lines
+          than the terminal height.
+
+    Dependencies:
+        - Exporter::Tidy for OptArgs2::Pager.
+        - Term::Size::Perl and/or Win32::Console
+
 0.0.12_2 (2022-01-27)
 
     API / Behaviour Changes:

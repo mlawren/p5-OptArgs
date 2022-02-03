@@ -25,7 +25,7 @@ our %isa2name = (
 );
 
 package Getopt::Args2::Mo;
-our $VERSION = '0.0.12_2';
+our $VERSION = '2.0.0_1';
 
 BEGIN {
 #<<< do not perltidy
@@ -59,7 +59,7 @@ use strict;
 use warnings;
 use Getopt::Args2::Mo;
 
-our $VERSION = '0.0.12_2';
+our $VERSION = '2.0.0_1';
 
 has cmd => (
     is       => 'rw',
@@ -150,7 +150,7 @@ use strict;
 use warnings;
 use Getopt::Args2::Mo;
 
-our $VERSION = '0.0.12_2';
+our $VERSION = '2.0.0_1';
 
 extends 'Getopt::Args2::Arg';
 
@@ -163,7 +163,7 @@ use strict;
 use warnings;
 use Getopt::Args2::Mo;
 
-our $VERSION = '0.0.12_2';
+our $VERSION = '2.0.0_1';
 
 has alias => ( is => 'ro', );
 
@@ -214,16 +214,16 @@ sub new_from {
     use feature 'state';
 
     if ( my $type = delete $ref->{ishelp} ) {
-        state %ishelp = (
+        state $styles = {
             Getopt::Args2::STYLE_USAGE       => undef,
             Getopt::Args2::STYLE_HELP        => undef,
             Getopt::Args2::STYLE_HELPSUMMARY => undef,
             Getopt::Args2::STYLE_HELPTREE    => undef,
-        );
+        };
         $type = Getopt::Args2::STYLE_HELP if $type eq 1;
         Getopt::Args2::_croak( 'InvalidIshelp', 'invalid ishelp "%s" for opt "%s"',
             $type, $ref->{name} )
-          unless exists $ishelp{$type};
+          unless exists $styles->{$type};
 
         $ref->{isa}     //= 'Flag';
         $ref->{alias}   //= substr $ref->{name}, 0, 1;
@@ -312,7 +312,7 @@ use List::Util qw/max/;
 use Getopt::Args2::Mo;
 use Scalar::Util qw/weaken/;
 
-our $VERSION = '0.0.12_2';
+our $VERSION = '2.0.0_1';
 
 has abbrev => ( is => 'rw', );
 
@@ -555,7 +555,7 @@ sub usage {
         }
     }
 
-    $usage = 'usage: ' . $usage;
+    $usage = 'usage: ' . $usage . "\n";
 
     if ( $style eq Getopt::Args2::STYLE_HELP ) {
         no strict 'refs';
@@ -583,12 +583,33 @@ use Getopt::Long qw/GetOptionsFromArray/;
 use Exporter qw/import/;
 use Getopt::Args2::Mo;
 
-our $VERSION = '0.0.12_2';
+our $VERSION = '2.0.0_1';
 our @CARP_NOT;
 our @EXPORT    = (qw/arg class_optargs cmd opt optargs subcmd/);
 our @EXPORT_OK = (qw/usage/);
 
+my @chars;
 my %COMMAND;
+
+sub _chars {
+    if ( $^O eq 'MSWin32' ) {
+        require Win32::Console;
+        @chars = Win32::Console->new()->Size();
+    }
+    else {
+        require Term::Size::Perl;
+        @chars = Term::Size::Perl::chars();
+    }
+    $chars[shift];
+}
+
+sub cols {
+    $chars[0] // _chars(0);
+}
+
+sub rows {
+    $chars[1] // _chars(1);
+}
 
 sub _usage {
     my $reason = shift // Carp::croak('usage: _usage($REASON, [$msg])');
@@ -619,17 +640,13 @@ sub _usage {
     $usage .= "\n\n" if length $usage;
     $usage .= $Getopt::Args2::CURRENT->usage($reason);
 
-    if ( -t STDOUT or $reason =~ m/^Help/ ) {
-        require Getopt::Args2::Pager;
-        Getopt::Args2::Pager->on;
-        print $usage;
-        Getopt::Args2::Pager->off;    # closes input to pager which should flush
-        my $nl = "\n";
-        die bless \$nl, $pkg;
-    }
+    die bless \$usage, $pkg
+      unless -t STDOUT and rows() < ( $usage =~ tr/\n\r// );
 
-    #    $usage .= "\n";
-    die bless \$usage, $pkg;
+    require Getopt::Args2::Pager;
+    Getopt::Args2::Pager::page($usage);
+
+    exit 1;
 }
 
 # Carp::croak can't deal with blessed references so a straight croak in
@@ -998,7 +1015,7 @@ Getopt::Args2 - command-line argument and option processor
 
 =head1 VERSION
 
-0.0.12_2 (2022-01-27)
+2.0.0_1 (2022-02-03)
 
 =head1 SYNOPSIS
 

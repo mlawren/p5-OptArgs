@@ -3,10 +3,13 @@ use strict;
 use warnings;
 use OptArgs2::Mo;
 use Carp ();
+use Exporter::Tidy other => [qw/page start_pager stop_pager/];
 use File::Which;
 use IO::Handle;
 
 our @CARP_NOT = (__PACKAGE__);
+
+# User provided arguments
 
 has auto => (
     is      => 'ro',
@@ -23,17 +26,19 @@ has pager => (
     default => \&_build_pager,
 );
 
+# Attributes
+
 has fh => (
     is      => 'rw',
     default => sub { IO::Handle->new },
 );
 
-has pid => ( is => 'rw' );
-
 has orig_fh => (
     is      => 'ro',
     default => sub { select },
 );
+
+has pid => ( is => 'rw' );
 
 sub _build_pager {
     my $self = shift;
@@ -64,7 +69,8 @@ sub BUILD {
 
 sub open {
     my $self = shift;
-    return unless -t $self->orig_fh and !$self->fh->opened;
+    return $self->fh if $self->fh->opened;
+    return unless -t $self->orig_fh;
 
     my $pager = $self->pager || return;
 
@@ -95,16 +101,26 @@ sub DESTROY {
     $self->close;
 }
 
+# Functions
 my $pager;
 
-sub on {
-    my $class = shift;
-    $pager //= $class->new(@_);
+sub start_pager {
+    $pager //= __PACKAGE__->new(@_);
     $pager->open;
 }
 
-sub off {
+sub stop_pager {
     $pager->close if $pager;
+}
+
+sub page {
+    my $text = shift;
+
+    my $close = not $pager;
+    $pager //= __PACKAGE__->new(@_);
+    $pager->open;
+    $pager->fh->printflush($text);
+    $pager->close if $close;
 }
 
 1;
@@ -119,29 +135,27 @@ OptArgs2::Pager - pipe output to a system (text) pager
 
 =head1 VERSION
 
-0.0.12_2 (2022-01-27)
+2.0.0_1 (2022-02-03)
 
 =head1 SYNOPSIS
 
-    # If you want to test this synopsis example you will
-    # want to prevent OptArgs2::Pager setting default
-    # environment values which cause pagers to exit on short
-    # inputs
-    # $ENV{LESS} = $ENV{MORE} = '';
+    use OptArgs2::Pager 'start_pager', 'page', 'stop_pager';
 
-    use OptArgs2::Pager;
+    # One-shot output to a pager
+    page("this goes to a page with page()\n" x 50);
 
-    # Functions
-    OptArgs2::Pager->on;
-    print "This text goes to a pager\n";
+    # Or make the pager filehandle the default
+    start_pager();
+    print "This text also goes pager by default\n" x 50;
 
-    OptArgs2::Pager->off;
-    print "This text goes directly to STDOUT\n";
+    stop_pager();
+    print "This text goes straight to STDOUT\n";
 
     # Scoped
-    my $pager = OptArgs2::Pager->new;
-    print "Back to a pager\n";
-    undef $pager;
+    {
+        my $pager = OptArgs2::Pager->new;
+        print "Back to a pager by default\n" x 50;
+    }
     print "Back to STDOUT\n";
 
 =head1 DESCRIPTION
@@ -155,14 +169,22 @@ is selected again.
 
 =head1 FUNCTIONS
 
-=head2 OptArgs2::Pager->on(%ARGS)
+=head2 page($string, [%ARGS])
 
-Creates a (global singleton) pager using C<%ARGS> (passed directly to
-C<new()> below) and keeps it alive until C<off()> is called.
+An all-in-one function to start a pager (using the optional C<%ARGS>
+passed directly to C<new()> below), send it a C<$string>, and close it.
+If a pager is already running when this is called (due to a previous
+C<start_pager()>) it will reused and left open.
 
-=head2 OptArgs2::Pager->off()
+=head2 start_pager(%ARGS)
 
-Stops the global pager.
+Create a pager using C<%ARGS> (passed directly to C<new()> below) and
+makes it the default output file handle.
+
+=head2 stop_pager()
+
+Make the original file handle (usually STDOUT) the default again.
+Closes the pager input, letting it know that no more content is coming.
 
 =head1 CONSTRUCTOR
 

@@ -11,7 +11,7 @@ configure_requires:
   ExtUtils::MakeMaker: '6.17'
   ExtUtils::MakeMaker::CPANfile: '0.09'
   File::Spec: '0'
-dynamic_config: 0
+dynamic_config: 1
 generated_by: 'ExtUtils::MakeMaker version 7.64, CPAN::Meta::Converter version 2.150010'
 license: gpl
 meta-spec:
@@ -41,13 +41,15 @@ no_index:
 requires:
   Carp: '0'
   Encode: '2.24'
+  Exporter::Tidy: '0'
   File::Which: '0'
   Getopt::Long: '2.37'
   I18N::Langinfo: '0'
   List::Util: '0'
+  Term::Size::Perl: '0'
   Text::Abbrev: '0'
   perl: '5.01'
 resources:
   repository: ssh://git@github.com/mlawren/p5-OptArgs.git
-version: v0.0.12_2
+version: v2.0.0_1
 x_serialization_backend: 'CPAN::Meta::YAML version 0.018'
