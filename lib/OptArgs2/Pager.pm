@@ -135,7 +135,7 @@ OptArgs2::Pager - pipe output to a system (text) pager
 
 =head1 VERSION
 
-2.0.0_1 (yyyy-mm-dd)
+2.0.0_1 (2022-02-03)
 
 =head1 SYNOPSIS
 
