@@ -641,7 +641,7 @@ sub _usage {
     $usage .= $OptArgs2::CURRENT->usage($reason);
 
     die bless \$usage, $pkg
-      unless -t STDOUT and rows() <= ( $usage =~ tr/\n\r// );
+      unless -t STDOUT and rows() < ( $usage =~ tr/\n\r// );
 
     require OptArgs2::Pager;
     OptArgs2::Pager::page($usage);
