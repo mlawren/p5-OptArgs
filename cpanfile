@@ -14,6 +14,13 @@ on runtime => sub {
     requires 'I18N::Langinfo' if $^O ne 'MSWin32';
     requires 'List::Util'   => 0;
     requires 'Text::Abbrev' => 0;
+
+    if ( $^O eq 'MSWin32' ) {
+        requires 'Win32::Console' => 0;
+    }
+    else {
+        requires 'Term::Size::Perl' => 0;
+    }
 };
 
 on develop => sub {

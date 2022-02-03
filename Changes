@@ -8,13 +8,15 @@
         - None.
 
     Enhancements:
-        - None.
+        - Pager will only be started for usage messages with more lines
+          than the terminal height.
 
     Bug Fixes:
         - None.
 
     Dependencies:
         - Exporter::Tidy for OptArgs2::Pager.
+        - Term::Size::Perl and/or Win32::Console
 
     Packaging:
         - None.

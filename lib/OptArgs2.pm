@@ -555,7 +555,7 @@ sub usage {
         }
     }
 
-    $usage = 'usage: ' . $usage;
+    $usage = 'usage: ' . $usage . "\n";
 
     if ( $style eq OptArgs2::STYLE_HELP ) {
         no strict 'refs';
@@ -588,7 +588,28 @@ our @CARP_NOT;
 our @EXPORT    = (qw/arg class_optargs cmd opt optargs subcmd/);
 our @EXPORT_OK = (qw/usage/);
 
+my @chars;
 my %COMMAND;
+
+sub _chars {
+    if ( $^O eq 'MSWin32' ) {
+        require Win32::Console;
+        @chars = Win32::Console->new()->Size();
+    }
+    else {
+        require Term::Size::Perl;
+        @chars = Term::Size::Perl::chars();
+    }
+    $chars[shift];
+}
+
+sub cols {
+    $chars[0] // _chars(0);
+}
+
+sub rows {
+    $chars[1] // _chars(1);
+}
 
 sub _usage {
     my $reason = shift // Carp::croak('usage: _usage($REASON, [$msg])');
@@ -619,15 +640,13 @@ sub _usage {
     $usage .= "\n\n" if length $usage;
     $usage .= $OptArgs2::CURRENT->usage($reason);
 
-    if ( -t STDOUT or $reason =~ m/^Help/ ) {
-        require OptArgs2::Pager;
-        OptArgs2::Pager::page($usage);
-        my $nl = "\n";
-        die bless \$nl, $pkg;
-    }
+    die bless \$usage, $pkg
+      unless -t STDOUT and rows() <= ( $usage =~ tr/\n\r// );
 
-    #    $usage .= "\n";
-    die bless \$usage, $pkg;
+    require OptArgs2::Pager;
+    OptArgs2::Pager::page($usage);
+
+    exit 1;
 }
 
 # Carp::croak can't deal with blessed references so a straight croak in
