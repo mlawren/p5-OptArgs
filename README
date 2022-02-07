@@ -623,7 +623,7 @@ FUNCTIONS
         for the command $class.
 
 SEE ALSO
-    OptArgs2::Pager, Getopt::Long
+    OptArgs2::Pager, OptArgs2::StatusLine, Getopt::Long
 
     This module is duplicated on CPAN as Getopt::Args2, to cover both
     its original name and yet still be found in the mess that is

@@ -1745,7 +1745,7 @@ the command C<$class>.
 
 =head1 SEE ALSO
 
-L<OptArgs2::Pager>, L<Getopt::Long>
+L<OptArgs2::Pager>, L<OptArgs2::StatusLine>, L<Getopt::Long>
 
 This module is duplicated on CPAN as L<Getopt::Args2>, to cover both
 its original name and yet still be found in the mess that is Getopt::*.
