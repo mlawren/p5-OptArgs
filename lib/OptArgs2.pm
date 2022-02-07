@@ -437,8 +437,7 @@ sub usage {
     my $usage = '';
 
     if ( $style eq OptArgs2::STYLE_HELPTREE ) {
-        $usage = $self->_usage_tree;
-        no strict 'refs';
+        $usage                   = $self->_usage_tree;
         @OptArgs2::HelpTree::ISA = ('OptArgs2');
         return bless \$usage, 'OptArgs2::HelpTree';
     }
