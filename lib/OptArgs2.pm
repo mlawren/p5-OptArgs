@@ -1672,11 +1672,10 @@ messages. Overrides the (sub-)command's C<show_default> setting.
 
 =item trigger
 
-The trigger parameter lets you define a subroutine that is called
-I<immediately> as soon as the option presence is detected. This is
-primarily to support --help or --version options which typically don't
-need the full command line to be processed before generating a
-response.
+The trigger parameter lets you define a subroutine that is called after
+processing before usage exceptions are raised.  This is primarily to
+support --help or --version options which would typically override
+usage errors.
 
     opt version => (
         isa     => 'Flag',

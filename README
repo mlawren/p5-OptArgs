@@ -561,10 +561,9 @@ FUNCTIONS
 
         trigger
             The trigger parameter lets you define a subroutine that is
-            called *immediately* as soon as the option presence is
-            detected. This is primarily to support --help or --version
-            options which typically don't need the full command line to
-            be processed before generating a response.
+            called after processing before usage exceptions are raised.
+            This is primarily to support --help or --version options
+            which would typically override usage errors.
 
                 opt version => (
                     isa     => 'Flag',
