@@ -119,8 +119,9 @@ sub page {
     my $close = not $pager;
     $pager //= __PACKAGE__->new(@_);
     $pager->open;
-    $pager->fh->printflush($text);
+    my $ok = $pager->fh->printflush($text);
     $pager->close if $close;
+    $ok;
 }
 
 1;
@@ -174,7 +175,8 @@ is selected again.
 An all-in-one function to start a pager (using the optional C<%ARGS>
 passed directly to C<new()> below), send it a C<$string>, and close it.
 If a pager is already running when this is called (due to a previous
-C<start_pager()>) it will reused and left open.
+C<start_pager()>) it will reused and left open. Returns the response
+from the underlying printflush().
 
 =head2 start_pager(%ARGS)
 
