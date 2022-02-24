@@ -1,3 +1,5 @@
+- How about a default SubCmd? (e.g. bif list topics?)
+
 - Check for multiple use of the same alias character
 
 - Fix --version example to use $cmd->name instead of just $cmd (or else
