@@ -10,6 +10,7 @@
         - Allow OptArgs2::Pager to work independently (by splitting out
           OptArgs2::Mo into its own file)
         - Code re-organisation
+        - Show SubCmd arguments in usage message
 
     Bug Fixes:
         - Fix for Getopt::Args2 conversion with a test

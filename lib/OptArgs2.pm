@@ -874,7 +874,8 @@ package OptArgs2::Cmd {
         my $optargs = $self->_values;
 
         # Summary line
-        $usage .= join( ' ', map { $_->name } @parents ) . ' ' if @parents;
+        $usage .= join( ' ', map { $_->name } @parents ) . ' '
+          if @parents and $style ne OptArgs2::STYLE_HELPSUMMARY;
         $usage .= $self->name;
 
         foreach my $arg (@args) {
@@ -885,20 +886,21 @@ package OptArgs2::Cmd {
             $usage .= ']' unless $arg->required;
         }
 
-        $usage .= ' [OPTIONS...]' if @opts;
-        $usage .= "\n";
-
         if ( $style eq OptArgs2::STYLE_HELPSUMMARY ) {
             no strict 'refs';
             @OptArgs2::HelpSummary::ISA = ('OptArgs2');
             return bless \$usage, 'OptArgs2::HelpSummary';
         }
 
+        $usage .= ' [OPTIONS...]' if @opts;
+        $usage .= "\n";
+
         # Synopsis
         $usage .= "\n  Synopsis:\n    " . $self->comment . "\n"
           if $style eq OptArgs2::STYLE_HELP and length $self->comment;
 
         # Build arguments
+        my @sargs;
         my @uargs;
         my $have_subcmd;
 
@@ -906,10 +908,10 @@ package OptArgs2::Cmd {
             my $i = 0;
             foreach my $arg (@args) {
                 if ( $arg->isa eq 'SubCmd' ) {
-                    my ( $n, $al, undef, $c ) =
+                    my ( $n, undef, undef, $c ) =
                       $arg->name_alias_type_comment( $optargs->{ $arg->name }
                           // undef );
-                    push( @uargs, [ '  ' . ucfirst($n) . ':', $al, '', $c ] );
+                    push( @sargs, [ '  ' . ucfirst($n) . ':', $c ] );
                     my @sorted_subs =
                       map  { $_->[1] }
                       sort { $a->[0] cmp $b->[0] }
@@ -918,19 +920,18 @@ package OptArgs2::Cmd {
                       @{ $arg->cmd->subcmds },
                       $arg->fallback ? $arg->fallback : ();
 
-                    my $prefix = '';    #length( $arg->comment ) ? '  ' : '';
                     foreach my $subcmd (@sorted_subs) {
                         push(
-                            @uargs,
+                            @sargs,
                             [
                                 '    '
                                   . (
                                     ref $subcmd eq 'OptArgs2::Fallback'
                                     ? uc( $subcmd->name )
-                                    : $subcmd->name
+                                    : $subcmd->usage(
+                                        OptArgs2::STYLE_HELPSUMMARY)
                                   ),
-                                '', '',
-                                $prefix . $subcmd->comment
+                                $subcmd->comment
                             ]
                         );
                     }
@@ -962,16 +963,28 @@ package OptArgs2::Cmd {
         }
 
         # Width calculation for args and opts combined
-        my $w1     = max( map { length $_->[0] } @uargs, @uopts );
-        my $w2     = max( map { length $_->[1] } @uargs, @uopts );
-        my $w3     = max( map { length $_->[2] } @uargs, @uopts );
-        my $format = "%-${w1}s %-${w2}s %-${w3}s  %s\n";
+        my $w1 = max( map { length $_->[0] } @uargs, @uopts );
+        my $w2 = max( map { length $_->[1] } @uargs, @uopts );
+        my $w3 = max( map { length $_->[2] } @uargs, @uopts );
+        my $w4 = max( 0,               map { length $_->[0] } @sargs );
+        my $w5 = max( $w1 + $w2 + $w3, $w4 );
+
+        my $format1 = "%-${w5}s  %s\n";
+        my $format2 = "%-${w1}s %-${w2}s %-${w3}s";
 
         # Output Arguments
+        if (@sargs) {
+            $usage .= "\n";
+            foreach my $row (@sargs) {
+                $usage .= sprintf( $format1, @$row );
+            }
+        }
+
         if (@uargs) {
             $usage .= "\n";
             foreach my $row (@uargs) {
-                $usage .= sprintf( $format, @$row );
+                my $l = pop @$row;
+                $usage .= sprintf( $format1, sprintf( $format2, @$row ), $l );
             }
         }
 
@@ -979,7 +992,8 @@ package OptArgs2::Cmd {
         if (@uopts) {
             $usage .= "\n";
             foreach my $row (@uopts) {
-                $usage .= sprintf( $format, @$row );
+                my $l = pop @$row;
+                $usage .= sprintf( $format1, sprintf( $format2, @$row ), $l );
             }
         }
 
