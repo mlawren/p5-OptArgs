@@ -13,7 +13,7 @@
         - Fix for Getopt::Args2 conversion with a test
 
     Dependencies:
-        - None.
+        - Minimum of perl 5.16 for package BLOCK syntax
 
     Packaging:
         - Clean up non-indexed packages list

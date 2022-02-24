@@ -5,7 +5,7 @@ on configure => sub {
 };
 
 on runtime => sub {
-    requires 'perl'           => 5.010;
+    requires 'perl'           => 5.016;
     requires 'Carp'           => 0;
     requires 'Exporter::Tidy' => 0;
     requires 'Encode'         => 2.24;
