@@ -73,9 +73,9 @@ package OptArgs2 {
         return unless -t select;
 
         my $lines = scalar( split /\n/, $_[0] );
-        $lines++ if $_[0] !~ m/\n\z/;
+        $lines++ if $_[0] =~ m/\n\z/;
 
-        if ( $lines > ( $chars[1] // _chars(1) ) ) {
+        if ( $lines >= ( $chars[1] // _chars(1) ) ) {
             require OptArgs2::Pager;
             OptArgs2::Pager::page( $_[0] );    # returns true on success
         }
