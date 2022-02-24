@@ -18,15 +18,15 @@ WriteMakefile(
             package => [
                 qw/
                   Getopt::Args2::Arg
-                  Getopt::Args2::CODE2optarg
                   Getopt::Args2::Cmd
+                  Getopt::Args2::CODEREF
                   Getopt::Args2::Fallback
                   Getopt::Args2::Mo
                   Getopt::Args2::Opt
                   Getopt::Args2::Result
                   OptArgs2::Arg
-                  OptArgs2::CODE2optarg
                   OptArgs2::Cmd
+                  OptArgs2::CODEREF
                   OptArgs2::Fallback
                   OptArgs2::Mo
                   OptArgs2::Opt
@@ -57,7 +57,7 @@ close $fh;
 $src =~ s/Getopt::Args2/GETOPT::ARGS2/g;
 $src =~ s/OptArgs2/Getopt::Args2/g;
 $src =~ s/Getopt::Args2::Pager/OptArgs2::Pager/g;
-$src =~ s!Getopt::Args2/Mo!Getopt/Args2/Mo!g;
+$src =~ s/Getopt::Args2::Mo/OptArgs2::Mo/g;
 $src =~ s/p5-Getopt::Args2/p5-OptArgs2/g;
 $src =~ s/GETOPT::ARGS2/OptArgs2/g;
 
