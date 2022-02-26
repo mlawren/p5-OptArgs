@@ -31,4 +31,5 @@ on test => sub {
     requires 'IO::Capture::Stdout' => 0;
     requires 'POSIX'               => 0;
     requires 'Test2::V0'           => 0;
+    requires 'Test::Output'        => 0;
 };

@@ -29,6 +29,8 @@ WriteMakefile(
                   OptArgs2::Fallback
                   OptArgs2::Mo
                   OptArgs2::Opt
+                  OptArgs2::StatusLine::Line
+                  OptArgs2::StatusLine::Prefix
                   /
             ],
         },

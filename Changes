@@ -4,7 +4,7 @@
         - None.
 
     New Features:
-        - New OptArgs2::StatusLine package
+        - New OptArgs2::StatusLine package for terminal status lines
 
     Enhancements:
         - Allow OptArgs2::Pager to work independently (by splitting out
@@ -17,6 +17,7 @@
 
     Dependencies:
         - Minimum of perl 5.16 for package BLOCK syntax
+        - Test::Output for StatusLine tests
 
     Packaging:
         - Clean up non-indexed packages list

@@ -1,33 +1,39 @@
 #!perl
 use strict;
 use warnings;
-use OptArgs2::StatusLine;
+use OptArgs2::StatusLine '$line';
+use OptArgs2::StatusLine '$line2', 'prefix:';
+use OptArgs2::StatusLine '$line3', '$prefix';
 use Test2::V0;
+use Test::Output;
 
-my $string;
-open( my $fh, ">", \$string );
-my $o = tie my ($l), 'OptArgs2::StatusLine', 'prefix:', $fh;
+my ( $i, $old ) = ( 0, undef );
 
-is $o, tied($l), $o;
-isa_ok( $o, 'OptArgs2::StatusLine' );
-is $l,      undef, 'var is undef';
-is $string, undef, 'output is undef';
+is $line, undef, 'initially undefined';
+stdout_is { $line = $i; } "$i\n", 'assignment';
+$i++;
+stdout_is { $line = $i; } "$i\n", 'reassignment';
+$old = $line;
+$i++;
+stdout_is { $line .= $i; } "${line}${i}\n", 'concatenation';
 
-my $KILL = '\e\[K';
-my $RET  = '\r';
+is $line2, undef, 'initially undefined';
+$i = 0;
+stdout_is { $line2 = $i; } "prefix:$i\n", 'assignment';
+$i++;
+stdout_is { $line2 = $i; } "prefix:$i\n", 'reassignment';
+$old = $line2;
+$i++;
+stdout_is { $line2 .= $i; } "prefix:${line2}${i}\n", 'concatenation';
 
-$l = 1;
-like $string, qr/prefix:1$KILL$RET\z/, 'assign ' . $l;
-
-$l .= 2;
-like $string, qr/prefix:12$KILL$RET\z/, 'concatenate ' . $l;
-
-$l .= "\n";
-like $string, qr/prefix:12$KILL\n\z/s, 'newline output';
-is $l,        '',                      'newline reset';
-
-$o->prefix('new:');
-$l .= 2;
-like $string, qr/new:2$KILL$RET\z/s, 'change of prefix';
+is $line3, undef, 'initially undefined';
+$i = 0;
+stdout_is { $line3 = $i; } "$i\n", 'assignment';
+stdout_is { $prefix = 'junk:' } "junk:$i\n", 'change of prefix';
+$i++;
+stdout_is { $line3 = $i; } "${prefix}$i\n", 'reassignment';
+$old = $line3;
+$i++;
+stdout_is { $line3 .= $i; } "${prefix}${line3}${i}\n", 'concatenation';
 
 done_testing();
