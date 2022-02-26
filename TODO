@@ -1,3 +1,5 @@
+- Warn about unknown SubCmd
+
 - How about a default SubCmd? (e.g. bif list topics?)
 
 - Check for multiple use of the same alias character
