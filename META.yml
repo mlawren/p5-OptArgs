@@ -7,6 +7,7 @@ build_requires:
   IO::Capture::Stdout: '0'
   POSIX: '0'
   Test2::V0: '0'
+  Test::Output: '0'
 configure_requires:
   ExtUtils::MakeMaker: '6.17'
   ExtUtils::MakeMaker::CPANfile: '0.09'
@@ -23,21 +24,20 @@ no_index:
     - t
     - inc
   package:
-    - OptArgs2::CODE2optarg
-    - OptArgs2::Arg
-    - OptArgs2::Cmd
-    - OptArgs2::Fallback
-    - OptArgs2::Mo
-    - OptArgs2::Opt
-    - OptArgs2::Result
-    - OptArgs2::Util
     - Getopt::Args2::Arg
     - Getopt::Args2::Cmd
+    - Getopt::Args2::CODEREF
     - Getopt::Args2::Fallback
     - Getopt::Args2::Mo
     - Getopt::Args2::Opt
-    - Getopt::Args2::Result
-    - Getopt::Args2::Util
+    - OptArgs2::Arg
+    - OptArgs2::Cmd
+    - OptArgs2::CODEREF
+    - OptArgs2::Fallback
+    - OptArgs2::Mo
+    - OptArgs2::Opt
+    - OptArgs2::StatusLine::Line
+    - OptArgs2::StatusLine::Prefix
 requires:
   Carp: '0'
   Encode: '2.24'
@@ -48,8 +48,8 @@ requires:
   List::Util: '0'
   Term::Size::Perl: '0'
   Text::Abbrev: '0'
-  perl: '5.01'
+  perl: '5.016'
 resources:
   repository: ssh://git@github.com/mlawren/p5-OptArgs.git
-version: v2.0.0_1
+version: v2.0.0_2
 x_serialization_backend: 'CPAN::Meta::YAML version 0.018'

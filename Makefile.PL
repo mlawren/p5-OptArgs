@@ -1,14 +1,14 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
-use 5.006;
+use 5.016;
 use ExtUtils::MakeMaker::CPANfile;
 
 WriteMakefile(
     NAME       => 'OptArgs2',
     ABSTRACT   => 'CLI argument and option processing',
     AUTHOR     => 'Mark Lawrence <nomad@null.net>',
-    VERSION    => '2.0.0_1',
+    VERSION    => '2.0.0_2',
     LICENSE    => 'gpl_3',
     test       => { RECURSIVE_TEST_FILES => 1, },
     META_MERGE => {
@@ -17,21 +17,20 @@ WriteMakefile(
         no_index       => {
             package => [
                 qw/
-                  OptArgs2::CODE2optarg
-                  OptArgs2::Arg
-                  OptArgs2::Cmd
-                  OptArgs2::Fallback
-                  OptArgs2::Mo
-                  OptArgs2::Opt
-                  OptArgs2::Result
-                  OptArgs2::Util
                   Getopt::Args2::Arg
                   Getopt::Args2::Cmd
+                  Getopt::Args2::CODEREF
                   Getopt::Args2::Fallback
                   Getopt::Args2::Mo
                   Getopt::Args2::Opt
-                  Getopt::Args2::Result
-                  Getopt::Args2::Util
+                  OptArgs2::Arg
+                  OptArgs2::Cmd
+                  OptArgs2::CODEREF
+                  OptArgs2::Fallback
+                  OptArgs2::Mo
+                  OptArgs2::Opt
+                  OptArgs2::StatusLine::Line
+                  OptArgs2::StatusLine::Prefix
                   /
             ],
         },
@@ -57,6 +56,8 @@ close $fh;
 
 $src =~ s/Getopt::Args2/GETOPT::ARGS2/g;
 $src =~ s/OptArgs2/Getopt::Args2/g;
+$src =~ s/Getopt::Args2::Pager/OptArgs2::Pager/g;
+$src =~ s/Getopt::Args2::Mo/OptArgs2::Mo/g;
 $src =~ s/p5-Getopt::Args2/p5-OptArgs2/g;
 $src =~ s/GETOPT::ARGS2/OptArgs2/g;
 

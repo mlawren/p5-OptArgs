@@ -2,7 +2,7 @@ NAME
     OptArgs2 - command-line argument and option processor
 
 VERSION
-    2.0.0_1 (2022-02-03)
+    2.0.0_2 (2022-02-26)
 
 SYNOPSIS
         #!/usr/bin/env perl
@@ -561,10 +561,9 @@ FUNCTIONS
 
         trigger
             The trigger parameter lets you define a subroutine that is
-            called *immediately* as soon as the option presence is
-            detected. This is primarily to support --help or --version
-            options which typically don't need the full command line to
-            be processed before generating a response.
+            called after processing before usage exceptions are raised.
+            This is primarily to support --help or --version options
+            which would typically override usage errors.
 
                 opt version => (
                     isa     => 'Flag',
@@ -623,7 +622,7 @@ FUNCTIONS
         for the command $class.
 
 SEE ALSO
-    OptArgs2::Pager, Getopt::Long
+    OptArgs2::Pager, OptArgs2::StatusLine, Getopt::Long
 
     This module is duplicated on CPAN as Getopt::Args2, to cover both
     its original name and yet still be found in the mess that is
