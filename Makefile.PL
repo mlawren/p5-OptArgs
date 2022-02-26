@@ -23,14 +23,12 @@ WriteMakefile(
                   Getopt::Args2::Fallback
                   Getopt::Args2::Mo
                   Getopt::Args2::Opt
-                  Getopt::Args2::Result
                   OptArgs2::Arg
                   OptArgs2::Cmd
                   OptArgs2::CODEREF
                   OptArgs2::Fallback
                   OptArgs2::Mo
                   OptArgs2::Opt
-                  OptArgs2::Result
                   /
             ],
         },
