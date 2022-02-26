@@ -963,9 +963,9 @@ package OptArgs2::Cmd {
         }
 
         # Width calculation for args and opts combined
-        my $w1 = max( map { length $_->[0] } @uargs, @uopts );
-        my $w2 = max( map { length $_->[1] } @uargs, @uopts );
-        my $w3 = max( map { length $_->[2] } @uargs, @uopts );
+        my $w1 = max( 0,               map { length $_->[0] } @uargs, @uopts );
+        my $w2 = max( 0,               map { length $_->[1] } @uargs, @uopts );
+        my $w3 = max( 0,               map { length $_->[2] } @uargs, @uopts );
         my $w4 = max( 0,               map { length $_->[0] } @sargs );
         my $w5 = max( $w1 + $w2 + $w3, $w4 );
 
