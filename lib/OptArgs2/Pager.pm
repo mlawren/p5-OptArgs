@@ -74,7 +74,7 @@ sub open {
 
     my $pager = $self->pager || return;
 
-    local $ENV{LESS} = $ENV{LESS} // '-FXeR';
+    local $ENV{LESS} = $ENV{LESS} // '-FSXeR';
     local $ENV{MORE} = $ENV{MORE} // '-FXer' unless $^O eq 'MSWin32';
 
     $self->pid( CORE::open( $self->fh, '|-', $pager ) )
@@ -251,6 +251,13 @@ Open the pager if it is not running. Can be called safely when the
 pager is already running.
 
 =back
+
+=head1 ENVIRONMENT
+
+Already mentioned above is the check for C<$PAGER> when choosing which
+pager to run. Additionally, OptArgs2 temporarily sets C<$LESS> to
+C<-FSXeR> and C<$MORE> to C<-FXer> if they are unset at the time the
+pager is opened.
 
 =head1 SEE ALSO
 
