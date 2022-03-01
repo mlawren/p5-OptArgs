@@ -838,18 +838,14 @@ package OptArgs2::Cmd {
 
     sub _usage_tree {
         my $self  = shift;
-        my $depth = shift || '';
+        my $depth = shift || 0;
 
-        ( my $str = $self->usage(OptArgs2::STYLE_HELPSUMMARY) ) =~
-          s/^/$depth/gsm;
-
-        foreach
-          my $subcmd ( sort { $a->name cmp $b->name } @{ $self->subcmds } )
-        {
-            $str .= $subcmd->_usage_tree( $depth . '    ' );
-        }
-
-        return $str;
+        return [
+            $depth, $self->usage(OptArgs2::STYLE_HELPSUMMARY),
+            $self->comment
+          ],
+          map { $_->_usage_tree( $depth + 1 ) }
+          sort { $a->name cmp $b->name } @{ $self->subcmds };
     }
 
     sub usage {
@@ -858,7 +854,30 @@ package OptArgs2::Cmd {
         my $usage = '';
 
         if ( $style eq OptArgs2::STYLE_HELPTREE ) {
-            $usage                   = $self->_usage_tree;
+            my ( @w1, @w2 );
+            my @items = map {
+                $_->[0] = ' ' x ( $_->[0] * 3 );
+                push @w1, length( $_->[1] ) + length( $_->[0] );
+                push @w2, length $_->[2];
+                $_
+            } $self->_usage_tree;
+            my ( $w1, $w2 ) = ( max(@w1), max(@w2) );
+            my $paged  = OptArgs2::rows() < scalar @items;
+            my $cols   = OptArgs2::cols();
+            my $usage  = '';
+            my $spacew = 3;
+            my $space  = ' ' x $spacew;
+            foreach my $i ( 0 .. $#items ) {
+                my $overlap = $w1 + $spacew + $w2[$i] - $cols;
+                if ( $overlap > 0 and not $paged ) {
+                    $items[$i]->[2] =
+                      sprintf '%-.' . ( $w2[$i] - $overlap - 3 ) . 's%s',
+                      $items[$i]->[2], '.' x 3;
+                }
+                $usage .= sprintf "%-${w1}s${space}%-s\n",
+                  $items[$i]->[0] . $items[$i]->[1],
+                  $items[$i]->[2];
+            }
             @OptArgs2::HelpTree::ISA = ('OptArgs2');
             return bless \$usage, 'OptArgs2::HelpTree';
         }
@@ -887,6 +906,7 @@ package OptArgs2::Cmd {
         }
 
         if ( $style eq OptArgs2::STYLE_HELPSUMMARY ) {
+            return $usage if __PACKAGE__ eq caller;
             no strict 'refs';
             @OptArgs2::HelpSummary::ISA = ('OptArgs2');
             return bless \$usage, 'OptArgs2::HelpSummary';
