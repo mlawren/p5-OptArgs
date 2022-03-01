@@ -13,7 +13,7 @@
           variable and documents this.
 
     Bug Fixes:
-        - None.
+        - Fix a StatusLine import with no arguments.
 
     Dependencies:
         - None.
