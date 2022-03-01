@@ -7,7 +7,10 @@
         - None.
 
     Enhancements:
-        - None.
+        - OptArgs2::STYLE_HELPTREE output has been improved and now
+          includes sub-command comments
+        - OptArgs2::Pager now includes '-S' in the $LESS environment
+          variable and documents this.
 
     Bug Fixes:
         - None.
