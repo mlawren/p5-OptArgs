@@ -4,7 +4,8 @@
         - New optargs2() function
 
     New Features:
-        - None.
+        - ANSI terminal codes are used to color output, which can be
+          disabled with the new 'show_color' option.
 
     Enhancements:
         - OptArgs2::STYLE_HELPTREE output has been improved and now

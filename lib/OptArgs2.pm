@@ -790,6 +790,11 @@ package OptArgs2::Cmd {
         default => 0,
     );
 
+    has show_color => (
+        is      => 'ro',
+        default => sub { -t STDERR },
+    );
+
     has subcmds => (
         is      => 'ro',
         default => sub { [] },
@@ -903,6 +908,15 @@ package OptArgs2::Cmd {
           if @parents and $style ne OptArgs2::STYLE_HELPSUMMARY;
         $usage .= $self->name;
 
+        my ( $grey, $reset ) = ( '', '' );
+        if ( $self->show_color ) {
+            $grey  = "\e[1;30m";
+            $reset = "\e[0m";
+
+            # $red      = "\e[0;31m";
+            # $yellow = "\e[0;33m";
+        }
+
         foreach my $arg (@args) {
             $usage .= ' ';
             $usage .= '[' unless $arg->required;
@@ -984,7 +998,7 @@ package OptArgs2::Cmd {
                 my ( $n, $a, $t, $c ) =
                   $opt->name_alias_type_comment( $optargs->{ $opt->name }
                       // undef );
-                push( @uopts, [ '    ' . $n, $a, $t, $c ] );
+                push( @uopts, [ '    ' . $n, $a, uc($t), $c ] );
             }
         }
 
@@ -1002,7 +1016,8 @@ package OptArgs2::Cmd {
         if (@sargs) {
             $usage .= "\n";
             foreach my $row (@sargs) {
-                $usage .= sprintf( $format1, @$row );
+                $usage .= sprintf( $format1, @$row ) =~
+                  s/^(\s+\w+\s)(.*?)(\s\s)/$1$grey$2$reset$3/r;
             }
         }
 
@@ -1566,6 +1581,11 @@ A description of the command. Required.
 A subref containing calls to C<arg()> and C<opt>. Note that options are
 inherited by subcommands so you don't need to define them again in
 child subcommands.
+
+=item show_color
+
+Boolean indicating if usage messages should use ANSI terminal color
+codes to highlight different elements. True by default.
 
 =item show_default
 

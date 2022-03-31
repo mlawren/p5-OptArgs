@@ -463,6 +463,11 @@ FUNCTIONS
             options are inherited by subcommands so you don't need to
             define them again in child subcommands.
 
+        show_color
+            Boolean indicating if usage messages should use ANSI
+            terminal color codes to highlight different elements. True
+            by default.
+
         show_default
             Boolean indicating if default values for options and
             arguments should be shown in usage messages. Can be
