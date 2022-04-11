@@ -1,7 +1,7 @@
 2.0.0_3 (yyyy-mm-dd)
 
     API / Behaviour Changes:
-        - None.
+        - New optargs2() function
 
     New Features:
         - None.

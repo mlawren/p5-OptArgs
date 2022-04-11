@@ -9,7 +9,7 @@ package OptArgs2 {
     use Encode qw/decode/;
     use Getopt::Long qw/GetOptionsFromArray/;
     use Exporter::Tidy
-      default => [qw/arg class_optargs cmd opt optargs subcmd/],
+      default => [qw/arg class_optargs cmd opt optargs optargs2 subcmd/],
       other   => [qw/usage/];
 
     our $VERSION = '2.0.0_3';
@@ -430,6 +430,12 @@ package OptArgs2 {
     sub optargs {
         my ( undef, $opts ) = class_optargs( scalar(caller), @_ );
         return $opts;
+    }
+
+    sub optargs2 {
+        my $class = caller;
+        cmd( $class, @_ );
+        return class_optargs($class);
     }
 
     sub subcmd {
@@ -1050,24 +1056,26 @@ OptArgs2 - command-line argument and option processor
     #!/usr/bin/env perl
     use OptArgs2;
 
-    arg item => (
-        isa      => 'Str',
-        required => 1,
-        comment  => 'the item to paint',
+    my $opts = optargs2(
+        comment => 'script to paint things',
+        optargs => sub {
+            arg item => (
+                isa      => 'Str',
+                required => 1,
+                comment  => 'the item to paint',
+            );
+
+            opt help => ( ishelp => 1 );
+
+            opt quiet => (
+                isa     => 'Flag',
+                alias   => 'q',
+                comment => 'output nothing while working',
+            );
+        },
     );
 
-    opt help => ( ishelp => 1 );
-
-    opt quiet => (
-        isa     => 'Flag',
-        alias   => 'q',
-        comment => 'output nothing while working',
-    );
-
-    my $ref = optargs;
-
-    print "Painting $ref->{item}\n" unless $ref->{quiet};
-
+    print "Painting $opts->{item}\n" unless $opts->{quiet};
 
 =head1 DESCRIPTION
 
@@ -1111,7 +1119,7 @@ L<OptArgs> need to be aware of the following:
 
 =over
 
-=item Obvious API changes: cmd(), subcmd()
+=item Obvious API changes: cmd(), optargs2(), subcmd()
 
 Commands and subcommands must now be explicitly defined using C<cmd()>
 and C<subcmd()>.
@@ -1148,8 +1156,8 @@ following interactions from the shell:
         --help,  -h   print a usage message and exit
         --quiet, -q   output nothing while working
 
-The C<optargs()> function parses the command line according to the
-previous C<opt()> and C<arg()> declarations and returns a single HASH
+The C<optargs2()> function parses the command line according to the
+included C<opt()> and C<arg()> declarations and returns a single HASH
 reference.  If the command is not called correctly then an exception is
 thrown containing an automatically generated usage message as shown
 above.  Because B<OptArgs2> fully knows the valid arguments and options
@@ -1158,7 +1166,7 @@ it can detect a wide range of errors:
     $ ./paint wall Perl is great
     error: unexpected option or argument: Perl
 
-So let's add that missing argument definition:
+So let's add that missing argument definition inside the optargs sub:
 
     arg message => (
         isa      => 'Str',
@@ -1744,6 +1752,14 @@ Parse @ARGV by default (or @argv when given) for the arguments and
 options defined for the I<default global> command. Argument decoding
 and exceptions are the same as for C<class_optargs>, but this function
 returns only the combined argument/option values HASHref.
+
+This interface has been superceeded by C<optargs2()>.
+
+=item optargs2( @command_args_and_opts ) -> HASHref
+
+This all-in-one function passes it's arguments directly to C<cmd()>,
+calls C<class_optargs()>, and returns only the C<$opts> HASHref result.
+It is the most convenient B<OptArgs2> interface for simple scripts.
 
 =item subcmd( $class, %parameters ) -> OptArgs2::Cmd
 
