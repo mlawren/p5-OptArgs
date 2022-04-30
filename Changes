@@ -1,4 +1,4 @@
-2.0.0_3 (yyyy-mm-dd)
+2.0.0_3 (2022-04-30)
 
     API / Behaviour Changes:
         - New optargs2() function
@@ -15,12 +15,6 @@
 
     Bug Fixes:
         - Fix a StatusLine import with no arguments.
-
-    Dependencies:
-        - None.
-
-    Packaging:
-        - None.
 
 2.0.0_2 (2022-02-26)
 

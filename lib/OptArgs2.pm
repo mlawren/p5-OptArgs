@@ -1071,7 +1071,7 @@ OptArgs2 - command-line argument and option processor
 
 =head1 VERSION
 
-2.0.0_3 (yyyy-mm-dd)
+2.0.0_3 (2022-04-30)
 
 =head1 SYNOPSIS
 
