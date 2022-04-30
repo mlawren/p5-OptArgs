@@ -16,26 +16,28 @@ package OptArgs2::StatusLine {
         my $class  = shift;
         my $caller = scalar caller;
 
-        my ( $l, $p ) = @_;
+        while (@_) {
+            my ( $l, $p ) = ( shift, shift );
 
-        if ( $l =~ s/^\$(.*)// ) {
-            $l = $caller . '::' . $1;
-        }
-        else {
-            die 'first argument must be like "$scalar"';
-        }
+            if ( $l =~ s/^\$(.*)// ) {
+                $l = $caller . '::' . $1;
+            }
+            else {
+                die 'first argument must be like "$scalar"';
+            }
 
-        my $x;
-        if ( defined $p && $p =~ s/^\$(.*)// ) {
-            my $o = make_line_prefix( $x, my $y );
-            $p = $caller . '::' . $1;
-            *{$p} = \$y;
-        }
-        else {
-            make_line( $x, $p );
-        }
+            my $x;
+            if ( defined $p && $p =~ s/^\$(.*)// ) {
+                my $o = make_line_prefix( $x, my $y );
+                $p = $caller . '::' . $1;
+                *{$p} = \$y;
+            }
+            else {
+                make_line( $x, $p );
+            }
 
-        *{$l} = \$x;
+            *{$l} = \$x;
+        }
     }
 
     sub make_line {
@@ -119,7 +121,7 @@ OptArgs2::StatusLine - terminal status line
 
 =head1 VERSION
 
-2.0.0_2 (2022-02-26)
+2.0.0_3 (2022-04-30)
 
 =head1 SYNOPSIS
 
@@ -164,6 +166,13 @@ line of output, which you might like to use with your script's name:
 If the second argument starts with '$' then it gets imported like
 $line, allowing you to update the prefix dynamically as shown in the
 synopsis.
+
+If you would like multiple status lines you can import them all at
+once:
+
+    use OptArgs2::StatusLine
+      '$line'  => '[myprog] ',
+      '$debug' => '[myprog] (debug) ';
 
 =head1 SEE ALSO
 

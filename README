@@ -2,29 +2,32 @@ NAME
     OptArgs2 - command-line argument and option processor
 
 VERSION
-    2.0.0_2 (2022-02-26)
+    2.0.0_3 (2022-04-30)
 
 SYNOPSIS
         #!/usr/bin/env perl
         use OptArgs2;
 
-        arg item => (
-            isa      => 'Str',
-            required => 1,
-            comment  => 'the item to paint',
+        my $opts = optargs2(
+            comment => 'script to paint things',
+            optargs => sub {
+                arg item => (
+                    isa      => 'Str',
+                    required => 1,
+                    comment  => 'the item to paint',
+                );
+
+                opt help => ( ishelp => 1 );
+
+                opt quiet => (
+                    isa     => 'Flag',
+                    alias   => 'q',
+                    comment => 'output nothing while working',
+                );
+            },
         );
 
-        opt help => ( ishelp => 1 );
-
-        opt quiet => (
-            isa     => 'Flag',
-            alias   => 'q',
-            comment => 'output nothing while working',
-        );
-
-        my $ref = optargs;
-
-        print "Painting $ref->{item}\n" unless $ref->{quiet};
+        print "Painting $opts->{item}\n" unless $opts->{quiet};
 
 DESCRIPTION
     OptArgs2 processes command line arguments, options, and subcommands
@@ -58,7 +61,7 @@ DESCRIPTION
     anytime soon. Users converting to OptArgs2 from OptArgs need to be
     aware of the following:
 
-    Obvious API changes: cmd(), subcmd()
+    Obvious API changes: cmd(), optargs2(), subcmd()
         Commands and subcommands must now be explicitly defined using
         "cmd()" and "subcmd()".
 
@@ -89,8 +92,8 @@ DESCRIPTION
             --help,  -h   print a usage message and exit
             --quiet, -q   output nothing while working
 
-    The "optargs()" function parses the command line according to the
-    previous "opt()" and "arg()" declarations and returns a single HASH
+    The "optargs2()" function parses the command line according to the
+    included "opt()" and "arg()" declarations and returns a single HASH
     reference. If the command is not called correctly then an exception
     is thrown containing an automatically generated usage message as
     shown above. Because OptArgs2 fully knows the valid arguments and
@@ -99,7 +102,8 @@ DESCRIPTION
         $ ./paint wall Perl is great
         error: unexpected option or argument: Perl
 
-    So let's add that missing argument definition:
+    So let's add that missing argument definition inside the optargs
+    sub:
 
         arg message => (
             isa      => 'Str',
@@ -459,6 +463,11 @@ FUNCTIONS
             options are inherited by subcommands so you don't need to
             define them again in child subcommands.
 
+        show_color
+            Boolean indicating if usage messages should use ANSI
+            terminal color codes to highlight different elements. True
+            by default.
+
         show_default
             Boolean indicating if default values for options and
             arguments should be shown in usage messages. Can be
@@ -603,6 +612,14 @@ FUNCTIONS
         decoding and exceptions are the same as for "class_optargs", but
         this function returns only the combined argument/option values
         HASHref.
+
+        This interface has been superceeded by "optargs2()".
+
+    optargs2( @command_args_and_opts ) -> HASHref
+        This all-in-one function passes it's arguments directly to
+        "cmd()", calls "class_optargs()", and returns only the $opts
+        HASHref result. It is the most convenient OptArgs2 interface for
+        simple scripts.
 
     subcmd( $class, %parameters ) -> OptArgs2::Cmd
         Defines a subcommand identified by $class which must include the

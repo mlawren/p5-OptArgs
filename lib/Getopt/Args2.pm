@@ -9,10 +9,10 @@ package Getopt::Args2 {
     use Encode qw/decode/;
     use Getopt::Long qw/GetOptionsFromArray/;
     use Exporter::Tidy
-      default => [qw/arg class_optargs cmd opt optargs subcmd/],
+      default => [qw/arg class_optargs cmd opt optargs optargs2 subcmd/],
       other   => [qw/usage/];
 
-    our $VERSION = '2.0.0_2';
+    our $VERSION = '2.0.0_3';
     our @CARP_NOT;
 
     # constants
@@ -243,10 +243,8 @@ package Getopt::Args2 {
                 }
                 elsif ( $try->required ) {
                     $name =~ s/_/-/g;
-                    $error //= [
-                        'OptRequired',
-                        qq{error: missing required option "--$name"}
-                    ];
+                    $error //=
+                      [ 'OptRequired', qq{missing required option "--$name"} ];
                 }
             }
 
@@ -312,8 +310,7 @@ package Getopt::Args2 {
                       )
                     {
                         my $o = shift @$source;
-                        $error //=
-                          [ 'OptUnknown', qq{error: unknown option "$o"} ];
+                        $error //= [ 'OptUnknown', qq{unknown option "$o"} ];
                     }
 
                     if ( $try->greedy ) {
@@ -374,13 +371,13 @@ package Getopt::Args2 {
         if (@$source) {
             $error //= [
                 'UnexpectedOptArg',
-                "error: unexpected option(s) or argument(s): @$source"
+                "unexpected option(s) or argument(s): @$source"
             ];
         }
         elsif ( my @unexpected = keys %$source_hash ) {
             $error //= [
                 'UnexpectedHashOptArg',
-                "error: unexpected HASH option(s) or argument(s): @unexpected"
+                "unexpected HASH option(s) or argument(s): @unexpected"
             ];
         }
 
@@ -389,7 +386,17 @@ package Getopt::Args2 {
         local $Getopt::Args2::CURRENT = $cmd;
         map { $_->[0]->( $cmd, $optargs->{ $_->[1] } ) } @trigger;
 
-        Getopt::Args2::_usage(@$error) if $error;
+        if ($error) {
+            if ( @$error > 1 ) {
+                my ( $red, $reset ) = ( '', '' );
+                if ( $cmd->show_color ) {
+                    $red   = "\e[0;31m";
+                    $reset = "\e[0m";
+                }
+                $error->[1] = $red . 'error:' . $reset . ' ' . $error->[1];
+            }
+            Getopt::Args2::_usage(@$error);
+        }
 
         return ( $cmd->class, $optargs );
     }
@@ -430,6 +437,12 @@ package Getopt::Args2 {
     sub optargs {
         my ( undef, $opts ) = class_optargs( scalar(caller), @_ );
         return $opts;
+    }
+
+    sub optargs2 {
+        my $class = caller;
+        cmd( $class, @_ );
+        return class_optargs($class);
     }
 
     sub subcmd {
@@ -784,6 +797,11 @@ package Getopt::Args2::Cmd {
         default => 0,
     );
 
+    has show_color => (
+        is      => 'ro',
+        default => sub { -t STDERR },
+    );
+
     has subcmds => (
         is      => 'ro',
         default => sub { [] },
@@ -838,18 +856,14 @@ package Getopt::Args2::Cmd {
 
     sub _usage_tree {
         my $self  = shift;
-        my $depth = shift || '';
+        my $depth = shift || 0;
 
-        ( my $str = $self->usage(Getopt::Args2::STYLE_HELPSUMMARY) ) =~
-          s/^/$depth/gsm;
-
-        foreach
-          my $subcmd ( sort { $a->name cmp $b->name } @{ $self->subcmds } )
-        {
-            $str .= $subcmd->_usage_tree( $depth . '    ' );
-        }
-
-        return $str;
+        return [
+            $depth, $self->usage(Getopt::Args2::STYLE_HELPSUMMARY),
+            $self->comment
+          ],
+          map { $_->_usage_tree( $depth + 1 ) }
+          sort { $a->name cmp $b->name } @{ $self->subcmds };
     }
 
     sub usage {
@@ -858,7 +872,30 @@ package Getopt::Args2::Cmd {
         my $usage = '';
 
         if ( $style eq Getopt::Args2::STYLE_HELPTREE ) {
-            $usage                   = $self->_usage_tree;
+            my ( @w1, @w2 );
+            my @items = map {
+                $_->[0] = ' ' x ( $_->[0] * 3 );
+                push @w1, length( $_->[1] ) + length( $_->[0] );
+                push @w2, length $_->[2];
+                $_
+            } $self->_usage_tree;
+            my ( $w1, $w2 ) = ( max(@w1), max(@w2) );
+            my $paged  = Getopt::Args2::rows() < scalar @items;
+            my $cols   = Getopt::Args2::cols();
+            my $usage  = '';
+            my $spacew = 3;
+            my $space  = ' ' x $spacew;
+            foreach my $i ( 0 .. $#items ) {
+                my $overlap = $w1 + $spacew + $w2[$i] - $cols;
+                if ( $overlap > 0 and not $paged ) {
+                    $items[$i]->[2] =
+                      sprintf '%-.' . ( $w2[$i] - $overlap - 3 ) . 's%s',
+                      $items[$i]->[2], '.' x 3;
+                }
+                $usage .= sprintf "%-${w1}s${space}%-s\n",
+                  $items[$i]->[0] . $items[$i]->[1],
+                  $items[$i]->[2];
+            }
             @Getopt::Args2::HelpTree::ISA = ('Getopt::Args2');
             return bless \$usage, 'Getopt::Args2::HelpTree';
         }
@@ -878,6 +915,15 @@ package Getopt::Args2::Cmd {
           if @parents and $style ne Getopt::Args2::STYLE_HELPSUMMARY;
         $usage .= $self->name;
 
+        my ( $grey, $reset ) = ( '', '' );
+        if ( $self->show_color ) {
+            $grey  = "\e[1;30m";
+            $reset = "\e[0m";
+
+            # $red      = "\e[0;31m";
+            # $yellow = "\e[0;33m";
+        }
+
         foreach my $arg (@args) {
             $usage .= ' ';
             $usage .= '[' unless $arg->required;
@@ -887,6 +933,7 @@ package Getopt::Args2::Cmd {
         }
 
         if ( $style eq Getopt::Args2::STYLE_HELPSUMMARY ) {
+            return $usage if __PACKAGE__ eq caller;
             no strict 'refs';
             @Getopt::Args2::HelpSummary::ISA = ('Getopt::Args2');
             return bless \$usage, 'Getopt::Args2::HelpSummary';
@@ -958,7 +1005,7 @@ package Getopt::Args2::Cmd {
                 my ( $n, $a, $t, $c ) =
                   $opt->name_alias_type_comment( $optargs->{ $opt->name }
                       // undef );
-                push( @uopts, [ '    ' . $n, $a, $t, $c ] );
+                push( @uopts, [ '    ' . $n, $a, uc($t), $c ] );
             }
         }
 
@@ -976,7 +1023,8 @@ package Getopt::Args2::Cmd {
         if (@sargs) {
             $usage .= "\n";
             foreach my $row (@sargs) {
-                $usage .= sprintf( $format1, @$row );
+                $usage .= sprintf( $format1, @$row ) =~
+                  s/^(\s+\w+\s)(.*?)(\s\s)/$1$grey$2$reset$3/r;
             }
         }
 
@@ -1023,31 +1071,33 @@ Getopt::Args2 - command-line argument and option processor
 
 =head1 VERSION
 
-2.0.0_2 (2022-02-26)
+2.0.0_3 (2022-04-30)
 
 =head1 SYNOPSIS
 
     #!/usr/bin/env perl
     use Getopt::Args2;
 
-    arg item => (
-        isa      => 'Str',
-        required => 1,
-        comment  => 'the item to paint',
+    my $opts = optargs2(
+        comment => 'script to paint things',
+        optargs => sub {
+            arg item => (
+                isa      => 'Str',
+                required => 1,
+                comment  => 'the item to paint',
+            );
+
+            opt help => ( ishelp => 1 );
+
+            opt quiet => (
+                isa     => 'Flag',
+                alias   => 'q',
+                comment => 'output nothing while working',
+            );
+        },
     );
 
-    opt help => ( ishelp => 1 );
-
-    opt quiet => (
-        isa     => 'Flag',
-        alias   => 'q',
-        comment => 'output nothing while working',
-    );
-
-    my $ref = optargs;
-
-    print "Painting $ref->{item}\n" unless $ref->{quiet};
-
+    print "Painting $opts->{item}\n" unless $opts->{quiet};
 
 =head1 DESCRIPTION
 
@@ -1091,7 +1141,7 @@ L<OptArgs> need to be aware of the following:
 
 =over
 
-=item Obvious API changes: cmd(), subcmd()
+=item Obvious API changes: cmd(), optargs2(), subcmd()
 
 Commands and subcommands must now be explicitly defined using C<cmd()>
 and C<subcmd()>.
@@ -1128,8 +1178,8 @@ following interactions from the shell:
         --help,  -h   print a usage message and exit
         --quiet, -q   output nothing while working
 
-The C<optargs()> function parses the command line according to the
-previous C<opt()> and C<arg()> declarations and returns a single HASH
+The C<optargs2()> function parses the command line according to the
+included C<opt()> and C<arg()> declarations and returns a single HASH
 reference.  If the command is not called correctly then an exception is
 thrown containing an automatically generated usage message as shown
 above.  Because B<Getopt::Args2> fully knows the valid arguments and options
@@ -1138,7 +1188,7 @@ it can detect a wide range of errors:
     $ ./paint wall Perl is great
     error: unexpected option or argument: Perl
 
-So let's add that missing argument definition:
+So let's add that missing argument definition inside the optargs sub:
 
     arg message => (
         isa      => 'Str',
@@ -1539,6 +1589,11 @@ A subref containing calls to C<arg()> and C<opt>. Note that options are
 inherited by subcommands so you don't need to define them again in
 child subcommands.
 
+=item show_color
+
+Boolean indicating if usage messages should use ANSI terminal color
+codes to highlight different elements. True by default.
+
 =item show_default
 
 Boolean indicating if default values for options and arguments should
@@ -1725,6 +1780,14 @@ options defined for the I<default global> command. Argument decoding
 and exceptions are the same as for C<class_optargs>, but this function
 returns only the combined argument/option values HASHref.
 
+This interface has been superceeded by C<optargs2()>.
+
+=item optargs2( @command_args_and_opts ) -> HASHref
+
+This all-in-one function passes it's arguments directly to C<cmd()>,
+calls C<class_optargs()>, and returns only the C<$opts> HASHref result.
+It is the most convenient B<Getopt::Args2> interface for simple scripts.
+
 =item subcmd( $class, %parameters ) -> Getopt::Args2::Cmd
 
 Defines a subcommand identified by C<$class> which must include the
@@ -1751,7 +1814,7 @@ the command C<$class>.
 
 =head1 SEE ALSO
 
-L<OptArgs2::Pager>, L<Getopt::Args2::StatusLine>, L<Getopt::Long>
+L<OptArgs2::Pager>, L<OptArgs2::StatusLine>, L<Getopt::Long>
 
 This module is duplicated on CPAN as L<OptArgs2>, to cover both
 its original name and yet still be found in the mess that is Getopt::*.

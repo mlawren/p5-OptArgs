@@ -1,9 +1,11 @@
 #!perl
 use strict;
 use warnings;
+use OptArgs2::StatusLine;
 use OptArgs2::StatusLine '$line';
-use OptArgs2::StatusLine '$line2', 'prefix:';
-use OptArgs2::StatusLine '$line3', '$prefix';
+use OptArgs2::StatusLine
+  '$line2' => 'prefix:',
+  '$line3' => '$prefix';
 use Test2::V0;
 use Test::Output;
 

@@ -79,6 +79,6 @@
          "url" : "ssh://git@github.com/mlawren/p5-OptArgs.git"
       }
    },
-   "version" : "v2.0.0_2",
+   "version" : "v2.0.0_3",
    "x_serialization_backend" : "JSON::PP version 4.02"
 }

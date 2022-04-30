@@ -8,7 +8,7 @@ WriteMakefile(
     NAME       => 'OptArgs2',
     ABSTRACT   => 'CLI argument and option processing',
     AUTHOR     => 'Mark Lawrence <nomad@null.net>',
-    VERSION    => '2.0.0_2',
+    VERSION    => '2.0.0_3',
     LICENSE    => 'gpl_3',
     test       => { RECURSIVE_TEST_FILES => 1, },
     META_MERGE => {
@@ -56,6 +56,7 @@ close $fh;
 
 $src =~ s/Getopt::Args2/GETOPT::ARGS2/g;
 $src =~ s/OptArgs2/Getopt::Args2/g;
+$src =~ s/Getopt::Args2::Status/OptArgs2::Status/g;
 $src =~ s/Getopt::Args2::Pager/OptArgs2::Pager/g;
 $src =~ s/Getopt::Args2::Mo/OptArgs2::Mo/g;
 $src =~ s/p5-Getopt::Args2/p5-OptArgs2/g;

@@ -1,3 +1,21 @@
+2.0.0_3 (2022-04-30)
+
+    API / Behaviour Changes:
+        - New optargs2() function
+
+    New Features:
+        - ANSI terminal codes are used to color output, which can be
+          disabled with the new 'show_color' option.
+
+    Enhancements:
+        - OptArgs2::STYLE_HELPTREE output has been improved and now
+          includes sub-command comments
+        - OptArgs2::Pager now includes '-S' in the $LESS environment
+          variable and documents this.
+
+    Bug Fixes:
+        - Fix a StatusLine import with no arguments.
+
 2.0.0_2 (2022-02-26)
 
     New Features:

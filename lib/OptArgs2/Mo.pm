@@ -1,5 +1,5 @@
 package OptArgs2::Mo {
-    our $VERSION = '2.0.0_2';
+    our $VERSION = '2.0.0_3';
 
     BEGIN {
         no strict;
