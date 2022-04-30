@@ -12,7 +12,7 @@ package OptArgs2 {
       default => [qw/arg class_optargs cmd opt optargs optargs2 subcmd/],
       other   => [qw/usage/];
 
-    our $VERSION = '2.0.0_3';
+    our $VERSION = '2.0.0_4';
     our @CARP_NOT;
 
     # constants
@@ -1071,7 +1071,7 @@ OptArgs2 - command-line argument and option processor
 
 =head1 VERSION
 
-2.0.0_3 (2022-04-30)
+2.0.0_4 (yyyy-mm-dd)
 
 =head1 SYNOPSIS
 
