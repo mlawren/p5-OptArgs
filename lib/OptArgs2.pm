@@ -243,10 +243,8 @@ package OptArgs2 {
                 }
                 elsif ( $try->required ) {
                     $name =~ s/_/-/g;
-                    $error //= [
-                        'OptRequired',
-                        qq{error: missing required option "--$name"}
-                    ];
+                    $error //=
+                      [ 'OptRequired', qq{missing required option "--$name"} ];
                 }
             }
 
@@ -312,8 +310,7 @@ package OptArgs2 {
                       )
                     {
                         my $o = shift @$source;
-                        $error //=
-                          [ 'OptUnknown', qq{error: unknown option "$o"} ];
+                        $error //= [ 'OptUnknown', qq{unknown option "$o"} ];
                     }
 
                     if ( $try->greedy ) {
@@ -374,13 +371,13 @@ package OptArgs2 {
         if (@$source) {
             $error //= [
                 'UnexpectedOptArg',
-                "error: unexpected option(s) or argument(s): @$source"
+                "unexpected option(s) or argument(s): @$source"
             ];
         }
         elsif ( my @unexpected = keys %$source_hash ) {
             $error //= [
                 'UnexpectedHashOptArg',
-                "error: unexpected HASH option(s) or argument(s): @unexpected"
+                "unexpected HASH option(s) or argument(s): @unexpected"
             ];
         }
 
@@ -389,7 +386,17 @@ package OptArgs2 {
         local $OptArgs2::CURRENT = $cmd;
         map { $_->[0]->( $cmd, $optargs->{ $_->[1] } ) } @trigger;
 
-        OptArgs2::_usage(@$error) if $error;
+        if ($error) {
+            if ( @$error > 1 ) {
+                my ( $red, $reset ) = ( '', '' );
+                if ( $cmd->show_color ) {
+                    $red   = "\e[0;31m";
+                    $reset = "\e[0m";
+                }
+                $error->[1] = $red . 'error:' . $reset . ' ' . $error->[1];
+            }
+            OptArgs2::_usage(@$error);
+        }
 
         return ( $cmd->class, $optargs );
     }
