@@ -1,44 +1,24 @@
 package OptArgs2::Pager;
 use strict;
 use warnings;
-use OptArgs2::Mo;
 use Carp ();
 use Exporter::Tidy other => [qw/page start_pager stop_pager/];
 use File::Which;
 use IO::Handle;
+use OptArgs2::Pager_CI {
+
+    # User provided arguments
+    auto     => { is => 'ro', default => 1, },
+    encoding => { is => 'ro', default => ':utf8', },
+    pager    => { is => 'ro', default => \&_build_pager, },
+
+    # Attributes
+    fh      => { is => 'rw', default => sub { IO::Handle->new }, },
+    orig_fh => { is => 'ro', default => sub { select }, },
+    pid     => { is => 'rw' },
+};
 
 our @CARP_NOT = (__PACKAGE__);
-
-# User provided arguments
-
-has auto => (
-    is      => 'ro',
-    default => 1,
-);
-
-has encoding => (
-    is      => 'ro',
-    default => ':utf8',
-);
-
-has pager => (
-    is      => 'ro',
-    default => \&_build_pager,
-);
-
-# Attributes
-
-has fh => (
-    is      => 'rw',
-    default => sub { IO::Handle->new },
-);
-
-has orig_fh => (
-    is      => 'ro',
-    default => sub { select },
-);
-
-has pid => ( is => 'rw' );
 
 sub _build_pager {
     my $self = shift;

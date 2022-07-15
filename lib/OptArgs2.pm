@@ -147,8 +147,6 @@ package OptArgs2 {
               OptArgs2::Cmd
               OptArgs2::Fallback
               OptArgs2::Opt
-              OptArgs2::Mo
-              OptArgs2::Mo::Object
               /
         );
 
@@ -498,39 +496,19 @@ package OptArgs2::CODEREF {
 }
 
 package OptArgs2::Arg {
-    use OptArgs2::Mo;
-
-    has cmd => (
-        is       => 'rw',
-        weak_ref => 1,
-    );
-
-    has comment => (
-        is       => 'ro',
-        required => 1,
-    );
-
-    # Can be re-set by CODEref defaults
-    has default => ( is => 'ro', );
-
-    has fallback => ( is => 'rw', );
-
-    has isa => ( required => 1, );
-
-    has isa_name => ( is => 'rw', );
-
-    has getopt => ( is => 'rw', );
-
-    has greedy => ( is => 'ro', );
-
-    has name => (
-        is       => 'ro',
-        required => 1,
-    );
-
-    has required => ( is => 'ro', );
-
-    has show_default => ( is => 'ro', );
+    use OptArgs2::Arg_CI {
+        cmd      => { is       => 'rw', weak_ref => 1, },
+        comment  => { is       => 'ro', required => 1, },
+        default  => { is       => 'ro', },   # Can be re-set by CODEref defaults
+        fallback => { is       => 'rw', },
+        isa      => { required => 1, },
+        isa_name => { is       => 'rw', },
+        getopt   => { is       => 'rw', },
+        greedy   => { is       => 'ro', },
+        name         => { is => 'ro', required => 1, },
+        required     => { is => 'ro', },
+        show_default => { is => 'ro', },
+    };
 
     my %arg2getopt = (
         'Str'      => '=s',
@@ -586,48 +564,24 @@ package OptArgs2::Arg {
 }
 
 package OptArgs2::Fallback {
-    use OptArgs2::Mo;
-
-    extends 'OptArgs2::Arg';
-
-    has hidden => ( is => 'ro', );
-
+    use parent 'OptArgs2::Arg';
+    use OptArgs2::Fallback_CI { hidden => { is => 'ro' } };
 }
 
 package OptArgs2::Opt {
-    use OptArgs2::Mo;
-
-    has alias => ( is => 'ro', );
-
-    has comment => (
-        is       => 'ro',
-        required => 1,
-    );
-
-    # Can be re-set by CODEref defaults
-    has default => ( is => 'ro', );
-
-    has getopt => ( is => 'ro', );
-
-    has required => ( is => 'ro', );
-
-    has hidden => ( is => 'ro', );
-
-    has isa => (
-        is       => 'ro',
-        required => 1,
-    );
-
-    has isa_name => ( is => 'rw', );
-
-    has name => (
-        is       => 'ro',
-        required => 1,
-    );
-
-    has trigger => ( is => 'ro', );
-
-    has show_default => ( is => 'ro', );
+    use OptArgs2::Opt_CI {
+        alias        => { is => 'ro', },
+        comment      => { is => 'ro', required => 1, },
+        default      => { is => 'ro', },    # Can be re-set by CODEref defaults
+        getopt       => { is => 'ro', },
+        required     => { is => 'ro', },
+        hidden       => { is => 'ro', },
+        isa          => { is => 'ro', required => 1, },
+        isa_name     => { is => 'rw', },
+        name         => { is => 'ro', required => 1, },
+        trigger      => { is => 'ro', },
+        show_default => { is => 'ro', },
+    };
 
     my %isa2getopt = (
         'ArrayRef' => '=s@',
@@ -742,72 +696,36 @@ package OptArgs2::Cmd {
       '""'     => sub { shift->class },
       fallback => 1;
     use List::Util qw/max/;
-    use OptArgs2::Mo;
     use Scalar::Util qw/weaken/;
-
-    has abbrev => ( is => 'rw', );
-
-    has args => (
-        is      => 'ro',
-        default => sub { [] },
-    );
-
-    has class => (
-        is       => 'ro',
-        required => 1,
-    );
-
-    has comment => (
-        is       => 'ro',
-        required => 1,
-    );
-
-    has hidden => ( is => 'ro', );
-
-    has name => (
-        is      => 'rw',
-        default => sub {
-            my $x = $_[0]->class;
-            if ( $x eq 'main' ) {
-                require File::Basename;
-                File::Basename::basename($0),;
-            }
-            else {
-                $x =~ s/.*://;
-                $x =~ s/_/-/g;
-                $x;
-            }
+    use OptArgs2::Cmd_CI {
+        abbrev  => { is => 'rw', },
+        args    => { is => 'ro', default  => sub { [] }, },
+        class   => { is => 'ro', required => 1, },
+        comment => { is => 'ro', required => 1, },
+        hidden  => { is => 'ro', },
+        name    => {
+            is      => 'rw',
+            default => sub {
+                my $x = $_[0]->class;
+                if ( $x eq 'main' ) {
+                    require File::Basename;
+                    File::Basename::basename($0),;
+                }
+                else {
+                    $x =~ s/.*://;
+                    $x =~ s/_/-/g;
+                    $x;
+                }
+            },
         },
-    );
-
-    has optargs => ( is => 'rw', );
-
-    has opts => (
-        is      => 'ro',
-        default => sub { [] },
-    );
-
-    has parent => (
-        is       => 'rw',
-        weak_ref => 1,
-    );
-
-    has show_default => (
-        is      => 'ro',
-        default => 0,
-    );
-
-    has show_color => (
-        is      => 'ro',
-        default => sub { -t STDERR },
-    );
-
-    has subcmds => (
-        is      => 'ro',
-        default => sub { [] },
-    );
-
-    has _values => ( is => 'rw' );
+        optargs      => { is => 'rw', },
+        opts         => { is => 'ro', default  => sub { [] }, },
+        parent       => { is => 'rw', weak_ref => 1, },
+        show_default => { is => 'ro', default  => 0, },
+        show_color   => { is => 'ro', default  => sub { -t STDERR }, },
+        subcmds      => { is => 'ro', default  => sub { [] }, },
+        _values      => { is => 'rw' },
+    };
 
     sub add_arg {
         my $self = shift;
@@ -1816,8 +1734,8 @@ the command C<$class>.
 
 L<OptArgs2::Pager>, L<OptArgs2::StatusLine>, L<Getopt::Long>
 
-This module is duplicated on CPAN as L<Getopt::Args2>, to cover both
-its original name and yet still be found in the mess that is Getopt::*.
+This module used to duplicate itself on CPAN as L<Getopt::Args2>, but
+as of the version 2 series that is no longer the case.
 
 =head1 SUPPORT & DEVELOPMENT
 

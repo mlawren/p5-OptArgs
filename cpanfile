@@ -25,6 +25,7 @@ on runtime => sub {
 
 on develop => sub {
     requires 'App::githook::perltidy' => 'v0.12.0';
+    requires 'Class::Inline'          => 0;
 };
 
 on test => sub {

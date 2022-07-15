@@ -641,9 +641,8 @@ FUNCTIONS
 SEE ALSO
     OptArgs2::Pager, OptArgs2::StatusLine, Getopt::Long
 
-    This module is duplicated on CPAN as Getopt::Args2, to cover both
-    its original name and yet still be found in the mess that is
-    Getopt::*.
+    This module used to duplicate itself on CPAN as Getopt::Args2, but
+    as of the version 2 series that is no longer the case.
 
 SUPPORT & DEVELOPMENT
     This distribution is managed via github:

@@ -13,7 +13,7 @@
         - None.
 
     Dependencies:
-        - None.
+        - (development only) Use Class::Inline instead of Mo.
 
     Packaging:
         - None.
