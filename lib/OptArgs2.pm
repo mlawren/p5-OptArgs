@@ -323,7 +323,10 @@ package OptArgs2 {
                             $result = [@$source];
                         }
                         elsif ( $try->isa eq 'HashRef' ) {
-                            $result = { map { split /=/, $_ } @$source };
+                            $result = {
+                                map { split /=/, $_ }
+                                map { split /,/, $_ } @$source
+                            };
                         }
                         else {
                             $result = "@$source";
@@ -338,7 +341,8 @@ package OptArgs2 {
                         $result = [ shift @$source ];
                     }
                     elsif ( $try->isa eq 'HashRef' ) {
-                        $result = { split /=/, shift @$source };
+                        $result =
+                          { map { split /=/, $_ } split /,/, shift @$source };
                     }
                     else {
                         $result = shift @$source;
