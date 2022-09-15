@@ -11,7 +11,7 @@ WriteMakefile(
     VERSION    => '2.0.0_4',
     LICENSE    => 'gpl_3',
     test       => { RECURSIVE_TEST_FILES => 1, },
-    PM_FILTER  => 'perl -ne "print unless /\#\# CI_PM_FILTER/"',
+    PM_FILTER  => 'perl -ne "print unless /(^|\#\# )CI_PM_FILTER/"',
     META_MERGE => {
         dynamic_config => 1,
         'meta-spec'    => { version => 2 },
