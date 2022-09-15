@@ -3,7 +3,6 @@ cover_db/
 .direnv
 .envrc
 _build
-lib/Getopt/Args2.pm
 Makefile
 Makefile.old
 MANIFEST
