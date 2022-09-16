@@ -500,19 +500,19 @@ package OptArgs2::CODEREF {
 }
 
 package OptArgs2::Arg {
-    use OptArgs2::Arg_CI {
-        cmd      => { is       => 'rw', weak_ref => 1, },
-        comment  => { is       => 'ro', required => 1, },
-        default  => { is       => 'ro', },   # Can be re-set by CODEref defaults
-        fallback => { is       => 'rw', },
-        isa      => { required => 1, },
-        isa_name => { is       => 'rw', },
-        getopt   => { is       => 'rw', },
-        greedy   => { is       => 'ro', },
-        name         => { is => 'ro', required => 1, },
-        required     => { is => 'ro', },
-        show_default => { is => 'ro', },
-    };
+    use OptArgs2::Arg_CI
+      cmd          => { is       => 'rw', weaken   => 1, },
+      comment      => { is       => 'ro', required => 1, },
+      default      => { is       => 'ro', }, # Can be re-set by CODEref defaults
+      fallback     => { is       => 'rw', },
+      isa          => { required => 1, },
+      isa_name     => { is       => 'rw', },
+      getopt       => { is       => 'rw', },
+      greedy       => { is       => 'ro', },
+      name         => { is       => 'ro', required => 1, },
+      required     => { is       => 'ro', },
+      show_default => { is       => 'ro', },
+      ;
 
     my %arg2getopt = (
         'Str'      => '=s',
@@ -568,24 +568,25 @@ package OptArgs2::Arg {
 }
 
 package OptArgs2::Fallback {
-    use parent 'OptArgs2::Arg';
-    use OptArgs2::Fallback_CI { hidden => { is => 'ro' } };
+    use OptArgs2::Fallback_CI
+      extends => 'OptArgs2::Arg',
+      has     => { hidden => { is => 'ro' }, };
 }
 
 package OptArgs2::Opt {
-    use OptArgs2::Opt_CI {
-        alias        => { is => 'ro', },
-        comment      => { is => 'ro', required => 1, },
-        default      => { is => 'ro', },    # Can be re-set by CODEref defaults
-        getopt       => { is => 'ro', },
-        required     => { is => 'ro', },
-        hidden       => { is => 'ro', },
-        isa          => { is => 'ro', required => 1, },
-        isa_name     => { is => 'rw', },
-        name         => { is => 'ro', required => 1, },
-        trigger      => { is => 'ro', },
-        show_default => { is => 'ro', },
-    };
+    use OptArgs2::Opt_CI
+      alias        => { is => 'ro', },
+      comment      => { is => 'ro', required => 1, },
+      default      => { is => 'ro', },    # Can be re-set by CODEref defaults
+      getopt       => { is => 'ro', },
+      required     => { is => 'ro', },
+      hidden       => { is => 'ro', },
+      isa          => { is => 'ro', required => 1, },
+      isa_name     => { is => 'rw', },
+      name         => { is => 'ro', required => 1, },
+      trigger      => { is => 'ro', },
+      show_default => { is => 'ro', },
+      ;
 
     my %isa2getopt = (
         'ArrayRef' => '=s@',
@@ -700,36 +701,35 @@ package OptArgs2::Cmd {
       '""'     => sub { shift->class },
       fallback => 1;
     use List::Util qw/max/;
-    use Scalar::Util qw/weaken/;
-    use OptArgs2::Cmd_CI {
-        abbrev  => { is => 'rw', },
-        args    => { is => 'ro', default  => sub { [] }, },
-        class   => { is => 'ro', required => 1, },
-        comment => { is => 'ro', required => 1, },
-        hidden  => { is => 'ro', },
-        name    => {
-            is      => 'rw',
-            default => sub {
-                my $x = $_[0]->class;
-                if ( $x eq 'main' ) {
-                    require File::Basename;
-                    File::Basename::basename($0),;
-                }
-                else {
-                    $x =~ s/.*://;
-                    $x =~ s/_/-/g;
-                    $x;
-                }
-            },
+    use OptArgs2::Cmd_CI
+      abbrev  => { is => 'rw', },
+      args    => { is => 'ro', default  => sub { [] }, },
+      class   => { is => 'ro', required => 1, },
+      comment => { is => 'ro', required => 1, },
+      hidden  => { is => 'ro', },
+      name    => {
+        is      => 'rw',
+        default => sub {
+            my $x = $_[0]->class;
+            if ( $x eq 'main' ) {
+                require File::Basename;
+                File::Basename::basename($0),;
+            }
+            else {
+                $x =~ s/.*://;
+                $x =~ s/_/-/g;
+                $x;
+            }
         },
-        optargs      => { is => 'rw', },
-        opts         => { is => 'ro', default  => sub { [] }, },
-        parent       => { is => 'rw', weak_ref => 1, },
-        show_default => { is => 'ro', default  => 0, },
-        show_color   => { is => 'ro', default  => sub { -t STDERR }, },
-        subcmds      => { is => 'ro', default  => sub { [] }, },
-        _values      => { is => 'rw' },
-    };
+      },
+      optargs      => { is => 'rw', },
+      opts         => { is => 'ro', default => sub { [] }, },
+      parent       => { is => 'rw', weaken  => 1, },
+      show_default => { is => 'ro', default => 0, },
+      show_color   => { is => 'ro', default => sub { -t STDERR }, },
+      subcmds      => { is => 'ro', default => sub { [] }, },
+      _values      => { is => 'rw' },
+      ;
 
     sub add_arg {
         my $self = shift;
@@ -738,8 +738,6 @@ package OptArgs2::Cmd {
         push( @{ $self->args }, $arg );
         $arg->cmd($self);
 
-        # A hack until Mo gets weaken support
-        weaken $arg->{cmd};
         return $arg;
     }
 
@@ -751,8 +749,6 @@ package OptArgs2::Cmd {
         $subcmd->parent($self);
         $subcmd->abbrev( $self->abbrev );
 
-        # A hack until Mo gets weaken support
-        weaken $subcmd->{parent};
         return $subcmd;
     }
 

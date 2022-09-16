@@ -19,10 +19,15 @@ WriteMakefile(
             package => [
                 qw/
                   OptArgs2::Arg
+                  OptArgs2::Arg_CI
                   OptArgs2::Cmd
+                  OptArgs2::Cmd_CI
                   OptArgs2::CODEREF
                   OptArgs2::Fallback
+                  OptArgs2::Fallback_CI
                   OptArgs2::Opt
+                  OptArgs2::Opt_CI
+                  OptArgs2::Pager_CI
                   OptArgs2::StatusLine::Line
                   OptArgs2::StatusLine::Prefix
                   /
