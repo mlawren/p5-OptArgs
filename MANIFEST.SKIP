@@ -62,7 +62,7 @@
 ^MANIFEST\.SKIP
 
 # Avoid archives of this distribution
-\bOptArgs2-v[\d\.\_]+
+\bOptArgs2-
 
 \.perltidy
 \.podtidy
