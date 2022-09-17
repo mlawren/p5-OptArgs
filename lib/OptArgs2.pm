@@ -604,24 +604,16 @@ package OptArgs2::Opt {
         my $ref   = {@_};
         use feature 'state';
 
-        if ( my $type = delete $ref->{ishelp} ) {
-            state $styles = {
-                OptArgs2::STYLE_USAGE       => undef,
-                OptArgs2::STYLE_HELP        => undef,
-                OptArgs2::STYLE_HELPSUMMARY => undef,
-                OptArgs2::STYLE_HELPTREE    => undef,
-            };
-            $type = OptArgs2::STYLE_HELP if $type eq 1;
-            OptArgs2::_croak( 'InvalidIshelp',
-                'invalid ishelp "%s" for opt "%s"',
-                $type, $ref->{name} )
-              unless exists $styles->{$type};
-
-            $ref->{isa}     //= 'Flag';
-            $ref->{alias}   //= substr $ref->{name}, 0, 1;
-            $ref->{comment} //= 'print a full help message and exit';
+        if ( $ref->{isa} =~ m/^Help/ ) {    # one of the STYLE_HELPs
+            my $style = $ref->{isa};
+            my $name  = $style;
+            $name =~ s/([a-z])([A-Z])/$1-$2/g;
+            $ref->{isa} = 'Flag';
+            $ref->{name}    //= lc $name;
+            $ref->{alias}   //= lc substr $ref->{name}, 0, 1;
+            $ref->{comment} //= "print a $style message and exit";
             $ref->{trigger} //= sub {
-                OptArgs2::_usage($type);
+                OptArgs2::_usage($style);
             };
         }
 
@@ -1457,10 +1449,6 @@ options defined for command C<$class>.  C<@ARGV> will first be decoded
 into UTF-8 (if necessary) from whatever L<I18N::Langinfo> says your
 current locale codeset is.
 
-Throws an error / usage exception object (typically C<OptArgs2::Usage>)
-for missing or invalid arguments/options. Uses L<OptArgs2::Pager> for
-'ishelp' output.
-
 Returns the following two values:
 
 =over
@@ -1476,6 +1464,10 @@ a hashref containing key/value pairs for options and arguments
 I<combined>.
 
 =back
+
+Throws an error / usage exception object (typically C<OptArgs2::Usage>)
+for missing or invalid arguments/options. Uses L<OptArgs2::Pager> for
+Help output.
 
 As an aid for testing, if the passed in argument C<@argv> (not @ARGV)
 contains a HASH reference, the key/value combinations of the hash will
@@ -1600,35 +1592,32 @@ message.
 Required. Is mapped to a L<Getopt::Long> type according to the
 following table:
 
-    isa              Getopt::Long
-    ---              ------------
-     'ArrayRef'      's@'
-     'Flag'          '!'
-     'Bool'          '!'
-     'Counter'       '+'
-     'HashRef'       's%'
-     'Int'           '=i'
-     'Num'           '=f'
-     'Str'           '=s'
+    isa                             Getopt::Long
+    ---                             ------------
+     'ArrayRef'                     's@'
+     'Flag'                         '!'
+     'Bool'                         '!'
+     'Counter'                      '+'
+     'HashRef'                      's%'
+     'Int'                          '=i'
+     'Num'                          '=f'
+     'Str'                          '=s'
+     OptArgs2::STYLE_HELP           '!'
+     OptArgs2::STYLE_HELPTREE       '!'
+     OptArgs2::STYLE_HELPSUMMARY    '!'
 
-=item isa_name
-
-When provided this parameter will be presented instead of the generic
-presentation for the 'isa' parameter.
-
-=item ishelp
-
-Makes the option behave like a typical C<--help>, that displays a usage
+The last three STYLE_HELP* types pre-fill various attributes to make
+the option behave like a typical C<--help>, that displays a usage
 message and exits before errors are generated.  Typically used alone as
 follows:
 
     opt help => (
-        ishelp => OptArgs2::STYLE_HELP,
+        isa => OptArgs2::STYLE_HELP,
     );
 
     opt help_tree => (
-        ishelp => OptArgs2::STYLE_HELPTREE,
-        alias  => 'T', # or 'undef' if you don't want an alias
+        isa => OptArgs2::STYLE_HELPTREE,
+        alias  => 'T',    # or 'undef' if you don't want an alias
     );
 
 The first option above is similar to this longhand version:
@@ -1636,16 +1625,18 @@ The first option above is similar to this longhand version:
     opt help => (
         isa     => 'Flag',
         alias   => 'h',   # first character of the opt name
-        comment => 'print a usage message and exit',
+        comment => 'print a Help message and exit',
         trigger => sub {
-            # Start a pager for long messages
-            print OptArgs2::usage(undef, OptArgs2::STYLE_HELP);
-            # Stop the pager
-            exit;
+            OptArgs2::_usage(OptArgs2::STYLE_HELP);
         }
     );
 
 You can override any of the above with your own parameters.
+
+=item isa_name
+
+When provided this parameter will be presented instead of the generic
+presentation for the 'isa' parameter.
 
 =item show_default
 

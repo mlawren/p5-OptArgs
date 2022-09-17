@@ -1,7 +1,7 @@
 2.0.0_4 (yyyy-mm-dd)
 
     API / Behaviour Changes:
-        - None.
+        - Replace 'ishelp' attribute with isa => OptArgs2::STYLE_HELP
 
     New Features:
         - None.
