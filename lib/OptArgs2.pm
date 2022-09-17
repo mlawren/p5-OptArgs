@@ -575,17 +575,17 @@ package OptArgs2::Fallback {
 
 package OptArgs2::Opt {
     use OptArgs2::Opt_CI
-      alias        => { is => 'ro', },
-      comment      => { is => 'ro', required => 1, },
-      default      => { is => 'ro', },    # Can be re-set by CODEref defaults
-      getopt       => { is => 'ro', },
-      required     => { is => 'ro', },
-      hidden       => { is => 'ro', },
-      isa          => { is => 'ro', required => 1, },
-      isa_name     => { is => 'rw', },
-      name         => { is => 'ro', required => 1, },
-      trigger      => { is => 'ro', },
-      show_default => { is => 'ro', },
+      alias        => {},
+      comment      => { required => 1, },
+      default      => {},                   # Can be re-set by CODEref defaults
+      getopt       => {},
+      required     => {},
+      hidden       => {},
+      isa          => { required => 1, },
+      isa_name     => { is       => 'rw', },
+      name         => { required => 1, },
+      trigger      => {},
+      show_default => {},
       ;
 
     my %isa2getopt = (
@@ -702,11 +702,11 @@ package OptArgs2::Cmd {
       fallback => 1;
     use List::Util qw/max/;
     use OptArgs2::Cmd_CI
-      abbrev  => { is => 'rw', },
-      args    => { is => 'ro', default  => sub { [] }, },
-      class   => { is => 'ro', required => 1, },
-      comment => { is => 'ro', required => 1, },
-      hidden  => { is => 'ro', },
+      abbrev  => { is       => 'rw', },
+      args    => { default  => sub { [] }, },
+      class   => { required => 1, },
+      comment => { required => 1, },
+      hidden  => {},
       name    => {
         is      => 'rw',
         default => sub {
@@ -722,13 +722,14 @@ package OptArgs2::Cmd {
             }
         },
       },
-      optargs      => { is => 'rw', },
-      opts         => { is => 'ro', default => sub { [] }, },
-      parent       => { is => 'rw', weaken  => 1, },
-      show_default => { is => 'ro', default => 0, },
-      show_color   => { is => 'ro', default => sub { -t STDERR }, },
-      subcmds      => { is => 'ro', default => sub { [] }, },
-      _values      => { is => 'rw' },
+      no_help      => { default => 0 },
+      optargs      => { is      => 'rw', },
+      opts         => { default => sub { [] }, },
+      parent       => { is      => 'rw', weaken => 1, },
+      show_default => { default => 0, },
+      show_color   => { default => sub { -t STDERR }, },
+      subcmds      => { default => sub { [] }, },
+      _values      => { is      => 'rw' },
       ;
 
     sub add_arg {
