@@ -113,11 +113,8 @@ package OptArgs2 {
 
         $OptArgs2::CURRENT //= cmd( ( scalar caller ), comment => '' );
         $OptArgs2::CURRENT->add_arg(
-            OptArgs2::Arg->new(
-                name         => $name,
-                show_default => $OptArgs2::CURRENT->show_default,
-                @_,
-            )
+            name => $name,
+            @_,
         );
     }
 
@@ -172,11 +169,8 @@ package OptArgs2 {
 
         $OptArgs2::CURRENT //= cmd( ( scalar caller ), comment => '' );
         $OptArgs2::CURRENT->add_opt(
-            OptArgs2::Opt->new_from(
-                name         => $name,
-                show_default => $OptArgs2::CURRENT->show_default,
-                @_,
-            )
+            name => $name,
+            @_,
         );
     }
 
@@ -516,23 +510,16 @@ package OptArgs2::CmdBase {
       _values      => { is      => 'rw' },
       ;
 
-    sub BUILD {
-        my $self = shift;
-
-        #        if (my $p = $self->parent) {
-        #            if (my $n = $self->name) {
-        #            $self->class($p->class .'::'.
-        #        }
-    }
-
     sub add_arg {
         my $self = shift;
-        my $arg  = shift;
+        my $arg  = OptArgs2::Arg->new(
+            cmd          => $self,
+            show_default => $self->show_default,
+            @_,
+        );
 
         push( @{ $self->args }, $arg );
-        $arg->cmd($self);
-
-        return $arg;
+        $arg;
     }
 
     sub add_cmd {
@@ -553,8 +540,14 @@ package OptArgs2::CmdBase {
     }
 
     sub add_opt {
-        push( @{ $_[0]->opts }, $_[1] );
-        $_[1];
+        my $self = shift;
+        my $opt  = OptArgs2::Opt->new_from(
+            show_default => $self->show_default,
+            @_,
+        );
+
+        push( @{ $self->opts }, $opt );
+        $opt;
     }
 
     sub parents {
@@ -575,20 +568,14 @@ package OptArgs2::CmdBase {
             while ( my ( $name, $args ) = splice @{ $self->optargs }, 0, 2 ) {
                 if ( $args->{isa} =~ s/^--// ) {
                     $self->add_opt(
-                        OptArgs2::Opt->new_from(
-                            name         => $name,
-                            show_default => $self->show_default,
-                            %$args,
-                        )
+                        name => $name,
+                        %$args,
                     );
                 }
                 else {
                     $self->add_arg(
-                        OptArgs2::Arg->new(
-                            name         => $name,
-                            show_default => $self->show_default,
-                            %$args,
-                        )
+                        name => $name,
+                        %$args,
                     );
                 }
             }
@@ -1071,10 +1058,8 @@ package OptArgs2::Cmd {
         my $self = shift;
 
         $self->add_opt(
-            OptArgs2::Opt->new_from(
-                isa          => OptArgs2::STYLE_HELP,
-                show_default => $self->show_default,
-            )
+            isa          => OptArgs2::STYLE_HELP,
+            show_default => 0,
         ) unless $self->no_help;
     }
 }
