@@ -10,52 +10,56 @@ use OptArgs2;
 $Data::Dumper::Indent   = 1;
 $Data::Dumper::Sortkeys = 1;
 
-arg aaa => (
-    isa      => 'Str',
-    required => 1,
-    comment  => 'some kind of arg',
-);
+my $opts = eval {
+    optargs2(
+        comment => 'an example optargs2-based command',
+        optargs => [
+            aaa => {
+                isa      => 'Str',
+                required => 1,
+                comment  => 'some kind of arg',
+            },
 
-arg bbb => (
-    isa     => 'Str',
-    comment => 'other some kind of arg',
-    default => 'meh',
-);
+            bbb => {
+                isa     => 'Str',
+                comment => 'other some kind of arg',
+                default => 'meh',
+            },
 
-opt dump => (
-    isa     => 'Flag',
-    alias   => 'd',
-    comment => 'print result using Data::Dumper',
-    trigger => sub {
-        require Data::Dumper;
-        print Dumper $_[1];
-    }
-);
+            dump => {
+                isa     => '--Flag',
+                alias   => 'd',
+                comment => 'print result using Data::Dumper',
+                trigger => sub {
+                    require Data::Dumper;
+                    print Dumper $_[1];
+                }
+            },
 
-opt help => ( ishelp => 1 );
+            message => {
+                isa     => '--Str',
+                alias   => 'm',
+                comment => 'possibly very long option',
+            },
 
-opt message => (
-    isa     => 'Str',
-    alias   => 'm',
-    comment => 'possibly very long option',
-);
+            required => {
+                isa      => '--Str',
+                alias    => 'r',
+                comment  => 'a very necessary option',
+                required => 1,
+            },
 
-opt required => (
-    isa      => 'Str',
-    alias    => 'r',
-    comment  => 'a very necessary option',
-    required => 1,
-);
+            quiet => {
+                isa     => '--Flag',
+                comment => 'work quietly',
+                alias   => 'q',
+            },
+        ],
+    );
+};
 
-opt quiet => (
-    isa     => 'Flag',
-    comment => 'work quietly',
-    alias   => 'q',
-);
-
-my $opts = eval { optargs };
-my $err  = $@;
-my $ref  = ref $err;
+my $err = $@;
+my $ref = ref $err;
 die "$err\n$ref\n" if $ref;
 die $err           if $err;
 

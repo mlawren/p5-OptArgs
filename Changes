@@ -2,6 +2,7 @@
 
     API / Behaviour Changes:
         - Replace 'ishelp' attribute with isa => OptArgs2::STYLE_HELP
+        - Move to "optargs => \@ARRAY" construction style
 
     New Features:
         - None.

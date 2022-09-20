@@ -4,19 +4,34 @@ use warnings;
 use OptArgs2;
 use Test2::V0;
 
-skip_all 'no tests at the moment';
+my $o;
 
-my $e;
+isa_ok dies {
+    subcmd not_found => ();
+},
+  'OptArgs2::Error::ParentCmdNotFound';
 
-$e = dies {
-    opt one => (
-        isa     => 'Flag',
-        ishelp  => 1,
-        trigger => sub { },
-        comment => 'comment',
-    );
-};
+@ARGV = ('the arg');
+$o    = optargs2(
+    comment => 'test',
+    optargs => [
+        arg => {
+            isa      => 'Str',
+            comment  => 'do soemthing',
+            required => 1,
+        },
+        opt => {
+            isa     => '--Flag',
+            comment => 'do soemthing',
+        },
+        three => {
+            isa     => '--Int',
+            comment => 'do soemthing',
+            default => 3,
+        },
+    ],
+);
 
-isa_ok $e, 'OptArgs2::Error::IshelpTriggerConflict';
+is $o, { arg => 'the arg', three => 3 }, 'optargs as ARRAY ref';
 
 done_testing;

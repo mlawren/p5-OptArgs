@@ -10,21 +10,18 @@ SYNOPSIS
 
         my $opts = optargs2(
             comment => 'script to paint things',
-            optargs => sub {
-                arg item => (
+            optargs => [
+                item => {
                     isa      => 'Str',
                     required => 1,
                     comment  => 'the item to paint',
-                );
-
-                opt help => ( ishelp => 1 );
-
-                opt quiet => (
-                    isa     => 'Flag',
+                },
+                quiet => {
+                    isa     => '--Flag',
                     alias   => 'q',
                     comment => 'output nothing while working',
-                );
-            },
+                },
+            ],
         );
 
         print "Painting $opts->{item}\n" unless $opts->{quiet};
@@ -93,11 +90,11 @@ DESCRIPTION
             --quiet, -q   output nothing while working
 
     The "optargs2()" function parses the command line according to the
-    included "opt()" and "arg()" declarations and returns a single HASH
-    reference. If the command is not called correctly then an exception
-    is thrown containing an automatically generated usage message as
-    shown above. Because OptArgs2 fully knows the valid arguments and
-    options it can detect a wide range of errors:
+    included optarg declarations and returns a single HASH reference. If
+    the command is not called correctly then an exception is thrown
+    containing an automatically generated usage message as shown above.
+    Because OptArgs2 fully knows the valid arguments and options it can
+    detect a wide range of errors:
 
         $ ./paint wall Perl is great
         error: unexpected option or argument: Perl
@@ -136,11 +133,14 @@ DESCRIPTION
     want the user to be able to choose the colour if they don't like the
     default. An option might make sense here:
 
-        opt colour => (
-            isa           => 'Str',
-            default       => 'blue',
-            comment       => 'the colour to use',
-        );
+        optargs => [
+            ...
+            colour => {
+                isa           => 'Str',
+                default       => 'blue',
+                comment       => 'the colour to use',
+            },
+        ],
 
     This now produces the following usage output:
 
@@ -170,40 +170,39 @@ DESCRIPTION
 
             cmd 'App::demo' => (
                 comment => 'the demo command',
-                optargs => sub {
-                    arg command => (
+                optargs => [
+                    command => {
                         isa      => 'SubCmd',
                         required => 1,
                         comment  => 'command to run',
-                    );
-
-                    opt quiet => (
-                        isa     => 'Flag',
+                    },
+                    quiet => {
+                        isa     => '--Flag',
                         alias   => 'q',
                         comment => 'run quietly',
-                    );
-                },
+                    },
+                ],
             );
 
             subcmd 'App::demo::foo' => (
                 comment => 'demo foo',
-                optargs => sub {
-                    arg action => (
+                optargs => [
+                    action => {
                         isa      => 'Str',
                         required => 1,
                         comment  => 'command to run',
-                    );
-                },
+                    },
+                ],
             );
 
             subcmd 'App::demo::bar' => (
                 comment => 'demo bar',
-                optargs => sub {
-                    opt baz => (
-                        isa => 'Counter',
+                optargs => [
+                    baz => {
+                        isa => '--Counter',
                         comment => '+1',
-                    );
-                },
+                    },
+                ],
             );
 
             # Command hierarchy for the above code:
@@ -271,9 +270,9 @@ DESCRIPTION
 
                 cmd 'App::demo' => (
                     comment => 'the demo app',
-                    optargs => sub {
+                    optargs => [
                         #...
-                    },
+                    ],
                 )
 
             The reason for keeping this separate from lib/App/demo.pm is
@@ -327,10 +326,10 @@ DESCRIPTION
         no_option   Flag        always undef    --no-option
 
         # In Perl
-        opt no_foo => (
-            isa     => 'Flag',
+        no_foo => {
+            isa     => '--Flag',
             comment => 'disable the foo feature',
-        );
+        }
 
         # Then later do { } unless $opts->{no_foo}
 
@@ -520,17 +519,17 @@ FUNCTIONS
 
                 isa                             Getopt::Long
                 ---                             ------------
-                 'ArrayRef'                     's@'
-                 'Flag'                         '!'
-                 'Bool'                         '!'
-                 'Counter'                      '+'
-                 'HashRef'                      's%'
-                 'Int'                          '=i'
-                 'Num'                          '=f'
-                 'Str'                          '=s'
-                 OptArgs2::STYLE_HELP           '!'
-                 OptArgs2::STYLE_HELPTREE       '!'
-                 OptArgs2::STYLE_HELPSUMMARY    '!'
+                 '--ArrayRef'                     's@'
+                 '--Flag'                         '!'
+                 '--Bool'                         '!'
+                 '--Counter'                      '+'
+                 '--HashRef'                      's%'
+                 '--Int'                          '=i'
+                 '--Num'                          '=f'
+                 '--Str'                          '=s'
+                 OptArgs2::STYLE_HELP             '!'
+                 OptArgs2::STYLE_HELPTREE         '!'
+                 OptArgs2::STYLE_HELPSUMMARY      '!'
 
             The last three STYLE_HELP* types pre-fill various attributes
             to make the option behave like a typical "--help", that
@@ -553,7 +552,7 @@ FUNCTIONS
                     alias   => 'h',   # first character of the opt name
                     comment => 'print a Help message and exit',
                     trigger => sub {
-                        OptArgs2::_usage(OptArgs2::STYLE_HELP);
+                        OptArgs2::Status::usage(OptArgs2::STYLE_HELP);
                     }
                 );
 
@@ -587,10 +586,9 @@ FUNCTIONS
             The trigger subref is passed two parameters: a OptArgs2::Cmd
             object and the value (if any) of the option. The
             OptArgs2::Cmd object is an internal one, but one public
-            interface is has (in addition to the usage() method
-            described in 'ishelp' above) is the usage_tree() method
-            which gives a usage overview of all subcommands in the
-            command hierarchy.
+            interface is has (in addition to the usage() method) is the
+            usage_tree() method which gives a usage overview of all
+            subcommands in the command hierarchy.
 
                 opt usage_tree => (
                     isa     => 'Flag',
@@ -615,11 +613,16 @@ FUNCTIONS
 
         This interface has been superceeded by "optargs2()".
 
-    optargs2( @command_args_and_opts ) -> HASHref
-        This all-in-one function passes it's arguments directly to
-        "cmd()", calls "class_optargs()", and returns only the $opts
-        HASHref result. It is the most convenient OptArgs2 interface for
-        simple scripts.
+    optargs2( @cmd_optargs ) -> HASHref
+        This all-in-one function:
+
+        passes it's arguments directly to "cmd()",
+        adds a default '--help' option
+        calls "class_optargs()" to parse '@ARGV' and returns the $opts
+        HASHref result.
+
+        This is the most convenient OptArgs2 interface for simple
+        scripts, as shown in the SYNOPSIS.
 
     subcmd( $class, %parameters ) -> OptArgs2::Cmd
         Defines a subcommand identified by $class which must include the

@@ -12,23 +12,12 @@ $Data::Dumper::Sortkeys = 1;
 
 cmd demo => (
     comment => 'OptArgs2 demonstration script',
+    abbrev  => 1,
     optargs => sub {
-
         arg command => (
             isa      => 'SubCmd',
             comment  => '',
             required => 1,
-            abbrev   => 1,
-        );
-
-        opt help => ( ishelp => 1 );
-
-        opt usage_tree => (
-            isa     => 'Flag',
-            comment => 'display usage tree and exit',
-            alias   => 'u',
-            hidden  => 1,
-            trigger => sub { die shift->usage_tree },
         );
     },
 );
@@ -227,105 +216,105 @@ subcmd 'demo::opt' => (
         opt bool => (
             isa     => 'Bool',
             comment => 'isa: Bool, name: bool',
-            alias   => 'a',
+            alias   => 'b',
         );
 
         opt bool_default_0 => (
             isa     => 'Bool',
             comment => 'isa: Bool, name: bool_default_0',
             default => 0,
-            alias   => 'b',
+            alias   => 'c',
         );
 
         opt bool_default_1 => (
             isa     => 'Bool',
             comment => 'isa: Bool, name: bool_default_1',
             default => 1,
-            alias   => 'c',
+            alias   => 'd',
         );
 
         opt counter => (
             isa     => 'Counter',
             comment => 'isa: Counter, name: counter',
-            alias   => 'a',
+            alias   => 'e',
         );
 
         opt counter_default_3 => (
             isa     => 'Counter',
             comment => 'isa: Counter, name: counter_default_3',
             default => -3,
-            alias   => 'b',
+            alias   => 'f',
         );
 
         opt flag => (
             isa     => 'Flag',
             comment => 'isa: Flag, name: flag',
-            alias   => 'a',
+            alias   => 'g',
         );
 
         opt no_flag => (
             isa     => 'Flag',
             comment => 'isa: Flag, name: no_flag',
-            alias   => 'b',
+            alias   => 'i',
         );
 
         opt hashref => (
             isa     => 'HashRef',
             comment => 'isa: HashRef, name: hashref',
-            alias   => 'a',
+            alias   => 'j',
         );
 
         opt hashref_default => (
             isa     => 'HashRef',
             comment => 'isa: HashRef, name: hashref_default',
             default => { x => 1 },
-            alias   => 'b',
+            alias   => 'k',
         );
 
         opt int => (
             isa     => 'Int',
             comment => 'isa: Int, name: int',
-            alias   => 'a',
+            alias   => 'l',
         );
 
         opt int_default => (
             isa     => 'Int',
             comment => 'isa: Int, name: int_default',
             default => 5,
-            alias   => 'b',
+            alias   => 'm',
         );
 
         opt num => (
             isa     => 'Num',
             comment => 'isa: Num, name: num',
-            alias   => 'a',
+            alias   => 'n',
         );
 
         opt num_default => (
             isa     => 'Num',
             comment => 'isa: Num, name: num_default',
             default => 6,
-            alias   => 'b',
+            alias   => 'o',
         );
 
         opt str => (
             isa     => 'Str',
             comment => 'isa: Str, name: str',
-            alias   => 'a',
+            alias   => 'p',
         );
 
         opt str_default => (
             isa     => 'Str',
             comment => 'isa: Str, name: str_default',
             default => 'some text',
-            alias   => 'b',
+            alias   => 'q',
         );
 
         opt isa_name => (
             isa      => 'Str',
             isa_name => 'XXX',
             comment  => 'isa: Str, name: isa_name',
-            alias    => 'b',
+            alias    => 's',
         );
     },
 );
