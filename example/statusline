@@ -1,0 +1,29 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use lib 'lib';
+use File::Basename;
+use OptArgs2::StatusLine '$line', '$prefix';
+use Time::HiRes 'sleep';
+
+$prefix = '[' . basename($0) . '] ';
+$line   = 'working ... ';
+sleep .5;
+
+foreach my $i ( 1, 2, 3 ) {
+    $line .= " $i";
+    sleep .8;
+}
+
+# You can localize both $line and $prefix
+# for temporary status lines
+{
+    local $prefix = "$prefix" . '[debug] ';
+    local $line   = "temporary activity";
+    sleep 1.5;
+}
+
+# back to old value
+sleep 1.3;
+
+$line = "Done.\n";
