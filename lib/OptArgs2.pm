@@ -10,6 +10,18 @@ package OptArgs2::Status {
 
 package OptArgs2::Carp {
     our @CARP_NOT;
+    my @packages = (
+        qw/
+          OptArgs2
+          OptArgs2::Arg
+          OptArgs2::Cmd
+          OptArgs2::CmdBase
+          OptArgs2::Fallback
+          OptArgs2::Opt
+          OptArgs2::OptArgBase
+          OptArgs2::SubCmd
+          /
+    );
 
     my %croak_types = (
         CmdExists          => undef,
@@ -35,15 +47,13 @@ package OptArgs2::Carp {
         croak( 'Usage', "unknown croak type: $type" )
           unless exists $croak_types{$type};
 
-        local @CARP_NOT = (
-            qw/
-              OptArgs2
-              OptArgs2::Arg
-              OptArgs2::Cmd
-              OptArgs2::Fallback
-              OptArgs2::Opt
-              /
-        );
+        local @CARP_NOT = local @OptArgs2::CARP_NOT =
+          local @OptArgs2::Arg::CARP_NOT = local @OptArgs2::Cmd::CARP_NOT =
+          local @OptArgs2::CmdBase::CARP_NOT =
+          local @OptArgs2::Fallback::CARP_NOT =
+          local @OptArgs2::Opt::CARP_NOT =
+          local @OptArgs2::OptArgBase::CARP_NOT =
+          local @OptArgs2::SubCmd::CARP_NOT = @packages;
 
         $msg .= ' ' . Carp::longmess('');
 
@@ -60,15 +70,13 @@ package OptArgs2::Carp {
         my $msg   = shift;
         $msg = sprintf( $msg, @_ ) if @_;
 
-        local @CARP_NOT = (
-            qw/
-              OptArgs2
-              OptArgs2::Arg
-              OptArgs2::Cmd
-              OptArgs2::Fallback
-              OptArgs2::Opt
-              /
-        );
+        local @CARP_NOT = local @OptArgs2::CARP_NOT =
+          local @OptArgs2::Arg::CARP_NOT = local @OptArgs2::Cmd::CARP_NOT =
+          local @OptArgs2::CmdBase::CARP_NOT =
+          local @OptArgs2::Fallback::CARP_NOT =
+          local @OptArgs2::Opt::CARP_NOT =
+          local @OptArgs2::OptArgBase::CARP_NOT =
+          local @OptArgs2::SubCmd::CARP_NOT = @packages;
 
         Carp::carp($msg);
     }
