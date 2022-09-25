@@ -835,12 +835,12 @@ package OptArgs2::CmdBase {
 
             if ( $lines >= $self->rows ) {
                 require OptArgs2::Pager;
-                OptArgs2::Pager::page($str);
-                exit( ( $type =~ m/^Help/ ) ? 0 : 1 );
-            }
-            elsif ( $type =~ m/^Help/ ) {
-                print $str;
-                exit 0;
+                my $pager = OptArgs2::Pager->new( auto => 0 );
+                local *STDERR = $pager->fh;
+
+                no strict 'refs';
+                *{ $pkg . '::ISA' } = ['OptArgs2::Status'];
+                die bless \$str, $pkg;
             }
         }
 
