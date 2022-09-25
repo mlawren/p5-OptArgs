@@ -2,8 +2,8 @@
 use strict;
 use warnings;
 use FindBin;
+use lib 'lib';
 use lib "$FindBin::Bin/../lib";
-use lib "$FindBin::Bin/lib";
 use OptArgs2;
 use Data::Dumper;
 
@@ -319,10 +319,12 @@ subcmd 'demo::opt' => (
     },
 );
 
-my ( $cmd, $opts ) = eval { class_optargs('demo') };
-my $err = $@;
-my $ref = ref $err;
-die "$err\n$ref\n" if $ref;
-die $err           if $err;
+$SIG{__DIE__} = sub {
+    my $err = shift;
+    my $ref = ref $err;
+    die "$err\n$ref\n" if $ref;
+    die $err           if $err;
+};
 
+my ( $cmd, $opts ) = class_optargs('demo');
 print Dumper( bless $opts, $cmd );

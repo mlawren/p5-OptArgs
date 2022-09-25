@@ -2,65 +2,65 @@
 use strict;
 use warnings;
 use FindBin;
+use lib 'lib';
 use lib "$FindBin::Bin/../lib";
-use lib "$FindBin::Bin/lib";
 use Data::Dumper;
 use OptArgs2;
 
 $Data::Dumper::Indent   = 1;
 $Data::Dumper::Sortkeys = 1;
 
-my $opts = eval {
-    optargs2(
-        comment => 'an example optargs2-based command',
-        optargs => [
-            aaa => {
-                isa      => 'Str',
-                required => 1,
-                comment  => 'some kind of arg',
-            },
-
-            bbb => {
-                isa     => 'Str',
-                comment => 'other some kind of arg',
-                default => 'meh',
-            },
-
-            dump => {
-                isa     => '--Flag',
-                alias   => 'd',
-                comment => 'print result using Data::Dumper',
-                trigger => sub {
-                    require Data::Dumper;
-                    print Dumper $_[1];
-                }
-            },
-
-            message => {
-                isa     => '--Str',
-                alias   => 'm',
-                comment => 'possibly very long option',
-            },
-
-            required => {
-                isa      => '--Str',
-                alias    => 'r',
-                comment  => 'a very necessary option',
-                required => 1,
-            },
-
-            quiet => {
-                isa     => '--Flag',
-                comment => 'work quietly',
-                alias   => 'q',
-            },
-        ],
-    );
+$SIG{__DIE__} = sub {
+    my $err = shift;
+    my $ref = ref $err;
+    die "$err\n$ref\n" if $ref;
+    die $err           if $err;
 };
 
-my $err = $@;
-my $ref = ref $err;
-die "$err\n$ref\n" if $ref;
-die $err           if $err;
+my $opts = optargs2(
+    comment => 'an example optargs2-based command',
+    optargs => [
+        aaa => {
+            isa      => 'Str',
+            required => 1,
+            comment  => 'some kind of arg',
+        },
+
+        bbb => {
+            isa     => 'Str',
+            comment => 'other some kind of arg',
+            default => 'meh',
+        },
+
+        dump => {
+            isa     => '--Flag',
+            alias   => 'd',
+            comment => 'print result using Data::Dumper',
+            trigger => sub {
+                require Data::Dumper;
+                print Dumper $_[1];
+            }
+        },
+
+        message => {
+            isa     => '--Str',
+            alias   => 'm',
+            comment => 'possibly very long option',
+        },
+
+        required => {
+            isa      => '--Str',
+            alias    => 'r',
+            comment  => 'a very necessary option',
+            required => 1,
+        },
+
+        quiet => {
+            isa     => '--Flag',
+            comment => 'work quietly',
+            alias   => 'q',
+        },
+    ],
+);
 
 print Dumper $opts;
