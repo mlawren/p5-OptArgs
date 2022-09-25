@@ -8,14 +8,25 @@ use IO::Handle;
 use OptArgs2::Pager_CI {
 
     # User provided arguments
-    auto     => { is => 'ro', default => 1, },
-    encoding => { is => 'ro', default => ':utf8', },
-    pager    => { is => 'ro', default => \&_build_pager, },
+    auto     => { default => 1, },
+    encoding => { default => ':utf8', },
+    pager    => { default => \&_build_pager, },
 
     # Attributes
-    fh      => { is => 'rw', default => sub { IO::Handle->new }, },
-    orig_fh => { is => 'ro', default => sub { select }, },
-    pid     => { is => 'rw' },
+    fh => {
+        init_arg => undef,
+        is       => 'rw',
+        default  => sub { IO::Handle->new },
+    },
+    orig_fh => {
+        init_arg => undef,
+        default  => sub { select },
+    },
+    pid => {
+        init_arg => undef,
+        is       => 'rw',
+        init_arg => undef,
+    },
 };
 
 our @CARP_NOT = (__PACKAGE__);
@@ -44,13 +55,19 @@ sub _build_pager {
 
 sub BUILD {
     my $self = shift;
-    $self->open if $self->auto;
+    $self->open;
+    select $self->fh if $self->auto;
 }
 
 sub open {
     my $self = shift;
+
     return $self->fh if $self->fh->opened;
-    return unless -t $self->orig_fh;
+
+    if ( not -t $self->orig_fh ) {
+        $self->fh( $self->orig_fh );
+        return;
+    }
 
     my $pager = $self->pager || return;
 
@@ -64,8 +81,6 @@ sub open {
       or Carp::cluck "Could not set bindmode: $!";
 
     $self->fh->autoflush(1);
-
-    select $self->fh;
 }
 
 sub close {
@@ -73,7 +88,7 @@ sub close {
     return unless $self->fh && $self->fh->opened;
 
     select $self->orig_fh;
-    $self->fh->close;
+    $self->fh->close if $self->fh ne $self->orig_fh;
 }
 
 sub DESTROY {
@@ -87,17 +102,20 @@ my $pager;
 sub start_pager {
     $pager //= __PACKAGE__->new(@_);
     $pager->open;
+    select $pager->fh;
 }
 
 sub stop_pager {
-    $pager->close if $pager;
+    $pager // return;
+    $pager->close;
+    select( $pager->orig_fh );
 }
 
 sub page {
-    my $text = shift;
-
+    my $text  = shift;
     my $close = not $pager;
-    $pager //= __PACKAGE__->new(@_);
+
+    $pager //= __PACKAGE__->new( @_, auto => 0 );
     $pager->open;
     my $ok = $pager->fh->printflush($text);
     $pager->close if $close;
@@ -176,8 +194,9 @@ The C<new()> constuctor takes the following arguments.
 
 =item C<< auto => 1 >>
 
-By default the pager is opened when the object is created. Set C<auto>
-to a false value to inhibit this behaviour.
+By default the pager is selected as the default filehandle when the
+object is created. Set C<auto> to a false value to inhibit this
+behaviour.
 
 =item C<< encoding => ':utf8' >>
 
