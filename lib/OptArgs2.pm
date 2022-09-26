@@ -333,8 +333,8 @@ package OptArgs2::OptArgBase {
 
 package OptArgs2::Arg {
     use OptArgs2::Arg_CI
-      extends => 'OptArgs2::OptArgBase',
-      has     => {
+      isa => 'OptArgs2::OptArgBase',
+      has => {
         cmd      => { is => 'rw', weaken => 1, },
         fallback => { is => 'rw', },
         greedy   => { is => 'ro', },
@@ -396,14 +396,14 @@ package OptArgs2::Arg {
 
 package OptArgs2::Fallback {
     use OptArgs2::Fallback_CI
-      extends => 'OptArgs2::Arg',
-      has     => { hidden => { is => 'ro' }, };
+      isa => 'OptArgs2::Arg',
+      has => { hidden => { is => 'ro' }, };
 }
 
 package OptArgs2::Opt {
     use OptArgs2::Opt_CI
-      extends => 'OptArgs2::OptArgBase',
-      has     => {
+      isa => 'OptArgs2::OptArgBase',
+      has => {
         alias   => {},
         hidden  => {},
         trigger => {},
@@ -1047,8 +1047,8 @@ package OptArgs2::CmdBase {
 
 package OptArgs2::Cmd {
     use OptArgs2::Cmd_CI
-      extends => 'OptArgs2::CmdBase',
-      has     => {
+      isa => 'OptArgs2::CmdBase',
+      has => {
         class => { required => 1, },
         name  => {
             default => sub {
@@ -1078,8 +1078,8 @@ package OptArgs2::Cmd {
 
 package OptArgs2::SubCmd {
     use OptArgs2::SubCmd_CI
-      extends => 'OptArgs2::CmdBase',
-      has     => {
+      isa => 'OptArgs2::CmdBase',
+      has => {
         name   => { required => 1, },
         parent => { required => 1, },
       };
