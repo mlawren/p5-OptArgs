@@ -374,7 +374,7 @@ package OptArgs2::Arg {
         my $value = shift;
 
         my $deftype = '';
-        if ( $self->show_default and defined $value ) {
+        if ( defined $value ) {
             $deftype = '[' . $value . ']';
         }
         else {
@@ -502,7 +502,7 @@ package OptArgs2::Opt {
         }
 
         my $deftype = '';
-        if ( defined $value and $self->show_default ) {
+        if ( defined $value ) {
             if ( $self->isa eq 'Flag' ) {
                 $deftype = '(set)';
             }
@@ -944,8 +944,11 @@ package OptArgs2::CmdBase {
             foreach my $arg (@args) {
                 if ( $arg->isa eq 'SubCmd' ) {
                     my ( $n, undef, undef, $c ) =
-                      $arg->name_alias_type_comment( $optargs->{ $arg->name }
-                          // undef );
+                      $arg->name_alias_type_comment(
+                        $arg->show_default
+                        ? eval { $optargs->{ $arg->name } // undef }
+                        : ()
+                      );
                     push( @sargs, [ '  ' . ucfirst($n) . ':', $c ] );
                     my @sorted_subs =
                       map  { $_->[1] }
@@ -975,9 +978,11 @@ package OptArgs2::CmdBase {
                 }
                 elsif ( 'OptArgRef' ne $arg->isa ) {
                     push( @uargs, [ '  Arguments:', '', '', '' ] ) if !$i;
-                    my ( $n, $a, $t, $c ) =
-                      $arg->name_alias_type_comment( $optargs->{ $arg->name }
-                          // undef );
+                    my ( $n, $a, $t, $c ) = $arg->name_alias_type_comment(
+                        $arg->show_default
+                        ? eval { $optargs->{ $arg->name } // undef }
+                        : ()
+                    );
                     push( @uargs, [ '    ' . uc($n), $a, $t, $c ] );
                 }
                 $i++;
@@ -990,9 +995,11 @@ package OptArgs2::CmdBase {
             push( @uopts, [ "  Options:", '', '', '' ] );
             foreach my $opt (@opts) {
                 next if $style ne OptArgs2::STYLE_HELP and $opt->hidden;
-                my ( $n, $a, $t, $c ) =
-                  $opt->name_alias_type_comment( $optargs->{ $opt->name }
-                      // undef );
+                my ( $n, $a, $t, $c ) = $opt->name_alias_type_comment(
+                    $opt->show_default
+                    ? eval { $optargs->{ $opt->name } // undef }
+                    : ()
+                );
                 push( @uopts, [ '    ' . $n, $a, uc($t), $c ] );
             }
         }
