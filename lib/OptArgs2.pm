@@ -456,7 +456,7 @@ package OptArgs2::Opt {
                         'UnexpectedOptArg',
                         $cmd->usage(
                             'UnexpectedOptArg',
-                            'too many uses of --' . $ref->{name}
+                            qq{"--$ref->{name}" used too many times}
                         )
                     );
                 }
