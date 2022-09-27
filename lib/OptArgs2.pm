@@ -1111,6 +1111,7 @@ OptArgs2 - command-line argument and option processor
     #!/usr/bin/env perl
     use OptArgs2;
 
+    # Simple scripts
     my $opts = optargs2(
         comment => 'script to paint things',
         optargs => [
@@ -1128,6 +1129,53 @@ OptArgs2 - command-line argument and option processor
     );
 
     print "Painting $opts->{item}\n" unless $opts->{quiet};
+
+    # Complex commands
+    cmd 'My::app' => (
+        comment => 'handy work app',
+        optargs => [
+            command => {
+                isa      => 'Str',
+                required => 1,
+                comment  => 'the action to take',
+            },
+            quiet => {
+                isa     => '--Flag',
+                alias   => 'q',
+                comment => 'output nothing while working',
+            },
+        ],
+    );
+
+    subcmd 'My::app::prepare' => (
+        comment => 'prepare something',
+        optargs => [
+            item => {
+                isa      => 'Str',
+                required => 1,
+                comment  => 'the item to prepare',
+            },
+        ],
+    );
+
+    subcmd 'My::app::paint' => (
+        comment => 'paint something',
+        optargs => [
+            item => {
+                isa      => 'Str',
+                required => 1,
+                comment  => 'the item to paint',
+            },
+            color => {
+                isa     => '--Str',
+                alias   => 'c',
+                comment => 'your faviourite',
+                default => 'blue',
+            },
+        ],
+    );
+
+    my ( $class, $opts ) = class_optargs('My::app');
 
 =head1 DESCRIPTION
 
@@ -1163,18 +1211,24 @@ given.
 
 =back
 
-B<OptArgs2> is a re-write of the original L<OptArgs> module with a
-cleaner code base and improved API. It should be preferred over
-L<OptArgs> for new projects however L<OptArgs> is not likely to
-disappear from CPAN anytime soon.  Users converting to B<OptArgs2> from
-L<OptArgs> need to be aware of the following:
+=head2 Differences with Earlier Releases
+
+B<OptArgs2> version 2.0.0 was a large re-write to improve the API and
+code.  Users upgrading from 0.0.11 or even from B<OptArgs> need to be
+aware of the following:
 
 =over
 
-=item Obvious API changes: cmd(), optargs2(), subcmd()
+=item API changes: optargs(), cmd(), subcmd()
 
-Commands and subcommands must now be explicitly defined using C<cmd()>
-and C<subcmd()>.
+Commands and subcommands are now explicitly defined using C<cmd()> and
+C<subcmd()>. The arguments to C<optargs()> have changed to match
+C<cmd()>.
+
+=item Deprecated: arg(), opt()
+
+Optargs definitions are now always an array reference holding key/value
+pairs as shown in the synopsis.
 
 =item class_optargs() no longer loads the class
 
@@ -1188,7 +1242,7 @@ afterwards:
 
 A Bool option without a default is now displayed with the "[no-]"
 prefix. What this means in practise is that many of your existing Bool
-options should likely become Flag options instead.
+options most likely would become Flag options instead.
 
 =back
 
@@ -1218,13 +1272,16 @@ detect a wide range of errors:
     $ ./paint wall Perl is great
     error: unexpected option or argument: Perl
 
-So let's add that missing argument definition inside the optargs sub:
+So let's add that missing argument definition inside the optargs ref
 
-    arg message => (
-        isa      => 'Str',
-        comment  => 'the message to paint on the item',
-        greedy   => 1,
-    );
+    optargs => [
+        ...
+        message => {
+            isa      => 'Str',
+            comment  => 'the message to paint on the item',
+            greedy   => 1,
+        },
+    ],
 
 And then check the usage again:
 
@@ -1249,12 +1306,12 @@ argument will swallow whatever is left on the comand line:
 Note that it probably doesn't make sense to define any more arguments
 once you have a greedy argument. Let's imagine you now want the user to
 be able to choose the colour if they don't like the default. An option
-might make sense here:
+might make sense here, specified by a leading '--' type:
 
     optargs => [
         ...
         colour => {
-            isa           => 'Str',
+            isa           => '--Str',
             default       => 'blue',
             comment       => 'the colour to use',
         },
@@ -1270,6 +1327,7 @@ This now produces the following usage output:
 
       options:
         --colour=STR, -c   the colour to use [blue]
+        --help,       -h   print a usage message and exit
         --quiet,      -q   output nothing while working
 
 The command line is parsed first for arguments, then for options, in
@@ -1327,10 +1385,12 @@ of the Perl class that implements the (sub-)command.
         ],
     );
 
-    # Command hierarchy for the above code:
-    # demo COMMAND [OPTIONS...]
-    #     demo foo ACTION [OPTIONS...]
-    #     demo bar [OPTIONS...]
+    # Command hierarchy for the above code,
+    # printed by using '-h' twice:
+    #
+    #     demo COMMAND [OPTIONS...]
+    #         demo foo ACTION [OPTIONS...]
+    #         demo bar [OPTIONS...]
 
 An argument of type 'SubCmd' is an explicit indication that subcommands
 can occur in that position. The command hierarchy is based upon the
@@ -1394,12 +1454,13 @@ names that match the actual implementation modules.
     package App::demo::OptArgs;
     use OptArgs2;
 
-    cmd 'App::demo' => (
+    cmd 'App::demo' => {
         comment => 'the demo app',
         optargs => [
-            #...
+            # arg => 'Type, ...
+            # opt => '--Type, ...
         ],
-    )
+    }
 
 The reason for keeping this separate from lib/App/demo.pm is speed of
 loading. I don't want to have to load all of the modules that App::demo
@@ -1425,76 +1486,22 @@ then loads the appropriate package to run the command.
 
 =back
 
-=head2 Formatting of Usage Messages
+=head2 Argument Definition
 
-Usage messages attempt to present as much information as possible to
-the caller. Here is a brief overview of how the various types look
-and/or change depending on things like defaults.
+Arguments are key/hashref pairs defined inside a C<cmd()> or
+C<subcmd()> optargs arrayref like so:
 
-The presentation of Bool options in usage messages is as follows:
+    optargs => [
+        name => {
+            isa      => 'Str',
+            comment  => 'the file to parse',
+            default  => '-',
+            greedy   => 0,
+            # required => 1,
+        },
+    ],
 
-    Name        Type        Default         Presentation
-    ----        ----        -------         ------------
-    option      Bool        undef           --[no-]option
-    option      Bool        true            --no-option
-    option      Bool        false           --option
-    option      Counter     *               --option
-
-The Flag option type is like a Bool that can only be set to true or
-left undefined. This makes sense for things such as C<--help> or
-C<--version> for which you never need to see a "--no" prefix.
-
-    Name        Type        Default         Presentation
-    ----        ----        -------         ------------
-    option      Flag        always undef    --option
-
-Note that Flags also makes sense for "negative" options which will only
-ever turn things off:
-
-    Name        Type        Default         Presentation
-    ----        ----        -------         ------------
-    no_option   Flag        always undef    --no-option
-
-    # In Perl
-    no_foo => {
-        isa     => '--Flag',
-        comment => 'disable the foo feature',
-    }
-
-    # Then later do { } unless $opts->{no_foo}
-
-The remaining types are presented as follows:
-
-    Name        Type        isa_name        Presentation
-    ----        ----        --------        ------------
-    option      ArrayRef    -               --option Str
-    option      HashRef     -               --option Str
-    option      Int         -               --option Int
-    option      Num         -               --option Num
-    option      Str         -               --option Str
-    option      *           XX              --option XX
-
-Defaults TO BE COMPLETED.
-
-=head1 FUNCTIONS
-
-The following functions are exported by default.
-
-=over
-
-=item arg( $name, %parameters )
-
-Define a command argument, for example:
-
-    arg name => (
-        comment  => 'the file to parse',
-        default  => '-',
-        greedy   => 0,
-        isa      => 'Str',
-        # required => 1,
-    );
-
-The C<arg()> function accepts the following parameters:
+The following paramters are accepted:
 
 =over
 
@@ -1563,6 +1570,184 @@ messages. Overrides the (sub-)command's C<show_default> setting.
 
 =back
 
+
+=head2 Option Definition
+
+Arguments are defined similar to arguments inside a C<cmd()> or
+C<subcmd()> optargs arrayref like so:
+
+    optargs => [
+        colour => {
+            isa          => '--Str',
+            alias        => 'c',
+            comment      => 'the colour to paint',
+            default      => 'blue',
+            show_default => 1,
+        },
+    ],
+
+Any underscores in the name (i.e. the optargs key) are replaced by
+dashes (-) for presentation and command-line parsing.  The following
+paramters are accepted:
+
+=over
+
+=item alias
+
+A single character alias.
+
+=item comment
+
+Required. Used to generate the usage/help message.
+
+=item default
+
+The value set when the option is not given. Conflicts with the
+'required' parameter.
+
+If this is a subroutine reference it will be called with a hashref
+containing all option/argument values after parsing the source has
+finished.  The value to be set must be returned, and any changes to the
+hashref are ignored.
+
+=item required
+
+Set to a true value when the caller must specify this option. Conflicts
+with the 'default' parameter.
+
+=item hidden
+
+When true this option will not appear in usage messages unless the
+usage message is a help request.
+
+This is handy if you have developer-only options, or options that are
+very rarely used that you don't want cluttering up your normal usage
+message.
+
+=item isa
+
+Required. Is mapped to a L<Getopt::Long> type according to the
+following table:
+
+    isa                             Getopt::Long
+    ---                             ------------
+     '--ArrayRef'                     's@'
+     '--Flag'                         '!'
+     '--Bool'                         '!'
+     '--Counter'                      '+'
+     '--HashRef'                      's%'
+     '--Int'                          '=i'
+     '--Num'                          '=f'
+     '--Str'                          '=s'
+
+=item isa_name
+
+When provided this parameter will be presented instead of the generic
+presentation for the 'isa' parameter.
+
+=item show_default
+
+Boolean to indicate if the default value should be shown in usage
+messages. Overrides the (sub-)command's C<show_default> setting.
+
+=item trigger
+
+The trigger parameter lets you define a subroutine that is called after
+processing before usage exceptions are raised.  This is primarily to
+support --help or --version options which would typically override
+usage errors.
+
+    opt version => (
+        isa     => 'Flag',
+        alias   => 'V',
+        comment => 'print version string and exit',
+        trigger => sub {
+            my ( $cmd, $value ) = @_;
+            die "$cmd version $VERSION\n";
+        }
+    );
+
+The trigger subref is passed two parameters: a OptArgs2::Cmd object and
+the value (if any) of the option. The OptArgs2::Cmd object is an
+internal one, but one public interface is has (in addition to the
+usage() method) is the usage_tree() method which gives a usage overview
+of all subcommands in the command hierarchy.
+
+    opt usage_tree => (
+        isa     => 'Flag',
+        alias   => 'U',
+        comment => 'print usage tree and exit',
+        trigger => sub {
+            my ( $cmd, $value ) = @_;
+            die $cmd->usage_tree;
+        }
+    );
+
+    # demo COMMAND [OPTIONS...]
+    #     demo foo ACTION [OPTIONS...]
+    #     demo bar [OPTIONS...]
+
+=back
+
+
+=head2 Formatting of Usage Messages
+
+Usage messages attempt to present as much information as possible to
+the caller. Here is a brief overview of how the various types look
+and/or change depending on things like defaults.
+
+The presentation of Bool options in usage messages is as follows:
+
+    Name        Type        Default         Presentation
+    ----        ----        -------         ------------
+    option      Bool        undef           --[no-]option
+    option      Bool        true            --no-option
+    option      Bool        false           --option
+    option      Counter     *               --option
+
+The Flag option type is like a Bool that can only be set to true or
+left undefined. This makes sense for things such as C<--help> or
+C<--version> for which you never need to see a "--no" prefix.
+
+    Name        Type        Default         Presentation
+    ----        ----        -------         ------------
+    option      Flag        always undef    --option
+
+Note that Flags also makes sense for "negative" options which will only
+ever turn things off:
+
+    Name        Type        Default         Presentation
+    ----        ----        -------         ------------
+    no_option   Flag        always undef    --no-option
+
+    # In Perl
+    no_foo => {
+        isa     => '--Flag',
+        comment => 'disable the foo feature',
+    }
+
+    # Then later do { } unless $opts->{no_foo}
+
+The remaining types are presented as follows:
+
+    Name        Type        isa_name        Presentation
+    ----        ----        --------        ------------
+    option      ArrayRef    -               --option Str
+    option      HashRef     -               --option Str
+    option      Int         -               --option Int
+    option      Num         -               --option Num
+    option      Str         -               --option Str
+    option      *           XX              --option XX
+
+Defaults TO BE COMPLETED.
+
+=head1 FUNCTIONS
+
+The following functions are exported by default.
+
+=over
+
+
 =item class_optargs( $class, [ @argv ] ) -> ($subclass, $opts)
 
 Parse @ARGV by default (or @argv when given) for the arguments and
@@ -1617,9 +1802,16 @@ A description of the command. Required.
 
 =item optargs
 
-A subref containing calls to C<arg()> and C<opt>. Note that options are
-inherited by subcommands so you don't need to define them again in
+A subref containing argument and option definitions. Note that options
+are inherited by subcommands so you don't need to define them again in
 child subcommands.
+
+=item no_help
+
+By default C<cmd()> automatically adds a default '--help' option. When
+used once a standard help message is displayed. When used twice a help
+tree showing subcommands is displayed. To disable the automatic help
+set C<no_help> to a true value.
 
 =item show_color
 
@@ -1658,171 +1850,15 @@ message. See XXX befow for the structure this subref receives.
 
 =back
 
-=item opt( $name, %parameters )
-
-Define a command option, for example:
-
-    opt colour => (
-        alias        => 'c',
-        comment      => 'the colour to paint',
-        default      => 'blue',
-        show_default => 1,
-        isa          => 'Str',
-    );
-
-Any underscores in C<$name> are be replaced by dashes (-) for
-presentation and command-line parsing.  The C<arg()> function accepts
-the following parameters:
-
-=over
-
-=item alias
-
-A single character alias.
-
-=item comment
-
-Required. Used to generate the usage/help message.
-
-=item default
-
-The value set when the option is not given. Conflicts with the
-'required' parameter.
-
-If this is a subroutine reference it will be called with a hashref
-containing all option/argument values after parsing the source has
-finished.  The value to be set must be returned, and any changes to the
-hashref are ignored.
-
-=item required
-
-Set to a true value when the caller must specify this option. Conflicts
-with the 'default' parameter.
-
-=item hidden
-
-When true this option will not appear in usage messages unless the
-usage message is a help request.
-
-This is handy if you have developer-only options, or options that are
-very rarely used that you don't want cluttering up your normal usage
-message.
-
-=item isa
-
-Required. Is mapped to a L<Getopt::Long> type according to the
-following table:
-
-    isa                             Getopt::Long
-    ---                             ------------
-     '--ArrayRef'                     's@'
-     '--Flag'                         '!'
-     '--Bool'                         '!'
-     '--Counter'                      '+'
-     '--HashRef'                      's%'
-     '--Int'                          '=i'
-     '--Num'                          '=f'
-     '--Str'                          '=s'
-     OptArgs2::STYLE_HELP             '!'
-     OptArgs2::STYLE_HELPTREE         '!'
-     OptArgs2::STYLE_HELPSUMMARY      '!'
-
-The last three STYLE_HELP* types pre-fill various attributes to make
-the option behave like a typical C<--help>, that displays a usage
-message and exits before errors are generated.  Typically used alone as
-follows:
-
-    opt help => (
-        isa => OptArgs2::STYLE_HELP,
-    );
-
-    opt help_tree => (
-        isa => OptArgs2::STYLE_HELPTREE,
-        alias  => 'T',    # or 'undef' if you don't want an alias
-    );
-
-The first option above is similar to this longhand version:
-
-    opt help => (
-        isa     => 'Flag',
-        alias   => 'h',   # first character of the opt name
-        comment => 'print a Help message and exit',
-        trigger => sub {
-            OptArgs2::Status::usage(OptArgs2::STYLE_HELP);
-        }
-    );
-
-You can override any of the above with your own parameters.
-
-=item isa_name
-
-When provided this parameter will be presented instead of the generic
-presentation for the 'isa' parameter.
-
-=item show_default
-
-Boolean to indicate if the default value should be shown in usage
-messages. Overrides the (sub-)command's C<show_default> setting.
-
-=item trigger
-
-The trigger parameter lets you define a subroutine that is called after
-processing before usage exceptions are raised.  This is primarily to
-support --help or --version options which would typically override
-usage errors.
-
-    opt version => (
-        isa     => 'Flag',
-        alias   => 'V',
-        comment => 'print version string and exit',
-        trigger => sub {
-            my ( $cmd, $value ) = @_;
-            die "$cmd version $VERSION\n";
-        }
-    );
-
-The trigger subref is passed two parameters: a OptArgs2::Cmd object and
-the value (if any) of the option. The OptArgs2::Cmd object is an
-internal one, but one public interface is has (in addition to the
-usage() method) is the usage_tree() method which gives a usage overview
-of all subcommands in the command hierarchy.
-
-    opt usage_tree => (
-        isa     => 'Flag',
-        alias   => 'U',
-        comment => 'print usage tree and exit',
-        trigger => sub {
-            my ( $cmd, $value ) = @_;
-            die $cmd->usage_tree;
-        }
-    );
-
-    # demo COMMAND [OPTIONS...]
-    #     demo foo ACTION [OPTIONS...]
-    #     demo bar [OPTIONS...]
-
-=back
-
-=item optargs( [@argv] ) -> HASHref
-
-Parse @ARGV by default (or @argv when given) for the arguments and
-options defined for the I<default global> command. Argument decoding
-and exceptions are the same as for C<class_optargs>, but this function
-returns only the combined argument/option values HASHref.
-
-This interface has been superceeded by C<optargs2()>.
-
 =item optargs2( @cmd_optargs ) -> HASHref
 
 This all-in-one function:
 
 =over
 
-=item passes it's arguments directly to C<cmd()>,
+=item * passes it's arguments directly to C<cmd()>,
 
-=item adds a default '--help' option
-
-=item calls C<class_optargs()> to parse '@ARGV' and returns the
+=item * calls C<class_optargs()> to parse '@ARGV' and returns the
 C<$opts> HASHref result.
 
 =back
@@ -1865,7 +1901,7 @@ as of the version 2 series that is no longer the case.
 
 This distribution is managed via github:
 
-    https://github.com/mlawren/p5-OptArgs2/tree/devel
+    https://github.com/mlawren/p5-OptArgs2/
 
 This distribution follows the semantic versioning model:
 
