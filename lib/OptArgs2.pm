@@ -128,7 +128,7 @@ package OptArgs2::Status {
 package OptArgs2 {
     use Encode qw/decode/;
     use Exporter::Tidy
-      default => [qw/arg class_optargs cmd opt optargs optargs2 subcmd/],
+      default => [qw/class_optargs cmd optargs subcmd/],
       other   => [qw/usage/];
 
     our $VERSION  = '2.0.0_4';
@@ -160,15 +160,15 @@ package OptArgs2 {
 
     my %COMMAND;
 
-    sub arg {
-        my $name = shift;
-
-        $OptArgs2::CURRENT //= cmd( ( scalar caller ), comment => '' );
-        $OptArgs2::CURRENT->add_arg(
-            name => $name,
-            @_,
-        );
-    }
+    #    sub arg {
+    #        my $name = shift;
+    #
+    #        $OptArgs2::CURRENT //= cmd( ( scalar caller ), comment => '' );
+    #        $OptArgs2::CURRENT->add_arg(
+    #            name => $name,
+    #            @_,
+    #        );
+    #    }
 
     sub class_optargs {
         my $class = shift
@@ -217,22 +217,17 @@ package OptArgs2 {
         return $cmd;
     }
 
-    sub opt {
-        my $name = shift;
-
-        $OptArgs2::CURRENT //= cmd( ( scalar caller ), comment => '' );
-        $OptArgs2::CURRENT->add_opt(
-            name => $name,
-            @_,
-        );
-    }
+    #    sub opt {
+    #        my $name = shift;
+    #
+    #        $OptArgs2::CURRENT //= cmd( ( scalar caller ), comment => '' );
+    #        $OptArgs2::CURRENT->add_opt(
+    #            name => $name,
+    #            @_,
+    #        );
+    #    }
 
     sub optargs {
-        my ( undef, $opts ) = class_optargs( scalar(caller), @_ );
-        return $opts;
-    }
-
-    sub optargs2 {
         my $class = caller;
         my $cmd   = cmd( $class, @_ );
 
@@ -1112,7 +1107,7 @@ OptArgs2 - command-line argument and option processor
     use OptArgs2;
 
     # Simple scripts
-    my $opts = optargs2(
+    my $opts = optargs(
         comment => 'script to paint things',
         optargs => [
             item => {
@@ -1262,7 +1257,7 @@ following interactions from the shell:
         --help,  -h   print a usage message and exit
         --quiet, -q   output nothing while working
 
-The C<optargs2()> function parses the command line according to the
+The C<optargs()> function parses the command line according to the
 included optarg declarations and returns a single HASH reference.  If
 the command is not called correctly then an exception is thrown
 containing an automatically generated usage message as shown above.
@@ -1850,7 +1845,7 @@ message. See XXX befow for the structure this subref receives.
 
 =back
 
-=item optargs2( @cmd_optargs ) -> HASHref
+=item optargs( @cmd_optargs ) -> HASHref
 
 This all-in-one function:
 

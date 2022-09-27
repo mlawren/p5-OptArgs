@@ -10,17 +10,17 @@ my ( $e, $class, $opts );
 
 cmd 'c1' => (
     comment => 'the base command',
-    optargs => sub {
-        arg command => (
+    optargs => [
+        command => {
             isa     => 'SubCmd',
             comment => 'command to run',
-        );
-    },
+        },
+    ],
 );
 
 subcmd 'c1::s1' => (
     comment => 'sub command',
-    optargs => sub { },
+    optargs => [],
 );
 
 $e = dies { ( $class, $opts ) = class_optargs( 'c1', 's' ) };
@@ -29,17 +29,17 @@ like ref $e, qr/SubCmdUnknown/, 'unknown SubCmd without abbrev';
 cmd 'c2' => (
     comment => 'the base command',
     abbrev  => 1,
-    optargs => sub {
-        arg command => (
+    optargs => [
+        command => {
             isa     => 'SubCmd',
             comment => 'command to run',
-        );
-    },
+        },
+    ],
 );
 
 subcmd 'c2::s1' => (
     comment => 'sub command',
-    optargs => sub { },
+    optargs => [],
 );
 
 ( $class, $opts ) = class_optargs( 'c2', 's' );

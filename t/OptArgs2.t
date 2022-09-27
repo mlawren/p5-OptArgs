@@ -12,7 +12,7 @@ isa_ok dies {
   'OptArgs2::Error::ParentCmdNotFound';
 
 @ARGV = ('the arg');
-$o    = optargs2(
+$o    = optargs(
     comment => 'test',
     optargs => [
         arg => {

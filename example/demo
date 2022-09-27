@@ -13,182 +13,182 @@ $Data::Dumper::Sortkeys = 1;
 cmd demo => (
     comment => 'OptArgs2 demonstration script',
     abbrev  => 1,
-    optargs => sub {
-        arg command => (
+    optargs => [
+        command => {
             isa      => 'SubCmd',
             comment  => '',
             required => 1,
-        );
-    },
+        },
+    ],
 );
 
 subcmd 'demo::arg' => (
     comment => 'arguments',
-    optargs => sub {
+    optargs => [
 
-        arg type => (
+        type => {
             isa      => 'SubCmd',
             comment  => 'arg type',
             required => 1,
-        );
-    },
+        },
+    ],
 );
 
 subcmd 'demo::arg::arrayref' => (
     comment => 'ArrayRef argument',
-    optargs => sub {
+    optargs => [
 
-        arg aaa => (
+        aaa => {
             isa      => 'ArrayRef',
             comment  => 'isa: ArrayRef, name: aaa',
             required => 1,
-        );
-    },
+        },
+    ],
 );
 
 subcmd 'demo::arg::greedy' => (
     comment => 'arguments',
-    optargs => sub {
+    optargs => [
 
-        arg type => (
+        type => {
             isa      => 'SubCmd',
             comment  => 'arg type',
             required => 1,
-        );
-    },
+        },
+    ],
 );
 
 subcmd 'demo::arg::greedy::arrayref' => (
     comment => 'ArrayRef argument',
-    optargs => sub {
+    optargs => [
 
-        arg aaa => (
+        aaa => {
             isa      => 'ArrayRef',
             comment  => 'isa: ArrayRef, name: aaa',
             required => 1,
-        );
+        },
 
-        arg bbb => (
+        bbb => {
             isa     => 'ArrayRef',
             comment => 'isa: ArrayRef, name: bbb',
             default => [],
             greedy  => 1,
-        );
-    },
+        },
+    ],
 );
 
 subcmd 'demo::arg::greedy::hashref' => (
     comment => 'HashRef argument',
-    optargs => sub {
+    optargs => [
 
-        arg aaa => (
+        aaa => {
             isa      => 'HashRef',
             comment  => 'isa: HashRef, name: aaa',
             required => 1,
-        );
+        },
 
-        arg bbb => (
+        bbb => {
             isa     => 'HashRef',
             comment => 'isa: HashRef, name: bbb',
             greedy  => 1,
-        );
-    },
+        },
+    ],
 
 );
 
 subcmd 'demo::arg::greedy::str' => (
     comment => 'Str argument',
-    optargs => sub {
+    optargs => [
 
-        arg aaa => (
+        aaa => {
             isa      => 'Str',
             comment  => 'isa: Str, name: aaa',
             required => 1,
-        );
+        },
 
-        arg bbb => (
+        bbb => {
             isa     => 'Str',
             comment => 'isa: Str, name: bbb',
             default => 'some text',
             greedy  => 1,
-        );
-    },
+        },
+    ],
 );
 
 subcmd 'demo::arg::hashref' => (
     comment => 'HashRef argument',
-    optargs => sub {
+    optargs => [
 
-        arg aaa => (
+        aaa => {
             isa      => 'HashRef',
             comment  => 'isa: HashRef, name: aaa',
             required => 1,
-        );
+        },
 
-        arg bbb => (
+        bbb => {
             isa     => 'HashRef',
             comment => 'isa: HashRef, name: bbb',
             default => { x => 1 },
 
-        );
-    },
+        },
+    ],
 );
 
 subcmd 'demo::arg::int' => (
     comment => 'Int argument',
-    optargs => sub {
+    optargs => [
 
-        arg aaa => (
+        aaa => {
             isa      => 'Int',
             comment  => 'isa: Int, name: aaa',
             required => 1,
-        );
+        },
 
-        arg bbb => (
+        bbb => {
             isa     => 'Int',
             comment => 'isa: Int, name: bbb',
             default => 5,
 
-        );
-    },
+        },
+    ],
 );
 
 subcmd 'demo::arg::num' => (
     comment => 'Num argument',
-    optargs => sub {
+    optargs => [
 
-        arg aaa => (
+        aaa => {
             isa      => 'Num',
             comment  => 'isa: Num, name: aaa',
             required => 1,
-        );
+        },
 
-        arg bbb => (
+        bbb => {
             isa     => 'Num',
             comment => 'isa: Num, name: bbb',
             default => 6,
 
-        );
-    },
+        },
+    ],
 );
 
 subcmd 'demo::arg::str' => (
     comment => 'Str argument',
-    optargs => sub {
+    optargs => [
 
-        arg aaa => (
+        aaa => {
             isa      => 'Str',
             comment  => 'isa: Str, name: aaa',
             required => 1,
-        );
+        },
 
-        arg bbb => (
+        bbb => {
             isa     => 'Str',
             comment => 'isa: Str, name: bbb',
             default => 'some text',
 
-        );
-    },
+        },
+    ],
 );
 
 #    required => undef,
@@ -198,132 +198,136 @@ subcmd 'demo::arg::str' => (
 
 subcmd 'demo::opt' => (
     comment => 'options',
-    optargs => sub {
+    optargs => [
 
-        opt req => (
+        req => {
             alias    => 'r',
-            isa      => 'Flag',
+            isa      => '--Flag',
             comment  => 'isa: Flag, name: req',
             required => 1,
-        );
+        },
 
-        opt arrayref => (
-            isa     => 'ArrayRef',
+        arrayref => {
+            isa     => '--ArrayRef',
             comment => 'isa: ArrayRef, name: arrayref',
             alias   => 'a',
-        );
+        },
 
-        opt bool => (
-            isa     => 'Bool',
+        bool => {
+            isa     => '--Bool',
             comment => 'isa: Bool, name: bool',
             alias   => 'b',
-        );
+        },
 
-        opt bool_default_0 => (
-            isa     => 'Bool',
+        bool_default_0 => {
+            isa     => '--Bool',
             comment => 'isa: Bool, name: bool_default_0',
             default => 0,
             alias   => 'c',
-        );
+        },
 
-        opt bool_default_1 => (
-            isa     => 'Bool',
+        bool_default_1 => {
+            isa     => '--Bool',
             comment => 'isa: Bool, name: bool_default_1',
             default => 1,
             alias   => 'd',
-        );
+        },
 
-        opt counter => (
-            isa     => 'Counter',
+        counter => {
+            isa     => '--Counter',
             comment => 'isa: Counter, name: counter',
             alias   => 'e',
-        );
+        },
 
-        opt counter_default_3 => (
-            isa     => 'Counter',
+        counter_default_3 => {
+            isa     => '--Counter',
             comment => 'isa: Counter, name: counter_default_3',
             default => -3,
             alias   => 'f',
-        );
+        },
 
-        opt flag => (
-            isa     => 'Flag',
+        flag => {
+            isa     => '--Flag',
             comment => 'isa: Flag, name: flag',
             alias   => 'g',
-        );
+        },
 
-        opt no_flag => (
-            isa     => 'Flag',
+        no_flag => {
+            isa     => '--Flag',
             comment => 'isa: Flag, name: no_flag',
             alias   => 'i',
-        );
+        },
 
-        opt hashref => (
-            isa     => 'HashRef',
+        hashref => {
+            isa     => '--HashRef',
             comment => 'isa: HashRef, name: hashref',
             alias   => 'j',
-        );
+        },
 
-        opt hashref_default => (
-            isa     => 'HashRef',
+        hashref_default => {
+            isa     => '--HashRef',
             comment => 'isa: HashRef, name: hashref_default',
-            default => { x => 1 },
-            alias   => 'k',
-        );
+            default => {
+                x => 1
+            },
+            alias => 'k',
+        },
 
-        opt int => (
-            isa     => 'Int',
+        int => {
+            isa     => '--Int',
             comment => 'isa: Int, name: int',
             alias   => 'l',
-        );
+        },
 
-        opt int_default => (
-            isa     => 'Int',
+        int_default => {
+            isa     => '--Int',
             comment => 'isa: Int, name: int_default',
             default => 5,
             alias   => 'm',
-        );
+        },
 
-        opt num => (
-            isa     => 'Num',
+        num => {
+            isa     => '--Num',
             comment => 'isa: Num, name: num',
             alias   => 'n',
-        );
+        },
 
-        opt num_default => (
-            isa     => 'Num',
+        num_default => {
+            isa     => '--Num',
             comment => 'isa: Num, name: num_default',
             default => 6,
             alias   => 'o',
-        );
+        },
 
-        opt str => (
-            isa     => 'Str',
+        str => {
+            isa     => '--Str',
             comment => 'isa: Str, name: str',
             alias   => 'p',
-        );
+        },
 
-        opt str_default => (
-            isa     => 'Str',
+        str_default => {
+            isa     => '--Str',
             comment => 'isa: Str, name: str_default',
             default => 'some text',
             alias   => 'q',
-        );
+        },
 
-        opt isa_name => (
-            isa      => 'Str',
+        isa_name => {
+            isa      => '--Str',
             isa_name => 'XXX',
             comment  => 'isa: Str, name: isa_name',
             alias    => 's',
-        );
-    },
+        },
+    ],
 );
 
 $SIG{__DIE__} = sub {
     my $err = shift;
     my $ref = ref $err;
-    die "$err\n$ref\n" if $ref;
-    die $err           if $err;
+    die "$err\n$ref\n"
+      if $ref;
+    die $err
+      if $err;
 };
 
 my ( $cmd, $opts ) = class_optargs('demo');

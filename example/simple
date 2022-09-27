@@ -17,8 +17,8 @@ $SIG{__DIE__} = sub {
     die $err           if $err;
 };
 
-my $opts = optargs2(
-    comment      => 'an example optargs2-based command',
+my $opts = optargs(
+    comment      => 'an example optargs-based command',
     show_default => 1,
     optargs      => [
         aaa => {
