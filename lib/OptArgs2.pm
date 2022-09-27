@@ -320,14 +320,17 @@ package OptArgs2::CODEREF {
 
 package OptArgs2::OptArgBase {
     use OptArgs2::OptArgBase_CI
-      comment      => { required => 1, },
-      default      => {},                   # Can be re-set by CODEref defaults
-      getopt       => {},
-      isa          => { required => 1, },
-      isa_name     => { is       => 'rw', },
-      name         => { required => 1, },
-      required     => {},
-      show_default => {},
+      abstract => 1,
+      has      => {
+        comment      => { required => 1, },
+        default      => {},
+        getopt       => {},
+        isa          => { required => 1, },
+        isa_name     => { is       => 'rw', },
+        name         => { required => 1, },
+        required     => {},
+        show_default => {},
+      },
       ;
 }
 
@@ -541,27 +544,30 @@ package OptArgs2::CmdBase {
     use Getopt::Long qw/GetOptionsFromArray/;
     use List::Util qw/max/;
     use OptArgs2::CmdBase_CI
-      abbrev  => { is       => 'rw', },
-      args    => { default  => sub { [] }, },
-      comment => { required => 1, },
-      hidden  => {},
-      no_help => { default => 0 },
-      optargs => { is      => 'rw', },
-      opts    => { default => sub { [] }, },
-      parent  => { weaken  => 1, },
-      _opts   => {
-        default => sub { {} }
+      abstract => 1,
+      has      => {
+        abbrev  => { is       => 'rw', },
+        args    => { default  => sub { [] }, },
+        comment => { required => 1, },
+        hidden  => {},
+        no_help => { default => 0 },
+        optargs => { is      => 'rw', },
+        opts    => { default => sub { [] }, },
+        parent  => { weaken  => 1, },
+        _opts   => {
+            default => sub { {} }
+        },
+        _args => {
+            default => sub { {} }
+        },
+        _subcmds => {
+            default => sub { {} }
+        },
+        show_default => { default => 0, },
+        show_color   => { default => sub { -t STDERR }, },
+        subcmds      => { default => sub { [] }, },
+        _values      => { is      => 'rw' },
       },
-      _args => {
-        default => sub { {} }
-      },
-      _subcmds => {
-        default => sub { {} }
-      },
-      show_default => { default => 0, },
-      show_color   => { default => sub { -t STDERR }, },
-      subcmds      => { default => sub { [] }, },
-      _values      => { is      => 'rw' },
       ;
 
     sub add_arg {
