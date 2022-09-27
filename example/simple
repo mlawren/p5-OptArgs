@@ -18,8 +18,9 @@ $SIG{__DIE__} = sub {
 };
 
 my $opts = optargs2(
-    comment => 'an example optargs2-based command',
-    optargs => [
+    comment      => 'an example optargs2-based command',
+    show_default => 1,
+    optargs      => [
         aaa => {
             isa      => 'Str',
             required => 1,
@@ -46,6 +47,12 @@ my $opts = optargs2(
             isa     => '--Str',
             alias   => 'm',
             comment => 'possibly very long option',
+        },
+
+        other => {
+            isa     => '--Str',
+            default => 'some thing',
+            comment => 'an option with a default',
         },
 
         required => {
