@@ -330,5 +330,6 @@ $SIG{__DIE__} = sub {
       if $err;
 };
 
-my ( $cmd, $opts ) = class_optargs('demo');
+my ( $cmd, $opts, $file ) = class_optargs('demo');
+$opts->{__FILE__} = $file;
 print Dumper( bless $opts, $cmd );

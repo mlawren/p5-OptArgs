@@ -773,7 +773,8 @@ package OptArgs2::CmdBase {
         OptArgs2::Status->usage( $error->[0],
             $cmd->as_string( OptArgs2::STYLE_USAGE, $error->[1] ) )
           if $error;
-        return ( $cmd->class, $optargs );
+
+        return ( $cmd->class, $optargs, ( $cmd->class . '.pm' ) =~ s!::!/!gr );
     }
 
     sub _usage_tree {
@@ -1046,8 +1047,9 @@ OptArgs2 - command-line argument and option processor
     #!/usr/bin/env perl
     use OptArgs2;
 
-    # Simple scripts
-    my $opts = optargs(
+    # For simple scripts use optargs()
+
+    my $args = optargs(
         comment => 'script to paint things',
         optargs => [
             item => {
@@ -1063,9 +1065,11 @@ OptArgs2 - command-line argument and option processor
         ],
     );
 
-    print "Painting $opts->{item}\n" unless $opts->{quiet};
+    print "Painting $args->{item}\n" unless $args->{quiet};
 
-    # Complex commands
+    # For complex multi-command applications
+    # use cmd(), subcmd() and class_optargs()
+
     cmd 'My::app' => (
         comment => 'handy work app',
         optargs => [
@@ -1110,7 +1114,9 @@ OptArgs2 - command-line argument and option processor
         ],
     );
 
-    my ( $class, $opts ) = class_optargs('My::app');
+    my ( $class, $opts, $file ) = class_optargs('My::app');
+    require $file;
+    $class->new($opts);
 
 =head1 DESCRIPTION
 
@@ -1156,22 +1162,19 @@ aware of the following:
 
 =item API changes: optargs(), cmd(), subcmd()
 
-Commands and subcommands are now explicitly defined using C<cmd()> and
-C<subcmd()>. The arguments to C<optargs()> have changed to match
-C<cmd()>.
+Commands and subcommands are now explicitly defined using C<optargs()>,
+C<cmd()> and C<subcmd()>. The arguments to C<optargs()> have changed to
+match C<cmd()>.
 
 =item Deprecated: arg(), opt()
 
-Optargs definitions are now always an array reference holding key/value
-pairs as shown in the synopsis.
+Optargs definitions must now be defined in an array reference
+containing key/value pairs as shown in the synopsis.
 
 =item class_optargs() no longer loads the class
 
 Users must specifically require the class if they want to use it
-afterwards:
-
-    my ($class, $opts) = class_optargs('App::demo');
-    eval "require $class" or die $@; # new requirement
+afterwards.
 
 =item Bool options with no default display as "--[no-]bool"
 
@@ -1335,10 +1338,10 @@ plugins, as you like.
 
 =item Parsing
 
-The C<class_optargs()> function is called instead of C<optargs()> to
-parse the C<@ARGV> array and call the appropriate C<arg()> and C<opt()>
-definitions as needed. It's first argument is generally the top-level
-command name you used in your first C<cmd()> call.
+The C<class_optargs()> function is called to parse the C<@ARGV> array
+and call the appropriate C<arg()> and C<opt()> definitions as needed.
+It's first argument is generally the top-level command name you used in
+your first C<cmd()> call.
 
     my ($class, $opts) = class_optargs('App::demo');
 
@@ -1409,13 +1412,9 @@ The command script itself is then usually fairly short:
     use OptArgs2 'class_optargs';
     use App::demo::OptArgs;
 
-    my ($class, $opts) = class_optargs('App::demo');
-    eval "require $class" or die $@;
-    $class->new->run($opts);
-
-The above does nothing more than load the definitions from
-App::demo::OptArgs, obtain the command name and options hashref, and
-then loads the appropriate package to run the command.
+    my ($class, $opts, $file) = class_optargs('App::demo');
+    require $file;
+    $class->new($opts)->run;
 
 =back
 
@@ -1665,15 +1664,14 @@ The following functions are exported by default.
 
 =over
 
-
-=item class_optargs( $class, [ @argv ] ) -> ($subclass, $opts)
+=item class_optargs( $class, [ @argv ] ) -> ($subclass, $opts, $file)
 
 Parse @ARGV by default (or @argv when given) for the arguments and
 options defined for command C<$class>.  C<@ARGV> will first be decoded
 into UTF-8 (if necessary) from whatever L<I18N::Langinfo> says your
 current locale codeset is.
 
-Returns the following two values:
+Returns the following values:
 
 =over
 
@@ -1684,8 +1682,13 @@ This may be the same as C<$class>.
 
 =item $opts
 
-a hashref containing key/value pairs for options and arguments
-I<combined>.
+a hashref containing combined key/value pairs for options and
+arguments.
+
+=item $require_file
+
+A file fragment (matching C<$subclass>) suitable for passing to
+C<require>.
 
 =back
 

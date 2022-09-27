@@ -8,8 +8,9 @@ SYNOPSIS
         #!/usr/bin/env perl
         use OptArgs2;
 
-        # Simple scripts
-        my $opts = optargs(
+        # For simple scripts use optargs()
+
+        my $args = optargs(
             comment => 'script to paint things',
             optargs => [
                 item => {
@@ -25,9 +26,11 @@ SYNOPSIS
             ],
         );
 
-        print "Painting $opts->{item}\n" unless $opts->{quiet};
+        print "Painting $args->{item}\n" unless $args->{quiet};
 
-        # Complex commands
+        # For complex multi-command applications
+        # use cmd(), subcmd() and class_optargs()
+
         cmd 'My::app' => (
             comment => 'handy work app',
             optargs => [
@@ -72,7 +75,9 @@ SYNOPSIS
             ],
         );
 
-        my ( $class, $opts ) = class_optargs('My::app');
+        my ( $class, $opts, $file ) = class_optargs('My::app');
+        require $file;
+        $class->new($opts);
 
 DESCRIPTION
     OptArgs2 processes command line arguments, options, and subcommands
@@ -107,19 +112,16 @@ DESCRIPTION
 
     API changes: optargs(), cmd(), subcmd()
         Commands and subcommands are now explicitly defined using
-        "cmd()" and "subcmd()". The arguments to "optargs()" have
-        changed to match "cmd()".
+        "optargs()", "cmd()" and "subcmd()". The arguments to
+        "optargs()" have changed to match "cmd()".
 
     Deprecated: arg(), opt()
-        Optargs definitions are now always an array reference holding
-        key/value pairs as shown in the synopsis.
+        Optargs definitions must now be defined in an array reference
+        containing key/value pairs as shown in the synopsis.
 
     class_optargs() no longer loads the class
         Users must specifically require the class if they want to use it
-        afterwards:
-
-            my ($class, $opts) = class_optargs('App::demo');
-            eval "require $class" or die $@; # new requirement
+        afterwards.
 
     Bool options with no default display as "--[no-]bool"
         A Bool option without a default is now displayed with the
@@ -276,10 +278,10 @@ DESCRIPTION
         one or more separate packages or plugins, as you like.
 
     Parsing
-        The "class_optargs()" function is called instead of "optargs()"
-        to parse the @ARGV array and call the appropriate "arg()" and
-        "opt()" definitions as needed. It's first argument is generally
-        the top-level command name you used in your first "cmd()" call.
+        The "class_optargs()" function is called to parse the @ARGV
+        array and call the appropriate "arg()" and "opt()" definitions
+        as needed. It's first argument is generally the top-level
+        command name you used in your first "cmd()" call.
 
             my ($class, $opts) = class_optargs('App::demo');
 
@@ -347,14 +349,9 @@ DESCRIPTION
                 use OptArgs2 'class_optargs';
                 use App::demo::OptArgs;
 
-                my ($class, $opts) = class_optargs('App::demo');
-                eval "require $class" or die $@;
-                $class->new->run($opts);
-
-            The above does nothing more than load the definitions from
-            App::demo::OptArgs, obtain the command name and options
-            hashref, and then loads the appropriate package to run the
-            command.
+                my ($class, $opts, $file) = class_optargs('App::demo');
+                require $file;
+                $class->new($opts)->run;
 
   Argument Definition
     Arguments are key/hashref pairs defined inside a "cmd()" or
@@ -570,21 +567,25 @@ DESCRIPTION
 FUNCTIONS
     The following functions are exported by default.
 
-    class_optargs( $class, [ @argv ] ) -> ($subclass, $opts)
+    class_optargs( $class, [ @argv ] ) -> ($subclass, $opts, $file)
         Parse @ARGV by default (or @argv when given) for the arguments
         and options defined for command $class. @ARGV will first be
         decoded into UTF-8 (if necessary) from whatever I18N::Langinfo
         says your current locale codeset is.
 
-        Returns the following two values:
+        Returns the following values:
 
         $subclass
             The actual subcommand name that was matched by parsing the
             arguments. This may be the same as $class.
 
         $opts
-            a hashref containing key/value pairs for options and
-            arguments *combined*.
+            a hashref containing combined key/value pairs for options
+            and arguments.
+
+        $require_file
+            A file fragment (matching $subclass) suitable for passing to
+            "require".
 
         Throws an error / usage exception object (typically
         "OptArgs2::Usage") for missing or invalid arguments/options.
