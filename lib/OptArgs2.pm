@@ -1155,7 +1155,7 @@ given.
 =head2 Differences with Earlier Releases
 
 B<OptArgs2> version 2.0.0 was a large re-write to improve the API and
-code.  Users upgrading from 0.0.11 or even from B<OptArgs> need to be
+code.  Users upgrading from version 0.0.11 or B<OptArgs> need to be
 aware of the following:
 
 =over
@@ -1200,8 +1200,8 @@ following interactions from the shell:
         --help,  -h   print a usage message and exit
         --quiet, -q   output nothing while working
 
-The C<optargs()> function parses the command line according to the
-included optarg declarations and returns a single HASH reference.  If
+The C<optargs()> function parses the command line (C<@ARGV>) according
+to the included declarations and returns a single HASH reference.  If
 the command is not called correctly then an exception is thrown
 containing an automatically generated usage message as shown above.
 Because B<OptArgs2> fully knows the valid arguments and options it can
@@ -1267,11 +1267,6 @@ This now produces the following usage output:
         --colour=STR, -c   the colour to use [blue]
         --help,       -h   print a usage message and exit
         --quiet,      -q   output nothing while working
-
-The command line is parsed first for arguments, then for options, in
-the same order in which they are defined. This probably only of
-interest if you are using trigger actions on your options (see
-FUNCTIONS below for details).
 
 =head2 Multi-Level Commands
 
@@ -1773,24 +1768,21 @@ message. See XXX befow for the structure this subref receives.
 
 =item optargs( @cmd_optargs ) -> HASHref
 
-This all-in-one function:
+This is a convenience function for single-level commands that:
 
 =over
 
 =item * passes it's arguments directly to C<cmd()>,
 
 =item * calls C<class_optargs()> to parse '@ARGV' and returns the
-C<$opts> HASHref result.
+C<$opts> HASHref result directly.
 
 =back
 
-This is the most convenient B<OptArgs2> interface for simple scripts,
-as shown in the SYNOPSIS.
+=item subcmd( $subclass, %parameters ) -> OptArgs2::Cmd
 
-=item subcmd( $class, %parameters ) -> OptArgs2::Cmd
-
-Defines a subcommand identified by C<$class> which must include the
-name of a previously defined (sub)command + '::'.
+Defines the subcommand C<$subclass> of a previously defined
+(sub-)command.
 
 Accepts the same parameters as C<cmd()> in addition to the following:
 

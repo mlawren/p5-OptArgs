@@ -107,7 +107,7 @@ DESCRIPTION
 
   Differences with Earlier Releases
     OptArgs2 version 2.0.0 was a large re-write to improve the API and
-    code. Users upgrading from 0.0.11 or even from OptArgs need to be
+    code. Users upgrading from version 0.0.11 or OptArgs need to be
     aware of the following:
 
     API changes: optargs(), cmd(), subcmd()
@@ -144,8 +144,8 @@ DESCRIPTION
             --help,  -h   print a usage message and exit
             --quiet, -q   output nothing while working
 
-    The "optargs()" function parses the command line according to the
-    included optarg declarations and returns a single HASH reference. If
+    The "optargs()" function parses the command line (@ARGV) according
+    to the included declarations and returns a single HASH reference. If
     the command is not called correctly then an exception is thrown
     containing an automatically generated usage message as shown above.
     Because OptArgs2 fully knows the valid arguments and options it can
@@ -212,11 +212,6 @@ DESCRIPTION
             --colour=STR, -c   the colour to use [blue]
             --help,       -h   print a usage message and exit
             --quiet,      -q   output nothing while working
-
-    The command line is parsed first for arguments, then for options, in
-    the same order in which they are defined. This probably only of
-    interest if you are using trigger actions on your options (see
-    FUNCTIONS below for details).
 
   Multi-Level Commands
     Commands with subcommands require a different coding model and
@@ -631,19 +626,16 @@ FUNCTIONS
             overriden by sub-commands, args and opts. Off by default.
 
     optargs( @cmd_optargs ) -> HASHref
-        This all-in-one function:
+        This is a convenience function for single-level commands that:
 
         *   passes it's arguments directly to "cmd()",
 
         *   calls "class_optargs()" to parse '@ARGV' and returns the
-            $opts HASHref result.
+            $opts HASHref result directly.
 
-        This is the most convenient OptArgs2 interface for simple
-        scripts, as shown in the SYNOPSIS.
-
-    subcmd( $class, %parameters ) -> OptArgs2::Cmd
-        Defines a subcommand identified by $class which must include the
-        name of a previously defined (sub)command + '::'.
+    subcmd( $subclass, %parameters ) -> OptArgs2::Cmd
+        Defines the subcommand $subclass of a previously defined
+        (sub-)command.
 
         Accepts the same parameters as "cmd()" in addition to the
         following:
