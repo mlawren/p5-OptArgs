@@ -263,7 +263,7 @@ package OptArgs2::Arg {
       has => {
         cmd      => { is => 'rw', weaken => 1, },
         fallback => { is => 'rw', },
-        greedy   => { is => 'ro', },
+        greedy   => {},
       };
 
     our @CARP_NOT = @OptArgs2::CARP_NOT;
@@ -325,7 +325,7 @@ package OptArgs2::Arg {
 package OptArgs2::Fallback {
     use OptArgs2::Fallback_CI
       isa => 'OptArgs2::Arg',
-      has => { hidden => { is => 'ro' }, };
+      has => { hidden => {} };
 
     our @CARP_NOT = @OptArgs2::CARP_NOT;
 }
