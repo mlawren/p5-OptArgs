@@ -7,8 +7,7 @@ package OptArgs2::Status {
       '""'     => sub { ${ $_[0] } },
       fallback => 1;
 
-    our @CARP_NOT;
-    my @packages = (
+    our @CARP_NOT = (
         qw/
           OptArgs2
           OptArgs2::Arg
@@ -79,14 +78,6 @@ package OptArgs2::Status {
         Carp::croak( 'Usage', "unknown error type: $type" )
           unless exists $error_types{$type};
 
-        local @CARP_NOT = local @OptArgs2::CARP_NOT =
-          local @OptArgs2::Arg::CARP_NOT = local @OptArgs2::Cmd::CARP_NOT =
-          local @OptArgs2::CmdBase::CARP_NOT =
-          local @OptArgs2::Fallback::CARP_NOT =
-          local @OptArgs2::Opt::CARP_NOT =
-          local @OptArgs2::OptArgBase::CARP_NOT =
-          local @OptArgs2::SubCmd::CARP_NOT = @packages;
-
         $msg .= ' ' . Carp::longmess('');
 
         no strict 'refs';
@@ -129,14 +120,6 @@ package OptArgs2::Status {
         my $msg   = shift;
         $msg = sprintf( $msg, @_ ) if @_;
 
-        local @CARP_NOT = local @OptArgs2::CARP_NOT =
-          local @OptArgs2::Arg::CARP_NOT = local @OptArgs2::Cmd::CARP_NOT =
-          local @OptArgs2::CmdBase::CARP_NOT =
-          local @OptArgs2::Fallback::CARP_NOT =
-          local @OptArgs2::Opt::CARP_NOT =
-          local @OptArgs2::OptArgBase::CARP_NOT =
-          local @OptArgs2::SubCmd::CARP_NOT = @packages;
-
         require Carp;
         Carp::carp($msg);
     }
@@ -148,7 +131,8 @@ package OptArgs2 {
       default => [qw/arg class_optargs cmd opt optargs optargs2 subcmd/],
       other   => [qw/usage/];
 
-    our $VERSION = '2.0.0_4';
+    our $VERSION  = '2.0.0_4';
+    our @CARP_NOT = @OptArgs2::Status::CARP_NOT;
 
     # constants
     sub STYLE_USAGE()       { 'Usage' }         # default
@@ -302,6 +286,7 @@ package OptArgs2 {
 }
 
 package OptArgs2::CODEREF {
+    our @CARP_NOT = @OptArgs2::Status::CARP_NOT;
 
     sub TIESCALAR {
         my $class = shift;
@@ -332,6 +317,8 @@ package OptArgs2::OptArgBase {
         show_default => {},
       },
       ;
+
+    our @CARP_NOT = @OptArgs2::Status::CARP_NOT;
 }
 
 package OptArgs2::Arg {
@@ -343,6 +330,7 @@ package OptArgs2::Arg {
         greedy   => { is => 'ro', },
       };
 
+    our @CARP_NOT = @OptArgs2::Status::CARP_NOT;
     my %arg2getopt = (
         'Str'      => '=s',
         'Int'      => '=i',
@@ -401,6 +389,8 @@ package OptArgs2::Fallback {
     use OptArgs2::Fallback_CI
       isa => 'OptArgs2::Arg',
       has => { hidden => { is => 'ro' }, };
+
+    our @CARP_NOT = @OptArgs2::Status::CARP_NOT;
 }
 
 package OptArgs2::Opt {
@@ -411,6 +401,8 @@ package OptArgs2::Opt {
         hidden  => {},
         trigger => {},
       };
+
+    our @CARP_NOT = @OptArgs2::Status::CARP_NOT;
 
     my %isa2getopt = (
         'ArrayRef' => '=s@',
@@ -569,6 +561,8 @@ package OptArgs2::CmdBase {
         _values      => { is      => 'rw' },
       },
       ;
+
+    our @CARP_NOT = @OptArgs2::Status::CARP_NOT;
 
     sub add_arg {
         my $self = shift;
@@ -1072,6 +1066,8 @@ package OptArgs2::Cmd {
         },
       };
 
+    our @CARP_NOT = @OptArgs2::Status::CARP_NOT;
+
     sub BUILD {
         my $self = shift;
 
@@ -1089,6 +1085,8 @@ package OptArgs2::SubCmd {
         name   => { required => 1, },
         parent => { required => 1, },
       };
+
+    our @CARP_NOT = @OptArgs2::Status::CARP_NOT;
 
     sub class {
         my $self = shift;
