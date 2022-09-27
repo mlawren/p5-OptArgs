@@ -102,7 +102,7 @@ sub usage {
     OptArgs2::Status->error( 'CmdNotFound', "command not found: $class" )
       unless exists $COMMAND{$class};
 
-    return $COMMAND{$class}->usage($style);
+    return $COMMAND{$class}->as_string($style);
 }
 
 package OptArgs2::Status {
