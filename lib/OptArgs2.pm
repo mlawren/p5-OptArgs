@@ -1,24 +1,117 @@
 use strict;
 use warnings;
 
+package OptArgs2;
+use Encode qw/decode/;
+use Exporter::Tidy
+  default => [qw/class_optargs cmd optargs subcmd/],
+  other   => [qw/usage/];
+
+our $VERSION  = '2.0.0_4';
+our @CARP_NOT = (
+    qw/
+      OptArgs2
+      OptArgs2::Arg
+      OptArgs2::Cmd
+      OptArgs2::CmdBase
+      OptArgs2::Fallback
+      OptArgs2::Opt
+      OptArgs2::OptArgBase
+      OptArgs2::SubCmd
+      /
+);
+
+# constants
+sub STYLE_USAGE()       { 'Usage' }         # default
+sub STYLE_HELP()        { 'Help' }
+sub STYLE_HELPTREE()    { 'HelpTree' }
+sub STYLE_HELPSUMMARY() { 'HelpSummary' }
+
+my %COMMAND;
+
+sub class_optargs {
+    my $class = shift
+      || OptArgs2::Status->error( 'Usage', 'class_optargs($CMD,[@argv])' );
+
+    my $cmd = $COMMAND{$class}
+      || OptArgs2::Status->error( 'CmdNotFound',
+        'command class not found: ' . $class );
+
+    my @source = @_;
+
+    if ( !@_ and @ARGV ) {
+        my $CODESET =
+          eval { require I18N::Langinfo; I18N::Langinfo::CODESET() };
+
+        if ($CODESET) {
+            my $codeset = I18N::Langinfo::langinfo($CODESET);
+            $_ = decode( $codeset, $_ ) for @ARGV;
+        }
+
+        @source = @ARGV;
+    }
+
+    $cmd->parse(@source);
+}
+
+sub cmd {
+    my $class =
+      shift || OptArgs2::Status->error( 'Usage', 'cmd($CLASS,@args)' );
+
+    OptArgs2::Status->error( 'CmdExists', "command already defined: $class" )
+      if exists $COMMAND{$class};
+
+    $COMMAND{$class} = OptArgs2::Cmd->new( class => $class, @_ );
+}
+
+sub optargs {
+    my $class = caller;
+    cmd( $class, @_ );
+    ( class_optargs($class) )[1];
+}
+
+sub subcmd {
+    my $class =
+      shift || OptArgs2::Status->error( 'Usage', 'subcmd($CLASS,%%args)' );
+
+    OptArgs2::Status->error( 'SubCmdExists',
+        "subcommand already defined: $class" )
+      if exists $COMMAND{$class};
+
+    OptArgs2::Status->error( 'ParentCmdNotFound',
+        "no '::' in class '$class' - must have a parent" )
+      unless $class =~ m/(.+)::(.+)/;
+
+    my ( $parent_class, $name ) = ( $1, $2 );
+
+    OptArgs2::Status->error( 'ParentCmdNotFound',
+        "parent class not found: " . $parent_class )
+      unless exists $COMMAND{$parent_class};
+
+    $COMMAND{$class} = $COMMAND{$parent_class}->add_cmd(
+        name => $name,
+        @_
+    );
+}
+
+sub usage {
+    my $class =
+      shift || OptArgs2::Status->error( 'Usage', 'usage($CLASS,[$style])' );
+    my $style = shift;
+
+    OptArgs2::Status->error( 'CmdNotFound', "command not found: $class" )
+      unless exists $COMMAND{$class};
+
+    return $COMMAND{$class}->usage($style);
+}
+
 package OptArgs2::Status {
     use overload
       bool     => sub { 1 },
       '""'     => sub { ${ $_[0] } },
       fallback => 1;
 
-    our @CARP_NOT = (
-        qw/
-          OptArgs2
-          OptArgs2::Arg
-          OptArgs2::Cmd
-          OptArgs2::CmdBase
-          OptArgs2::Fallback
-          OptArgs2::Opt
-          OptArgs2::OptArgBase
-          OptArgs2::SubCmd
-          /
-    );
+    our @CARP_NOT = @OptArgs2::CARP_NOT;
 
     my %error_types = (
         CmdExists          => undef,
@@ -95,7 +188,7 @@ package OptArgs2::Status {
         $proto->error( 'Usage', "unknown usage reason: $type" )
           unless exists $usage_types{$type};
 
-        if ( -t select ) {
+        if ( -t STDERR ) {
             my $lines = scalar( split /\n/, $str );
             $lines++ if $str =~ m/\n\z/;
 
@@ -114,174 +207,10 @@ package OptArgs2::Status {
         *{ $pkg . '::ISA' } = ['OptArgs2::Status'];
         die bless \$str, $pkg;
     }
-
-    sub carp {
-        my $proto = shift;
-        my $msg   = shift;
-        $msg = sprintf( $msg, @_ ) if @_;
-
-        require Carp;
-        Carp::carp($msg);
-    }
-}
-
-package OptArgs2 {
-    use Encode qw/decode/;
-    use Exporter::Tidy
-      default => [qw/class_optargs cmd optargs subcmd/],
-      other   => [qw/usage/];
-
-    our $VERSION  = '2.0.0_4';
-    our @CARP_NOT = @OptArgs2::Status::CARP_NOT;
-
-    # constants
-    sub STYLE_USAGE()       { 'Usage' }         # default
-    sub STYLE_HELP()        { 'Help' }
-    sub STYLE_HELPTREE()    { 'HelpTree' }
-    sub STYLE_HELPSUMMARY() { 'HelpSummary' }
-
-    # Backwards compatibility
-    sub STYLE_FULL()    { STYLE_HELP }
-    sub STYLE_TREE()    { STYLE_HELPTREE }
-    sub STYLE_SUMMARY() { STYLE_HELPSUMMARY }
-
-    our $CURRENT;
-    our %isa2name = (
-        'ArrayRef' => 'Str',
-        'Bool'     => '',
-        'Counter'  => '',
-        'Flag'     => '',
-        'HashRef'  => 'Str',
-        'Int'      => 'Int',
-        'Num'      => 'Num',
-        'Str'      => 'Str',
-        'SubCmd'   => 'Str',
-    );
-
-    my %COMMAND;
-
-    #    sub arg {
-    #        my $name = shift;
-    #
-    #        $OptArgs2::CURRENT //= cmd( ( scalar caller ), comment => '' );
-    #        $OptArgs2::CURRENT->add_arg(
-    #            name => $name,
-    #            @_,
-    #        );
-    #    }
-
-    sub class_optargs {
-        my $class = shift
-          || OptArgs2::Status->error( 'Usage', 'class_optargs($CMD,[@argv])' );
-
-        my $cmd = $COMMAND{$class}
-          || OptArgs2::Status->error( 'CmdNotFound',
-            'command class not found: ' . $class );
-
-        my @source = @_;
-
-        if ( !@_ and @ARGV ) {
-            my $CODESET =
-              eval { require I18N::Langinfo; I18N::Langinfo::CODESET() };
-
-            if ($CODESET) {
-                my $codeset = I18N::Langinfo::langinfo($CODESET);
-                $_ = decode( $codeset, $_ ) for @ARGV;
-            }
-
-            @source = @ARGV;
-        }
-
-        $cmd->parse(@source);
-    }
-
-    sub cmd {
-        my $class =
-          shift || OptArgs2::Status->error( 'Usage', 'cmd($CLASS,@args)' );
-
-        OptArgs2::Status->error( 'CmdExists',
-            "command already defined: $class" )
-          if exists $COMMAND{$class};
-
-        my $cmd = OptArgs2::Cmd->new( class => $class, @_ );
-        $OptArgs2::CURRENT = $COMMAND{$class} = $cmd;
-
-        # If this check is not performed we end up adding ourselves
-        if ( $class =~ m/:/ ) {
-            ( my $parent_class = $class ) =~ s/(.*)::/$1/;
-            if ( exists $COMMAND{$parent_class} ) {
-                $COMMAND{$parent_class}->add_cmd($cmd);
-            }
-        }
-
-        return $cmd;
-    }
-
-    #    sub opt {
-    #        my $name = shift;
-    #
-    #        $OptArgs2::CURRENT //= cmd( ( scalar caller ), comment => '' );
-    #        $OptArgs2::CURRENT->add_opt(
-    #            name => $name,
-    #            @_,
-    #        );
-    #    }
-
-    sub optargs {
-        my $class = caller;
-        my $cmd   = cmd( $class, @_ );
-
-        my $CODESET =
-          eval { require I18N::Langinfo; I18N::Langinfo::CODESET() };
-
-        if ($CODESET) {
-            my $codeset = I18N::Langinfo::langinfo($CODESET);
-            $_ = decode( $codeset, $_ ) for @ARGV;
-        }
-
-        my ( undef, $opts ) = $cmd->parse(@ARGV);
-        return $opts;
-    }
-
-    sub subcmd {
-        my $class =
-          shift || OptArgs2::Status->error( 'Usage', 'subcmd($CLASS,%%args)' );
-
-        OptArgs2::Status->error( 'SubCmdExists',
-            "subcommand already defined: $class" )
-          if exists $COMMAND{$class};
-
-        OptArgs2::Status->error( 'ParentCmdNotFound',
-            "no '::' in class '$class' - must have a parent" )
-          unless $class =~ m/(.+)::(.+)/;
-
-        my ( $parent_class, $name ) = ( $1, $2 );
-
-        OptArgs2::Status->error( 'ParentCmdNotFound',
-            "parent class not found: " . $parent_class )
-          unless exists $COMMAND{$parent_class};
-
-        my $subcmd = $COMMAND{$parent_class}->add_cmd(
-            name => $name,
-            @_
-        );
-        $COMMAND{ $subcmd->class } = $subcmd;
-    }
-
-    sub usage {
-        my $class =
-          shift || OptArgs2::Status->error( 'Usage', 'usage($CLASS,[$style])' );
-        my $style = shift;
-
-        OptArgs2::Status->error( 'CmdNotFound', "command not found: $class" )
-          unless exists $COMMAND{$class};
-
-        return $COMMAND{$class}->usage($style);
-    }
 }
 
 package OptArgs2::CODEREF {
-    our @CARP_NOT = @OptArgs2::Status::CARP_NOT;
+    our @CARP_NOT = @OptArgs2::CARP_NOT;
 
     sub TIESCALAR {
         my $class = shift;
@@ -313,7 +242,19 @@ package OptArgs2::OptArgBase {
       },
       ;
 
-    our @CARP_NOT = @OptArgs2::Status::CARP_NOT;
+    our @CARP_NOT = @OptArgs2::CARP_NOT;
+    our %isa2name = (
+        'ArrayRef' => 'Str',
+        'Bool'     => '',
+        'Counter'  => '',
+        'Flag'     => '',
+        'HashRef'  => 'Str',
+        'Int'      => 'Int',
+        'Num'      => 'Num',
+        'Str'      => 'Str',
+        'SubCmd'   => 'Str',
+    );
+
 }
 
 package OptArgs2::Arg {
@@ -325,7 +266,7 @@ package OptArgs2::Arg {
         greedy   => { is => 'ro', },
       };
 
-    our @CARP_NOT = @OptArgs2::Status::CARP_NOT;
+    our @CARP_NOT = @OptArgs2::CARP_NOT;
     my %arg2getopt = (
         'Str'      => '=s',
         'Int'      => '=i',
@@ -364,7 +305,8 @@ package OptArgs2::Arg {
             $deftype = '[' . $value . ']';
         }
         else {
-            $deftype = $self->isa_name // $OptArgs2::isa2name{ $self->isa }
+            $deftype = $self->isa_name
+              // $OptArgs2::OptArgBase::isa2name{ $self->isa }
               // OptArgs2::Status->error( 'InvalidIsa',
                 'invalid isa type: ' . $self->isa );
         }
@@ -385,7 +327,7 @@ package OptArgs2::Fallback {
       isa => 'OptArgs2::Arg',
       has => { hidden => { is => 'ro' }, };
 
-    our @CARP_NOT = @OptArgs2::Status::CARP_NOT;
+    our @CARP_NOT = @OptArgs2::CARP_NOT;
 }
 
 package OptArgs2::Opt {
@@ -397,7 +339,7 @@ package OptArgs2::Opt {
         trigger => {},
       };
 
-    our @CARP_NOT = @OptArgs2::Status::CARP_NOT;
+    our @CARP_NOT = @OptArgs2::CARP_NOT;
 
     my %isa2getopt = (
         'ArrayRef' => '=s@',
@@ -415,7 +357,7 @@ package OptArgs2::Opt {
         my $ref   = {@_};
 
         if ( exists $ref->{ishelp} ) {
-            OptArgs2::Status->carp( '"ishelp" is deprecated in favour of '
+            Carp::carp( '"ishelp" is deprecated in favour of '
                   . '"isa => OptArgs2::STYLE_HELP"' );
             delete $ref->{ishelp};
             $ref->{isa} //= OptArgs2::STYLE_HELP;
@@ -435,17 +377,17 @@ package OptArgs2::Opt {
 
                 if ( $val == 1 ) {
                     OptArgs2::Status->usage( OptArgs2::STYLE_HELP,
-                        $cmd->usage(OptArgs2::STYLE_HELP) );
+                        $cmd->as_string(OptArgs2::STYLE_HELP) );
                 }
                 elsif ( $val == 2 ) {
                     OptArgs2::Status->usage( OptArgs2::STYLE_HELPTREE,
-                        $cmd->usage(OptArgs2::STYLE_HELPTREE) );
+                        $cmd->as_string(OptArgs2::STYLE_HELPTREE) );
                 }
                 else {
                     OptArgs2::Status->usage(
                         'UnexpectedOptArg',
-                        $cmd->usage(
-                            'UnexpectedOptArg',
+                        $cmd->as_string(
+                            OptArgs2::STYLE_USAGE,
                             qq{"--$ref->{name}" used too many times}
                         )
                     );
@@ -507,7 +449,8 @@ package OptArgs2::Opt {
             }
         }
         else {
-            $deftype = $self->isa_name // $OptArgs2::isa2name{ $self->isa }
+            $deftype = $self->isa_name
+              // $OptArgs2::OptArgBase::isa2name{ $self->isa }
               // OptArgs2::Status->error( 'InvalidIsa',
                 'invalid isa type: ' . $self->isa );
         }
@@ -538,10 +481,13 @@ package OptArgs2::CmdBase {
         comment => { required => 1, },
         hidden  => {},
         no_help => { default => 0 },
-        optargs => { is      => 'rw', },
-        opts    => { default => sub { [] }, },
-        parent  => { weaken  => 1, },
-        _opts   => {
+        optargs => {
+            is      => 'rw',
+            default => sub { [] }
+        },
+        opts   => { default => sub { [] }, },
+        parent => { weaken  => 1, },
+        _opts  => {
             default => sub { {} }
         },
         _args => {
@@ -557,7 +503,7 @@ package OptArgs2::CmdBase {
       },
       ;
 
-    our @CARP_NOT = @OptArgs2::Status::CARP_NOT;
+    our @CARP_NOT = @OptArgs2::CARP_NOT;
 
     sub add_arg {
         my $self = shift;
@@ -608,25 +554,18 @@ package OptArgs2::CmdBase {
     sub run_optargs {
         my $self = shift;
         map { $_->run_optargs } $self->parents;
-        if ( 'CODE' eq ref $self->optargs ) {
-            local $OptArgs2::CURRENT = $self;
-            $self->optargs->();
-            $self->optargs(undef);
-        }
-        elsif ( 'ARRAY' eq ref $self->optargs ) {
-            while ( my ( $name, $args ) = splice @{ $self->optargs }, 0, 2 ) {
-                if ( $args->{isa} =~ s/^--// ) {
-                    $self->add_opt(
-                        name => $name,
-                        %$args,
-                    );
-                }
-                else {
-                    $self->add_arg(
-                        name => $name,
-                        %$args,
-                    );
-                }
+        while ( my ( $name, $args ) = splice @{ $self->optargs }, 0, 2 ) {
+            if ( $args->{isa} =~ s/^--// ) {
+                $self->add_opt(
+                    name => $name,
+                    %$args,
+                );
+            }
+            else {
+                $self->add_arg(
+                    name => $name,
+                    %$args,
+                );
             }
         }
     }
@@ -829,10 +768,11 @@ package OptArgs2::CmdBase {
 
         $cmd->_values($optargs);
 
-        local $OptArgs2::CURRENT = $cmd;
         map { $_->[0]->( $cmd, $optargs->{ $_->[1] } ) } @trigger;
 
-        OptArgs2::Status->usage( $error->[0], $cmd->usage(@$error) ) if $error;
+        OptArgs2::Status->usage( $error->[0],
+            $cmd->as_string( OptArgs2::STYLE_USAGE, $error->[1] ) )
+          if $error;
         return ( $cmd->class, $optargs );
     }
 
@@ -841,14 +781,14 @@ package OptArgs2::CmdBase {
         my $depth = shift || 0;
 
         return [
-            $depth, $self->usage(OptArgs2::STYLE_HELPSUMMARY),
+            $depth, $self->as_string(OptArgs2::STYLE_HELPSUMMARY),
             $self->comment
           ],
           map { $_->_usage_tree( $depth + 1 ) }
           sort { $a->name cmp $b->name } @{ $self->subcmds };
     }
 
-    sub usage {
+    sub as_string {
         my $self  = shift;
         my $style = shift || OptArgs2::STYLE_USAGE;
         my $error = shift // '';
@@ -961,7 +901,7 @@ package OptArgs2::CmdBase {
                                   . (
                                     ref $subcmd eq 'OptArgs2::Fallback'
                                     ? uc( $subcmd->name )
-                                    : $subcmd->usage(
+                                    : $subcmd->as_string(
                                         OptArgs2::STYLE_HELPSUMMARY)
                                   ),
                                 $subcmd->comment
@@ -1061,7 +1001,7 @@ package OptArgs2::Cmd {
         },
       };
 
-    our @CARP_NOT = @OptArgs2::Status::CARP_NOT;
+    our @CARP_NOT = @OptArgs2::CARP_NOT;
 
     sub BUILD {
         my $self = shift;
@@ -1081,7 +1021,7 @@ package OptArgs2::SubCmd {
         parent => { required => 1, },
       };
 
-    our @CARP_NOT = @OptArgs2::Status::CARP_NOT;
+    our @CARP_NOT = @OptArgs2::CARP_NOT;
 
     sub class {
         my $self = shift;
@@ -1664,26 +1604,9 @@ usage errors.
 
 The trigger subref is passed two parameters: a OptArgs2::Cmd object and
 the value (if any) of the option. The OptArgs2::Cmd object is an
-internal one, but one public interface is has (in addition to the
-usage() method) is the usage_tree() method which gives a usage overview
-of all subcommands in the command hierarchy.
-
-    opt usage_tree => (
-        isa     => 'Flag',
-        alias   => 'U',
-        comment => 'print usage tree and exit',
-        trigger => sub {
-            my ( $cmd, $value ) = @_;
-            die $cmd->usage_tree;
-        }
-    );
-
-    # demo COMMAND [OPTIONS...]
-    #     demo foo ACTION [OPTIONS...]
-    #     demo bar [OPTIONS...]
+internal one.
 
 =back
-
 
 =head2 Formatting of Usage Messages
 

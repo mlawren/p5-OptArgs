@@ -515,24 +515,7 @@ DESCRIPTION
 
         The trigger subref is passed two parameters: a OptArgs2::Cmd
         object and the value (if any) of the option. The OptArgs2::Cmd
-        object is an internal one, but one public interface is has (in
-        addition to the usage() method) is the usage_tree() method which
-        gives a usage overview of all subcommands in the command
-        hierarchy.
-
-            opt usage_tree => (
-                isa     => 'Flag',
-                alias   => 'U',
-                comment => 'print usage tree and exit',
-                trigger => sub {
-                    my ( $cmd, $value ) = @_;
-                    die $cmd->usage_tree;
-                }
-            );
-
-            # demo COMMAND [OPTIONS...]
-            #     demo foo ACTION [OPTIONS...]
-            #     demo bar [OPTIONS...]
+        object is an internal one.
 
   Formatting of Usage Messages
     Usage messages attempt to present as much information as possible to
