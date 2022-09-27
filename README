@@ -591,6 +591,9 @@ FUNCTIONS
         the hash will be added as options. An undefined value means a
         boolean option.
 
+    cols() -> Integer
+        Returns the terminal column width.
+
     cmd( $class, %parameters ) -> OptArgs2::Cmd
         Define a top-level command identified by $class which is
         typically a Perl package name. The following parameters are
@@ -632,6 +635,9 @@ FUNCTIONS
 
         *   calls "class_optargs()" to parse '@ARGV' and returns the
             $opts HASHref result directly.
+
+    rows() -> Integer
+        Returns the terminal row height.
 
     subcmd( $subclass, %parameters ) -> OptArgs2::Cmd
         Defines the subcommand $subclass of a previously defined

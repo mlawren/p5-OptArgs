@@ -7,7 +7,7 @@
         - arg() and opt() deprected
 
     New Features:
-        - None.
+        - Utility functions cols() and rows() made public
 
     Enhancements:
         - None.

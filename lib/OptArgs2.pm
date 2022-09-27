@@ -5,7 +5,7 @@ package OptArgs2;
 use Encode qw/decode/;
 use Exporter::Tidy
   default => [qw/class_optargs cmd optargs subcmd/],
-  other   => [qw/usage/];
+  other   => [qw/usage cols rows/];
 
 our $VERSION  = '2.0.0_4';
 our @CARP_NOT = (
@@ -28,6 +28,28 @@ sub STYLE_HELPTREE()    { 'HelpTree' }
 sub STYLE_HELPSUMMARY() { 'HelpSummary' }
 
 my %COMMAND;
+
+my @chars;
+
+sub _chars {
+    if ( $^O eq 'MSWin32' ) {
+        require Win32::Console;
+        @chars = Win32::Console->new()->Size();
+    }
+    else {
+        require Term::Size::Perl;
+        @chars = Term::Size::Perl::chars();
+    }
+    \@chars;
+}
+
+sub cols {
+    $chars[0] // _chars()->[0];
+}
+
+sub rows {
+    $chars[1] // _chars()->[1];
+}
 
 sub class_optargs {
     my $class = shift
@@ -137,28 +159,6 @@ package OptArgs2::Status {
         UnexpectedOptArg => undef,
     );
 
-    my @chars;
-
-    sub _chars {
-        if ( $^O eq 'MSWin32' ) {
-            require Win32::Console;
-            @chars = Win32::Console->new()->Size();
-        }
-        else {
-            require Term::Size::Perl;
-            @chars = Term::Size::Perl::chars();
-        }
-        \@chars;
-    }
-
-    sub cols {
-        $chars[0] // _chars()->[0];
-    }
-
-    sub rows {
-        $chars[1] // _chars()->[1];
-    }
-
     sub error {
         require Carp;
 
@@ -192,7 +192,7 @@ package OptArgs2::Status {
             my $lines = scalar( split /\n/, $str );
             $lines++ if $str =~ m/\n\z/;
 
-            if ( $lines >= rows() ) {
+            if ( $lines >= OptArgs2::rows() ) {
                 require OptArgs2::Pager;
                 my $pager = OptArgs2::Pager->new( auto => 0 );
                 local *STDERR = $pager->fh;
@@ -805,8 +805,8 @@ package OptArgs2::CmdBase {
             } $self->_usage_tree;
             my ( $w1, $w2 ) = ( max(@w1), max(@w2) );
 
-            my $paged  = OptArgs2::Status->rows < scalar @items;
-            my $cols   = OptArgs2::Status->cols;
+            my $paged  = OptArgs2::rows() < scalar @items;
+            my $cols   = OptArgs2::cols();
             my $usage  = '';
             my $spacew = 3;
             my $space  = ' ' x $spacew;
@@ -1695,6 +1695,10 @@ As an aid for testing, if the passed in argument C<@argv> (not @ARGV)
 contains a HASH reference, the key/value combinations of the hash will
 be added as options. An undefined value means a boolean option.
 
+=item cols() -> Integer
+
+Returns the terminal column width.
+
 =item cmd( $class, %parameters ) -> OptArgs2::Cmd
 
 Define a top-level command identified by C<$class> which is typically a
@@ -1778,6 +1782,10 @@ This is a convenience function for single-level commands that:
 C<$opts> HASHref result directly.
 
 =back
+
+=item rows() -> Integer
+
+Returns the terminal row height.
 
 =item subcmd( $subclass, %parameters ) -> OptArgs2::Cmd
 
