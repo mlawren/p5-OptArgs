@@ -554,7 +554,7 @@ package OptArgs2::CmdBase {
 
         map {
             OptArgs2::Status->error( 'UndefOptArg',
-                '_optargs argument undefined!' )
+                'optargs argument undefined!' )
               if !defined $_
         } @$source;
 
