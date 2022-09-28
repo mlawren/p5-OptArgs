@@ -1,11 +1,30 @@
+2.0.0_4 (2022-09-28)
+
+    API / Behaviour Changes:
+        - Replace 'ishelp' attribute with isa => OptArgs2::STYLE_HELP
+        - Move to "optargs => \@ARRAY" construction style
+        - optargs2() renamed to replace optargs() completely
+        - arg() and opt() deprected
+        - Arg fallback replaced by fallthru option
+
+    New Features:
+        - Utility functions cols() and rows() made public
+
+    Dependencies:
+        - (development only) Use Class::Inline instead of Mo.
+
+    Packaging:
+        - No longer generating duplicate Getopt::Args package.
+
 2.0.0_3 (2022-04-30)
 
     API / Behaviour Changes:
-        - New optargs2() function
+        - None
 
     New Features:
         - ANSI terminal codes are used to color output, which can be
           disabled with the new 'show_color' option.
+        - New optargs2() function
 
     Enhancements:
         - OptArgs2::STYLE_HELPTREE output has been improved and now

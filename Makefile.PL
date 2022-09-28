@@ -8,27 +8,24 @@ WriteMakefile(
     NAME       => 'OptArgs2',
     ABSTRACT   => 'CLI argument and option processing',
     AUTHOR     => 'Mark Lawrence <nomad@null.net>',
-    VERSION    => '2.0.0_3',
+    VERSION    => '2.0.0_4',
     LICENSE    => 'gpl_3',
     test       => { RECURSIVE_TEST_FILES => 1, },
+    PM_FILTER  => 'perl -ne "print unless /(^|\#\# )CI_PM_FILTER/"',
     META_MERGE => {
         dynamic_config => 1,
         'meta-spec'    => { version => 2 },
         no_index       => {
             package => [
                 qw/
-                  Getopt::Args2::Arg
-                  Getopt::Args2::Cmd
-                  Getopt::Args2::CODEREF
-                  Getopt::Args2::Fallback
-                  Getopt::Args2::Mo
-                  Getopt::Args2::Opt
                   OptArgs2::Arg
+                  OptArgs2::Arg_CI
                   OptArgs2::Cmd
+                  OptArgs2::Cmd_CI
                   OptArgs2::CODEREF
-                  OptArgs2::Fallback
-                  OptArgs2::Mo
                   OptArgs2::Opt
+                  OptArgs2::Opt_CI
+                  OptArgs2::Pager_CI
                   OptArgs2::StatusLine::Line
                   OptArgs2::StatusLine::Prefix
                   /
@@ -47,22 +44,3 @@ WriteMakefile(
     },
 );
 
-# Duplicate OptArgs2 as Getopt::Args2 for easy discoverability
-use File::Spec;
-
-open my $fh, '<', File::Spec->catfile(qw/lib OptArgs2.pm/) or die "open: $!";
-my $src = do { local $/ = undef; <$fh> };
-close $fh;
-
-$src =~ s/Getopt::Args2/GETOPT::ARGS2/g;
-$src =~ s/OptArgs2/Getopt::Args2/g;
-$src =~ s/Getopt::Args2::Status/OptArgs2::Status/g;
-$src =~ s/Getopt::Args2::Pager/OptArgs2::Pager/g;
-$src =~ s/Getopt::Args2::Mo/OptArgs2::Mo/g;
-$src =~ s/p5-Getopt::Args2/p5-OptArgs2/g;
-$src =~ s/GETOPT::ARGS2/OptArgs2/g;
-
-mkdir File::Spec->catdir(qw/lib Getopt/);
-open $fh, '>', File::Spec->catfile(qw/lib Getopt Args2.pm/);
-print $fh $src;
-close $fh;

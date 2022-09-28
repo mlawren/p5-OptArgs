@@ -19,18 +19,14 @@
          "inc"
       ],
       "package" : [
-         "Getopt::Args2::Arg",
-         "Getopt::Args2::Cmd",
-         "Getopt::Args2::CODEREF",
-         "Getopt::Args2::Fallback",
-         "Getopt::Args2::Mo",
-         "Getopt::Args2::Opt",
          "OptArgs2::Arg",
+         "OptArgs2::Arg_CI",
          "OptArgs2::Cmd",
+         "OptArgs2::Cmd_CI",
          "OptArgs2::CODEREF",
-         "OptArgs2::Fallback",
-         "OptArgs2::Mo",
          "OptArgs2::Opt",
+         "OptArgs2::Opt_CI",
+         "OptArgs2::Pager_CI",
          "OptArgs2::StatusLine::Line",
          "OptArgs2::StatusLine::Prefix"
       ]
@@ -79,6 +75,6 @@
          "url" : "ssh://git@github.com/mlawren/p5-OptArgs.git"
       }
    },
-   "version" : "v2.0.0_3",
+   "version" : "v2.0.0_4",
    "x_serialization_backend" : "JSON::PP version 4.02"
 }
