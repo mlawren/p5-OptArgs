@@ -483,6 +483,25 @@ package OptArgs2::CmdBase {
 
     our @CARP_NOT = @OptArgs2::CARP_NOT;
 
+    sub BUILD {
+        my $self = shift;
+
+        while ( my ( $name, $args ) = splice @{ $self->optargs }, 0, 2 ) {
+            if ( $args->{isa} =~ s/^--// ) {
+                $self->add_opt(
+                    name => $name,
+                    %$args,
+                );
+            }
+            else {
+                $self->add_arg(
+                    name => $name,
+                    %$args,
+                );
+            }
+        }
+    }
+
     sub add_arg {
         my $self = shift;
         my $arg  = OptArgs2::Arg->new(
@@ -529,25 +548,6 @@ package OptArgs2::CmdBase {
         return ( $self->parent->parents, $self->parent );
     }
 
-    sub run_optargs {
-        my $self = shift;
-        map { $_->run_optargs } $self->parents;
-        while ( my ( $name, $args ) = splice @{ $self->optargs }, 0, 2 ) {
-            if ( $args->{isa} =~ s/^--// ) {
-                $self->add_opt(
-                    name => $name,
-                    %$args,
-                );
-            }
-            else {
-                $self->add_arg(
-                    name => $name,
-                    %$args,
-                );
-            }
-        }
-    }
-
     sub parse {
         my $self   = shift;
         my $source = \@_;
@@ -568,7 +568,6 @@ package OptArgs2::CmdBase {
         my @trigger;
 
         my $cmd = $self;
-        $cmd->run_optargs;
 
         # Start with the parents options
         my @opts = map { @{ $_->opts } } $cmd->parents, $cmd;
@@ -623,7 +622,6 @@ package OptArgs2::CmdBase {
                 if ( exists $cmd->_subcmds->{$subcmd} ) {
                     shift @$source;
                     $cmd = $cmd->_subcmds->{$subcmd};
-                    $cmd->run_optargs;
                     push( @opts, @{ $cmd->opts } );
 
                     # Ignoring any remaining arguments
@@ -806,8 +804,6 @@ package OptArgs2::CmdBase {
             }
             return $usage;
         }
-
-        $self->run_optargs;
 
         my @parents = $self->parents;
         my @args    = @{ $self->args };
