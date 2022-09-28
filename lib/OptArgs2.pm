@@ -14,7 +14,6 @@ our @CARP_NOT = (
       OptArgs2::Arg
       OptArgs2::Cmd
       OptArgs2::CmdBase
-      OptArgs2::Fallback
       OptArgs2::Opt
       OptArgs2::OptArgBase
       OptArgs2::SubCmd
@@ -136,15 +135,14 @@ package OptArgs2::Status {
     our @CARP_NOT = @OptArgs2::CARP_NOT;
 
     my %error_types = (
-        CmdExists          => undef,
-        CmdNotFound        => undef,
-        Conflict           => undef,
-        FallbackNotHashref => undef,
-        InvalidIsa         => undef,
-        ParentCmdNotFound  => undef,
-        SubCmdExists       => undef,
-        UndefOptArg        => undef,
-        Usage              => undef,
+        CmdExists         => undef,
+        CmdNotFound       => undef,
+        Conflict          => undef,
+        InvalidIsa        => undef,
+        ParentCmdNotFound => undef,
+        SubCmdExists      => undef,
+        UndefOptArg       => undef,
+        Usage             => undef,
     );
 
     my %usage_types = (
@@ -262,7 +260,7 @@ package OptArgs2::Arg {
       isa => 'OptArgs2::OptArgBase',
       has => {
         cmd      => { is => 'rw', weaken => 1, },
-        fallback => { is => 'rw', },
+        fallthru => {},
         greedy   => {},
       };
 
@@ -282,18 +280,6 @@ package OptArgs2::Arg {
         OptArgs2::Status->error( 'Conflict',
             q{'default' and 'required' conflict} )
           if $self->required and defined $self->default;
-
-        if ( my $fb = $self->fallback ) {
-            OptArgs2::Status->error( 'FallbackNotHashref',
-                'fallback must be a HASH ref' )
-              unless 'HASH' eq ref $fb;
-
-            $self->fallback(
-                OptArgs2::Fallback->new(
-                    %$fb, required => $self->required,
-                )
-            );
-        }
     }
 
     sub name_alias_type_comment {
@@ -320,14 +306,6 @@ package OptArgs2::Arg {
         return $self->name, '', $deftype, $comment;
     }
 
-}
-
-package OptArgs2::Fallback {
-    use OptArgs2::Fallback_CI
-      isa => 'OptArgs2::Arg',
-      has => { hidden => {} };
-
-    our @CARP_NOT = @OptArgs2::CARP_NOT;
 }
 
 package OptArgs2::Opt {
@@ -657,51 +635,42 @@ package OptArgs2::CmdBase {
 
             while ( my $try = shift @args ) {
                 my $result;
-
-                if ( $try->isa eq 'SubCmd' ) {
-                    if ( my $new_arg = $try->fallback ) {
-                        $try = $new_arg;
-                    }
-                    elsif ( $try->required ) {
-                        $error //= ['SubCmdRequired'];
-                        last OPTARGS;
-                    }
-                    elsif (@$source) {
-                        $error //= ['SubCmdUnknown'];
-                        last OPTARGS;
-                    }
-                }
-
                 my $name = $try->name;
 
                 if (@$source) {
                     if (
-                        $try->isa ne 'OptArgRef'
-                        and (
-                            ( $source->[0] =~ m/^--\S/ )
-                            or (
-                                $source->[0] =~ m/^-\S/
-                                and !(
-                                    $source->[0] =~ m/^-\d/
-                                    and (  $try->isa ne 'Num'
-                                        or $try->isa ne 'Int' )
-                                )
+                        #                        $try->isa ne 'SubCmd'
+                        #                        and (
+                        ( $source->[0] =~ m/^--\S/ )
+                        or (
+                            $source->[0] =~ m/^-\S/
+                            and !(
+                                $source->[0] =~ m/^-\d/
+                                and (  $try->isa ne 'Num'
+                                    or $try->isa ne 'Int' )
                             )
                         )
                       )
+
+                      #                      )
                     {
                         my $o = shift @$source;
                         $error //= [ 'OptUnknown', qq{unknown option "$o"} ];
+                        last OPTARGS;
                     }
 
                     if ( $try->greedy ) {
-                        my @later;
-                        if ( @args and @$source > @args ) {
-                            push( @later, pop @$source ) for @args;
-                        }
 
-                        if (   $try->isa eq 'ArrayRef'
-                            or $try->isa eq 'OptArgRef' )
+                        # Interesting feature or not? "GREEDY... LATER"
+                        # my @later;
+                        # if ( @args and @$source > @args ) {
+                        #     push( @later, pop @$source ) for @args;
+                        # }
+                        # Should also possibly check early for post-greedy arg,
+                        # except they might be wanted for display
+                        # purposes
+
+                        if ( $try->isa eq 'ArrayRef' or $try->isa eq 'SubCmd' )
                         {
                             $result = [@$source];
                         }
@@ -715,12 +684,11 @@ package OptArgs2::CmdBase {
                             $result = "@$source";
                         }
 
-                        shift @$source while @$source;
-                        push( @$source, @later );
+                        $source = [];
+
+                        #                        $source = \@later;
                     }
-                    elsif ($try->isa eq 'ArrayRef'
-                        or $try->isa eq 'OptArgRef' )
-                    {
+                    elsif ( $try->isa eq 'ArrayRef' ) {
                         $result = [ shift @$source ];
                     }
                     elsif ( $try->isa eq 'HashRef' ) {
@@ -738,6 +706,20 @@ package OptArgs2::CmdBase {
                 }
 
                 if ( defined( $result //= $try->default ) ) {
+                    $error //= [
+                        'SubCmdUnknown',
+                        "unknown $name: "
+                          . (
+                            ( 'ARRAY' eq ref $result )  ? $result->[0]
+                            : ( 'HASH' eq ref $result ) ? (
+                                join ',',
+                                map { "$_=$result->{$_}" } keys %$result
+                              )
+                            : $result
+                          )
+                      ]
+                      if $try->isa eq 'SubCmd' and not $try->fallthru;
+
                     if ( 'CODE' eq ref $result ) {
                         tie $optargs->{$name}, 'OptArgs2::CODEREF', $optargs,
                           $name,
@@ -877,7 +859,7 @@ package OptArgs2::CmdBase {
 
         if (@args) {
             my $i = 0;
-            foreach my $arg (@args) {
+          ARG: foreach my $arg (@args) {
                 if ( $arg->isa eq 'SubCmd' ) {
                     my ( $n, undef, undef, $c ) =
                       $arg->name_alias_type_comment(
@@ -891,26 +873,22 @@ package OptArgs2::CmdBase {
                       sort { $a->[0] cmp $b->[0] }
                       map  { [ $_->name, $_ ] }
                       grep { $style eq OptArgs2::STYLE_HELP or !$_->hidden }
-                      @{ $arg->cmd->subcmds },
-                      $arg->fallback ? $arg->fallback : ();
+                      @{ $arg->cmd->subcmds };
 
                     foreach my $subcmd (@sorted_subs) {
                         push(
                             @sargs,
                             [
                                 '    '
-                                  . (
-                                    ref $subcmd eq 'OptArgs2::Fallback'
-                                    ? uc( $subcmd->name )
-                                    : $subcmd->as_string(
-                                        OptArgs2::STYLE_HELPSUMMARY)
-                                  ),
+                                  . $subcmd->as_string(
+                                    OptArgs2::STYLE_HELPSUMMARY),
                                 $subcmd->comment
                             ]
                         );
                     }
 
                     $have_subcmd++;
+                    last ARG;
                 }
                 elsif ( 'OptArgRef' ne $arg->isa ) {
                     push( @uargs, [ '  Arguments:', '', '', '' ] ) if !$i;
@@ -1166,10 +1144,11 @@ Commands and subcommands are now explicitly defined using C<optargs()>,
 C<cmd()> and C<subcmd()>. The arguments to C<optargs()> have changed to
 match C<cmd()>.
 
-=item Deprecated: arg(), opt()
+=item Deprecated: arg(), opt(), fallback arguments
 
 Optargs definitions must now be defined in an array reference
-containing key/value pairs as shown in the synopsis.
+containing key/value pairs as shown in the synopsis. Fallback arguments
+have been replaced with a new C<fallthru> option.
 
 =item class_optargs() no longer loads the class
 
@@ -1426,7 +1405,8 @@ C<subcmd()> optargs arrayref like so:
             comment  => 'the file to parse',
             default  => '-',
             greedy   => 0,
-            # required => 1,
+            # required => 0 | 1,
+            # fallthru => 0 | 1,
         },
     ],
 
@@ -1452,16 +1432,15 @@ hashref are ignored.
 
 If true the argument swallows the rest of the command line.
 
-=item fallback
+=item fallthru
 
-A hashref containing an argument definition for the event that a
-subcommand match is not found. This parameter is only valid when C<isa>
-is a C<SubCmd>. The hashref must contain "isa", "name" and "comment"
-key/value pairs, and may contain a "greedy" key/value pair.
+Only relevant for SubCmd types. Normally, a "required" SubCmd will
+raise an error when the given argument doesn't match any subcommand.
+However, when fallthru is true the non-subcommand-matching argument
+will be passed back to the C<class_optargs()> caller.
 
-This is generally useful when you want to calculate a command alias
-from a configuration file at runtime, or otherwise run commands which
-don't easily fall into the OptArgs2 subcommand model.
+This is typically useful when you have aliases that you can expand into
+real subcommands.
 
 =item isa
 
@@ -1476,11 +1455,6 @@ following table:
      'ArrayRef'      's@'
      'HashRef'       's%'
      'SubCmd'        '=s'
-     'OptArgRef'     's@'
-
-An I<OptArgRef> isa is an I<ArrayRef> that doesn't undergo checks for
-unexpected options. It exists to capture options and arguments which
-get passed back into I<class_optargs> again.
 
 =item isa_name
 

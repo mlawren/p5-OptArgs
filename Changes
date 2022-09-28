@@ -5,6 +5,7 @@
         - Move to "optargs => \@ARRAY" construction style
         - optargs2() renamed to replace optargs() completely
         - arg() and opt() deprected
+        - Arg fallback replaced by fallthru option
 
     New Features:
         - Utility functions cols() and rows() made public

@@ -12,8 +12,9 @@ cmd 'c1' => (
     comment => 'the base command',
     optargs => [
         command => {
-            isa     => 'SubCmd',
-            comment => 'command to run',
+            isa      => 'SubCmd',
+            comment  => 'command to run',
+            required => 1,
         },
     ],
 );
@@ -24,7 +25,7 @@ subcmd 'c1::s1' => (
 );
 
 $e = dies { ( $class, $opts ) = class_optargs( 'c1', 's' ) };
-like ref $e, qr/SubCmdUnknown/, 'unknown SubCmd without abbrev';
+isa_ok $e, 'OptArgs2::Usage::SubCmdUnknown';
 
 cmd 'c2' => (
     comment => 'the base command',

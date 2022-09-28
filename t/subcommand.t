@@ -51,7 +51,7 @@ subcmd 'c2::s1' => (
 );
 
 $e = dies { ( $class, $opts ) = class_optargs('c2') };
-like ref $e, qr/SubCmdRequired/, ref $e;
+like ref $e, qr/ArgRequired/, ref $e;
 
 cmd 'c3' => (
     comment => 'the base command',
@@ -60,11 +60,7 @@ cmd 'c3' => (
             isa      => 'SubCmd',
             required => 1,
             comment  => 'command to run',
-            fallback => {
-                name    => 'fb',
-                isa     => 'Str',
-                comment => 'a fallback argument',
-            },
+            fallthru => 1,
         },
     ],
 );
@@ -83,6 +79,6 @@ is $opts, {}, 'no opts or args';
 
 ( $class, $opts ) = class_optargs( 'c3', 'junk' );
 is $class, 'c3', 'fallback class';
-is $opts, { fb => 'junk' }, 'fallback argument';
+is $opts, { command => 'junk' }, 'fallback argument';
 
 done_testing;

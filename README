@@ -115,9 +115,10 @@ DESCRIPTION
         "optargs()", "cmd()" and "subcmd()". The arguments to
         "optargs()" have changed to match "cmd()".
 
-    Deprecated: arg(), opt()
+    Deprecated: arg(), opt(), fallback arguments
         Optargs definitions must now be defined in an array reference
-        containing key/value pairs as shown in the synopsis.
+        containing key/value pairs as shown in the synopsis. Fallback
+        arguments have been replaced with a new "fallthru" option.
 
     class_optargs() no longer loads the class
         Users must specifically require the class if they want to use it
@@ -358,7 +359,8 @@ DESCRIPTION
                 comment  => 'the file to parse',
                 default  => '-',
                 greedy   => 0,
-                # required => 1,
+                # required => 0 | 1,
+                # fallthru => 0 | 1,
             },
         ],
 
@@ -379,17 +381,15 @@ DESCRIPTION
     greedy
         If true the argument swallows the rest of the command line.
 
-    fallback
-        A hashref containing an argument definition for the event that a
-        subcommand match is not found. This parameter is only valid when
-        "isa" is a "SubCmd". The hashref must contain "isa", "name" and
-        "comment" key/value pairs, and may contain a "greedy" key/value
-        pair.
+    fallthru
+        Only relevant for SubCmd types. Normally, a "required" SubCmd
+        will raise an error when the given argument doesn't match any
+        subcommand. However, when fallthru is true the
+        non-subcommand-matching argument will be passed back to the
+        "class_optargs()" caller.
 
-        This is generally useful when you want to calculate a command
-        alias from a configuration file at runtime, or otherwise run
-        commands which don't easily fall into the OptArgs2 subcommand
-        model.
+        This is typically useful when you have aliases that you can
+        expand into real subcommands.
 
     isa Required. Is mapped to a Getopt::Long type according to the
         following table:
@@ -402,11 +402,6 @@ DESCRIPTION
              'ArrayRef'      's@'
              'HashRef'       's%'
              'SubCmd'        '=s'
-             'OptArgRef'     's@'
-
-        An *OptArgRef* isa is an *ArrayRef* that doesn't undergo checks
-        for unexpected options. It exists to capture options and
-        arguments which get passed back into *class_optargs* again.
 
     isa_name
         When provided this parameter will be presented instead of the
