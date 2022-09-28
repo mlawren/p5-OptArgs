@@ -1310,8 +1310,8 @@ and call the appropriate C<arg()> and C<opt()> definitions as needed.
 It's first argument is generally the top-level command name you used in
 your first C<cmd()> call.
 
-    my ($class, $opts) = class_optargs('App::demo');
-
+    my ($class, $opts, $file) = class_optargs('App::demo');
+    require $file;
     printf "Running %s with %s\n", $class, Dumper($opts)
       unless $opts->{quiet};
 
@@ -1389,8 +1389,8 @@ The command script itself is then usually fairly short:
 
 =head2 Argument Definition
 
-Arguments are key/hashref pairs defined inside a C<cmd()> or
-C<subcmd()> optargs arrayref like so:
+Arguments are key/hashref pairs defined inside an optargs => arrayref
+like so:
 
     optargs => [
         name => {
@@ -1403,7 +1403,9 @@ C<subcmd()> optargs arrayref like so:
         },
     ],
 
-The following paramters are accepted:
+Any underscores in the name (i.e. the optargs "key") are replaced by
+dashes (-) for presentation and command-line parsing.  The following
+parameters are accepted:
 
 =over
 
@@ -1469,8 +1471,8 @@ messages. Overrides the (sub-)command's C<show_default> setting.
 
 =head2 Option Definition
 
-Arguments are defined similar to arguments inside a C<cmd()> or
-C<subcmd()> optargs arrayref like so:
+Options are defined like arguments inside an optargs => arrayref like
+so, the key difference being the leading "--" for the "isa" parameter:
 
     optargs => [
         colour => {
@@ -1482,9 +1484,9 @@ C<subcmd()> optargs arrayref like so:
         },
     ],
 
-Any underscores in the name (i.e. the optargs key) are replaced by
+Any underscores in the name (i.e. the optargs "key") are replaced by
 dashes (-) for presentation and command-line parsing.  The following
-paramters are accepted:
+parameters are accepted:
 
 =over
 
@@ -1654,9 +1656,9 @@ C<require>.
 
 =back
 
-Throws an error / usage exception object (typically C<OptArgs2::Usage>)
-for missing or invalid arguments/options. Uses L<OptArgs2::Pager> for
-Help output.
+Throws an error / usage exception object (typically
+C<OptArgs2::Usage::*>) for missing or invalid arguments/options. Uses
+L<OptArgs2::Pager> for Help output.
 
 As an aid for testing, if the passed in argument C<@argv> (not @ARGV)
 contains a HASH reference, the key/value combinations of the hash will
@@ -1664,7 +1666,7 @@ be added as options. An undefined value means a boolean option.
 
 =item cols() -> Integer
 
-Returns the terminal column width.
+Returns the terminal column width. Only exported on request.
 
 =item cmd( $class, %parameters ) -> OptArgs2::Cmd
 
@@ -1689,9 +1691,9 @@ A description of the command. Required.
 
 =item optargs
 
-A subref containing argument and option definitions. Note that options
-are inherited by subcommands so you don't need to define them again in
-child subcommands.
+An arrayref containing argument and option definitions. Note that
+options are inherited by subcommands so you don't need to define them
+again in child subcommands.
 
 =item no_help
 
@@ -1752,7 +1754,7 @@ C<$opts> HASHref result directly.
 
 =item rows() -> Integer
 
-Returns the terminal row height.
+Returns the terminal row height. Only exported on request.
 
 =item subcmd( $subclass, %parameters ) -> OptArgs2::Cmd
 
