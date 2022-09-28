@@ -50,12 +50,84 @@ sub rows {
     $chars[1] // _chars()->[1];
 }
 
+my %error_types = (
+    CmdExists         => undef,
+    CmdNotFound       => undef,
+    Conflict          => undef,
+    InvalidIsa        => undef,
+    ParentCmdNotFound => undef,
+    SubCmdExists      => undef,
+    UndefOptArg       => undef,
+    Usage             => undef,
+);
+
+sub throw_error {
+    require Carp;
+
+    my $proto = shift;
+    my $type  = shift // Carp::croak( 'Usage', 'error($TYPE, [$msg])' );
+    my $pkg   = 'OptArgs2::Error::' . $type;
+    my $msg   = shift // "($pkg)";
+    $msg = sprintf( $msg, @_ ) if @_;
+
+    Carp::croak( 'Usage', "unknown error type: $type" )
+      unless exists $error_types{$type};
+
+    $msg .= ' ' . Carp::longmess('');
+
+    no strict 'refs';
+    *{ $pkg . '::ISA' } = ['OptArgs2::Status'];
+
+    die bless \$msg, $pkg;
+}
+
+my %usage_types = (
+    ArgRequired      => undef,
+    Help             => undef,
+    HelpSummary      => undef,
+    HelpTree         => undef,
+    OptRequired      => undef,
+    OptUnknown       => undef,
+    SubCmdRequired   => undef,
+    SubCmdUnknown    => undef,
+    UnexpectedOptArg => undef,
+);
+
+sub throw_usage {
+    my $proto = shift;
+    my $type  = shift // $proto->error( 'Usage', 'usage($TYPE, $str)' );
+    my $str   = shift // $proto->error( 'Usage', 'usage($type, $STR)' );
+    my $pkg   = 'OptArgs2::Usage::' . $type;
+
+    $proto->error( 'Usage', "unknown usage reason: $type" )
+      unless exists $usage_types{$type};
+
+    if ( -t STDERR ) {
+        my $lines = scalar( split /\n/, $str );
+        $lines++ if $str =~ m/\n\z/;
+
+        if ( $lines >= OptArgs2::rows() ) {
+            require OptArgs2::Pager;
+            my $pager = OptArgs2::Pager->new( auto => 0 );
+            local *STDERR = $pager->fh;
+
+            no strict 'refs';
+            *{ $pkg . '::ISA' } = ['OptArgs2::Status'];
+            die bless \$str, $pkg;
+        }
+    }
+
+    no strict 'refs';
+    *{ $pkg . '::ISA' } = ['OptArgs2::Status'];
+    die bless \$str, $pkg;
+}
+
 sub class_optargs {
     my $class = shift
-      || OptArgs2::Status->error( 'Usage', 'class_optargs($CMD,[@argv])' );
+      || OptArgs2->throw_error( 'Usage', 'class_optargs($CMD,[@argv])' );
 
     my $cmd = $COMMAND{$class}
-      || OptArgs2::Status->error( 'CmdNotFound',
+      || OptArgs2->throw_error( 'CmdNotFound',
         'command class not found: ' . $class );
 
     my @source = @_;
@@ -76,10 +148,9 @@ sub class_optargs {
 }
 
 sub cmd {
-    my $class =
-      shift || OptArgs2::Status->error( 'Usage', 'cmd($CLASS,@args)' );
+    my $class = shift || OptArgs2->throw_error( 'Usage', 'cmd($CLASS,@args)' );
 
-    OptArgs2::Status->error( 'CmdExists', "command already defined: $class" )
+    OptArgs2->throw_error( 'CmdExists', "command already defined: $class" )
       if exists $COMMAND{$class};
 
     $COMMAND{$class} = OptArgs2::Cmd->new( class => $class, @_ );
@@ -93,19 +164,19 @@ sub optargs {
 
 sub subcmd {
     my $class =
-      shift || OptArgs2::Status->error( 'Usage', 'subcmd($CLASS,%%args)' );
+      shift || OptArgs2->throw_error( 'Usage', 'subcmd($CLASS,%%args)' );
 
-    OptArgs2::Status->error( 'SubCmdExists',
+    OptArgs2->throw_error( 'SubCmdExists',
         "subcommand already defined: $class" )
       if exists $COMMAND{$class};
 
-    OptArgs2::Status->error( 'ParentCmdNotFound',
+    OptArgs2->throw_error( 'ParentCmdNotFound',
         "no '::' in class '$class' - must have a parent" )
       unless $class =~ m/(.+)::(.+)/;
 
     my ( $parent_class, $name ) = ( $1, $2 );
 
-    OptArgs2::Status->error( 'ParentCmdNotFound',
+    OptArgs2->throw_error( 'ParentCmdNotFound',
         "parent class not found: " . $parent_class )
       unless exists $COMMAND{$parent_class};
 
@@ -117,13 +188,13 @@ sub subcmd {
 
 sub usage {
     my $class =
-      shift || OptArgs2::Status->error( 'Usage', 'usage($CLASS,[$style])' );
+      shift || OptArgs2->throw_error( 'Usage', 'usage($CLASS,[$style])' );
     my $style = shift;
 
-    OptArgs2::Status->error( 'CmdNotFound', "command not found: $class" )
+    OptArgs2->throw_error( 'CmdNotFound', "command not found: $class" )
       unless exists $COMMAND{$class};
 
-    return $COMMAND{$class}->as_string($style);
+    return $COMMAND{$class}->usage_string($style);
 }
 
 package OptArgs2::Status {
@@ -131,80 +202,6 @@ package OptArgs2::Status {
       bool     => sub { 1 },
       '""'     => sub { ${ $_[0] } },
       fallback => 1;
-
-    our @CARP_NOT = @OptArgs2::CARP_NOT;
-
-    my %error_types = (
-        CmdExists         => undef,
-        CmdNotFound       => undef,
-        Conflict          => undef,
-        InvalidIsa        => undef,
-        ParentCmdNotFound => undef,
-        SubCmdExists      => undef,
-        UndefOptArg       => undef,
-        Usage             => undef,
-    );
-
-    my %usage_types = (
-        ArgRequired      => undef,
-        Help             => undef,
-        HelpSummary      => undef,
-        HelpTree         => undef,
-        OptRequired      => undef,
-        OptUnknown       => undef,
-        SubCmdRequired   => undef,
-        SubCmdUnknown    => undef,
-        UnexpectedOptArg => undef,
-    );
-
-    sub error {
-        require Carp;
-
-        my $proto = shift;
-        my $type  = shift // Carp::croak( 'Usage', 'error($TYPE, [$msg])' );
-        my $pkg   = 'OptArgs2::Error::' . $type;
-        my $msg   = shift // "($pkg)";
-        $msg = sprintf( $msg, @_ ) if @_;
-
-        Carp::croak( 'Usage', "unknown error type: $type" )
-          unless exists $error_types{$type};
-
-        $msg .= ' ' . Carp::longmess('');
-
-        no strict 'refs';
-        *{ $pkg . '::ISA' } = ['OptArgs2::Status'];
-
-        die bless \$msg, $pkg;
-    }
-
-    sub usage {
-        my $proto = shift;
-        my $type  = shift // $proto->error( 'Usage', 'usage($TYPE, $str)' );
-        my $str   = shift // $proto->error( 'Usage', 'usage($type, $STR)' );
-        my $pkg   = 'OptArgs2::Usage::' . $type;
-
-        $proto->error( 'Usage', "unknown usage reason: $type" )
-          unless exists $usage_types{$type};
-
-        if ( -t STDERR ) {
-            my $lines = scalar( split /\n/, $str );
-            $lines++ if $str =~ m/\n\z/;
-
-            if ( $lines >= OptArgs2::rows() ) {
-                require OptArgs2::Pager;
-                my $pager = OptArgs2::Pager->new( auto => 0 );
-                local *STDERR = $pager->fh;
-
-                no strict 'refs';
-                *{ $pkg . '::ISA' } = ['OptArgs2::Status'];
-                die bless \$str, $pkg;
-            }
-        }
-
-        no strict 'refs';
-        *{ $pkg . '::ISA' } = ['OptArgs2::Status'];
-        die bless \$str, $pkg;
-    }
 }
 
 package OptArgs2::CODEREF {
@@ -213,7 +210,7 @@ package OptArgs2::CODEREF {
     sub TIESCALAR {
         my $class = shift;
         ( 3 == @_ )
-          or Optargs2::Status->error( 'Usage', 'args: optargs,name,sub' );
+          or Optargs2->throw_error( 'Usage', 'args: optargs,name,sub' );
         return bless [@_], $class;
     }
 
@@ -277,7 +274,7 @@ package OptArgs2::Arg {
     sub BUILD {
         my $self = shift;
 
-        OptArgs2::Status->error( 'Conflict',
+        OptArgs2->throw_error( 'Conflict',
             q{'default' and 'required' conflict} )
           if $self->required and defined $self->default;
     }
@@ -293,7 +290,7 @@ package OptArgs2::Arg {
         else {
             $deftype = $self->isa_name
               // $OptArgs2::OptArgBase::isa2name{ $self->isa }
-              // OptArgs2::Status->error( 'InvalidIsa',
+              // OptArgs2->throw_error( 'InvalidIsa',
                 'invalid isa type: ' . $self->isa );
         }
 
@@ -354,17 +351,17 @@ package OptArgs2::Opt {
                 my $val = shift;
 
                 if ( $val == 1 ) {
-                    OptArgs2::Status->usage( OptArgs2::STYLE_HELP,
-                        $cmd->as_string(OptArgs2::STYLE_HELP) );
+                    OptArgs2->throw_usage( OptArgs2::STYLE_HELP,
+                        $cmd->usage_string(OptArgs2::STYLE_HELP) );
                 }
                 elsif ( $val == 2 ) {
-                    OptArgs2::Status->usage( OptArgs2::STYLE_HELPTREE,
-                        $cmd->as_string(OptArgs2::STYLE_HELPTREE) );
+                    OptArgs2->throw_usage( OptArgs2::STYLE_HELPTREE,
+                        $cmd->usage_string(OptArgs2::STYLE_HELPTREE) );
                 }
                 else {
-                    OptArgs2::Status->usage(
+                    OptArgs2->throw_usage(
                         'UnexpectedOptArg',
-                        $cmd->as_string(
+                        $cmd->usage_string(
                             OptArgs2::STYLE_USAGE,
                             qq{"--$ref->{name}" used too many times}
                         )
@@ -374,7 +371,7 @@ package OptArgs2::Opt {
         }
 
         if ( !exists $isa2getopt{ $ref->{isa} } ) {
-            return OptArgs2::Status->error( 'InvalidIsa',
+            return OptArgs2->throw_error( 'InvalidIsa',
                 'invalid isa "%s" for opt "%s"',
                 $ref->{isa}, $ref->{name} );
         }
@@ -429,7 +426,7 @@ package OptArgs2::Opt {
         else {
             $deftype = $self->isa_name
               // $OptArgs2::OptArgBase::isa2name{ $self->isa }
-              // OptArgs2::Status->error( 'InvalidIsa',
+              // OptArgs2->throw_error( 'InvalidIsa',
                 'invalid isa type: ' . $self->isa );
         }
 
@@ -553,7 +550,7 @@ package OptArgs2::CmdBase {
         my $source = \@_;
 
         map {
-            OptArgs2::Status->error( 'UndefOptArg',
+            OptArgs2->throw_error( 'UndefOptArg',
                 'optargs argument undefined!' )
               if !defined $_
         } @$source;
@@ -563,7 +560,7 @@ package OptArgs2::CmdBase {
 
         Getopt::Long::Configure(qw/pass_through no_auto_abbrev no_ignore_case/);
 
-        my $error;
+        my $reason;
         my $optargs = {};
         my @trigger;
 
@@ -602,7 +599,7 @@ package OptArgs2::CmdBase {
                 }
                 elsif ( $try->required ) {
                     $name =~ s/_/-/g;
-                    $error //=
+                    $reason //=
                       [ 'OptRequired', qq{missing required option "--$name"} ];
                 }
             }
@@ -653,7 +650,7 @@ package OptArgs2::CmdBase {
                       #                      )
                     {
                         my $o = shift @$source;
-                        $error //= [ 'OptUnknown', qq{unknown option "$o"} ];
+                        $reason //= [ 'OptUnknown', qq{unknown option "$o"} ];
                         last OPTARGS;
                     }
 
@@ -704,7 +701,7 @@ package OptArgs2::CmdBase {
                 }
 
                 if ( defined( $result //= $try->default ) ) {
-                    $error //= [
+                    $reason //= [
                         'SubCmdUnknown',
                         "unknown $name: "
                           . (
@@ -728,19 +725,19 @@ package OptArgs2::CmdBase {
                     }
                 }
                 elsif ( $try->required ) {
-                    $error //= ['ArgRequired'];
+                    $reason //= ['ArgRequired'];
                 }
             }
         }
 
         if (@$source) {
-            $error //= [
+            $reason //= [
                 'UnexpectedOptArg',
                 "unexpected option(s) or argument(s): @$source"
             ];
         }
         elsif ( my @unexpected = keys %$source_hash ) {
-            $error //= [
+            $reason //= [
                 'UnexpectedHashOptArg',
                 "unexpected HASH option(s) or argument(s): @unexpected"
             ];
@@ -750,9 +747,9 @@ package OptArgs2::CmdBase {
 
         map { $_->[0]->( $cmd, $optargs->{ $_->[1] } ) } @trigger;
 
-        OptArgs2::Status->usage( $error->[0],
-            $cmd->as_string( OptArgs2::STYLE_USAGE, $error->[1] ) )
-          if $error;
+        OptArgs2->throw_usage( $reason->[0],
+            $cmd->usage_string( OptArgs2::STYLE_USAGE, $reason->[1] ) )
+          if $reason;
 
         return ( $cmd->class, $optargs, ( $cmd->class . '.pm' ) =~ s!::!/!gr );
     }
@@ -762,14 +759,14 @@ package OptArgs2::CmdBase {
         my $depth = shift || 0;
 
         return [
-            $depth, $self->as_string(OptArgs2::STYLE_HELPSUMMARY),
+            $depth, $self->usage_string(OptArgs2::STYLE_HELPSUMMARY),
             $self->comment
           ],
           map { $_->_usage_tree( $depth + 1 ) }
           sort { $a->name cmp $b->name } @{ $self->subcmds };
     }
 
-    sub as_string {
+    sub usage_string {
         my $self  = shift;
         my $style = shift || OptArgs2::STYLE_USAGE;
         my $error = shift // '';
@@ -876,7 +873,7 @@ package OptArgs2::CmdBase {
                             @sargs,
                             [
                                 '    '
-                                  . $subcmd->as_string(
+                                  . $subcmd->usage_string(
                                     OptArgs2::STYLE_HELPSUMMARY),
                                 $subcmd->comment
                             ]
