@@ -121,7 +121,7 @@ OptArgs2::StatusLine - terminal status line
 
 =head1 VERSION
 
-2.0.0_4 (yyyy-mm-dd)
+2.0.0_4 (2022-09-28)
 
 =head1 SYNOPSIS
 
