@@ -139,7 +139,7 @@ DESCRIPTION
         usage: paint ITEM [OPTIONS...]
 
           arguments:
-            ITEM          the item to paint [required]
+            ITEM          the item to paint *required*
 
           options:
             --help,  -h   print a usage message and exit
@@ -172,7 +172,7 @@ DESCRIPTION
         usage: paint ITEM [MESSAGE...] [OPTIONS...]
 
           arguments:
-            ITEM          the item to paint [required]
+            ITEM          the item to paint, *required*
             MESSAGE       the message to paint on the item
 
           options:

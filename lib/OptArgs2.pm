@@ -300,7 +300,7 @@ package OptArgs2::Arg {
         my $comment = $self->comment;
         if ( $self->required ) {
             $comment .= ' ' if length $comment;
-            $comment .= '[required]';
+            $comment .= '*required*';
         }
 
         return $self->name, '', $deftype, $comment;
@@ -436,7 +436,7 @@ package OptArgs2::Opt {
         my $comment = $self->comment;
         if ( $self->required ) {
             $comment .= ' ' if length $comment;
-            $comment .= '[required]';
+            $comment .= '*required*';
         }
 
         return $opt, $alias, $deftype, $comment;
@@ -1173,7 +1173,7 @@ following interactions from the shell:
     usage: paint ITEM [OPTIONS...]
 
       arguments:
-        ITEM          the item to paint [required]
+        ITEM          the item to paint *required*
 
       options:
         --help,  -h   print a usage message and exit
@@ -1206,7 +1206,7 @@ And then check the usage again:
     usage: paint ITEM [MESSAGE...] [OPTIONS...]
 
       arguments:
-        ITEM          the item to paint [required]
+        ITEM          the item to paint, *required*
         MESSAGE       the message to paint on the item
 
       options:
