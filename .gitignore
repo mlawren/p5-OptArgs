@@ -15,7 +15,6 @@ MYMETA.yml
 old/
 OptArgs-*
 pm_to_blib
-README
 *.swo
 *.swp
 .tests
