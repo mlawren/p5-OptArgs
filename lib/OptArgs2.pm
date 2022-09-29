@@ -513,7 +513,8 @@ package OptArgs2::CmdBase {
             parent => $self,
         );
 
-        Carp::croak "cmd exists" if exists $self->_subcmds->{ $subcmd->name };
+        OptArgs2->throw_error( 'CmdExists', 'cmd exists' )
+          if exists $self->_subcmds->{ $subcmd->name };
 
         $self->_subcmds->{ $subcmd->name } = $subcmd;
         push( @{ $self->subcmds }, $subcmd );

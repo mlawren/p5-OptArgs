@@ -10,7 +10,7 @@
         - None.
 
     Bug Fixes:
-        - None.
+        - Replace a naked Carp::croak with OptArgs2->throw_error;
 
     Code Maintenanc:e
         - None.
