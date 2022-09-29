@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use OptArgs;
 use lib 'lib';
-our $VERSION = '0.1.21';
+our $VERSION = '0.1.22_1';
 
 $OptArgs::COLOUR = 1;
 
