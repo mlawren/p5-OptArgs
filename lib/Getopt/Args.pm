@@ -9,10 +9,12 @@ use Exporter::Tidy
 use Getopt::Long qw/GetOptionsFromArray/;
 use List::Util qw/max/;
 
-our $VERSION = '0.1.16';
-our $COLOUR  = 0;
-our $ABBREV  = 0;
-our $SORT    = 0;
+our $VERSION       = '0.1.21';
+our $COLOUR        = 0;
+our $ABBREV        = 0;
+our $SORT          = 0;
+our $PRINT_DEFAULT = 0;
+our $PRINT_ISA     = 0;
 
 my %seen;           # hash of hashes keyed by 'caller', then opt/arg name
 my %opts;           # option configuration keyed by 'caller'
@@ -22,33 +24,9 @@ my %desc;           # sub-command descriptions
 my %dispatching;    # track optargs() calls from dispatch classes
 my %hidden;         # subcmd hiding by default
 
-# internal method for App::optargs
+# internal function for App::optargs
 sub _cmdlist {
-    my $package = shift || croak '_cmdlist($package)';
-    $package =~ s/-/_/g;
-    my @list = ($package);
-
-    if ( exists $args{$package} ) {
-        my @subcmd =
-          map { exists $_->{subcommands} ? $_->{subcommands} : () }
-          @{ $args{$package} };
-
-        push( @subcmd,
-            map { exists $_->{fallback} ? [ uc $_->{fallback}->{name} ] : () }
-              @{ $args{$package} } );
-
-        if ($SORT) {
-            foreach my $subcmd ( sort map { @$_ } @subcmd ) {
-                push( @list, _cmdlist( $package . '::' . $subcmd ) );
-            }
-        }
-        else {
-            foreach my $subcmd ( map { @$_ } @subcmd ) {
-                push( @list, _cmdlist( $package . '::' . $subcmd ) );
-            }
-        }
-    }
-    return @list;
+    return sort grep { $_ ne 'App::optargs' } keys %seen;
 }
 
 # ------------------------------------------------------------------------
@@ -89,7 +67,7 @@ sub subcmd {
       : ( $params->{cmd} );
     croak 'missing cmd elements' unless @cmd;
 
-    my $name = pop @cmd;
+    my $name   = pop @cmd;
     my $parent = join( '::', $caller, @cmd );
     $parent =~ s/-/_/g;
 
@@ -117,12 +95,13 @@ sub subcmd {
 # Option definition
 # ------------------------------------------------------------------------
 my %opt_params = (
-    isa     => undef,
-    comment => undef,
-    default => undef,
-    alias   => '',
-    ishelp  => undef,
-    hidden  => undef,
+    isa      => undef,
+    isa_name => undef,
+    comment  => undef,
+    default  => undef,
+    alias    => '',
+    ishelp   => undef,
+    hidden   => undef,
 );
 
 my @opt_required = (qw/isa comment/);
@@ -161,7 +140,7 @@ sub opt {
     croak "unknown type: $params->{isa}"
       unless exists $opt_isa{ $params->{isa} };
 
-    $params = { %opt_params, %$params };
+    $params            = { %opt_params, %$params };
     $params->{package} = $package;
     $params->{name}    = $name;
     $params->{length}  = length $name;
@@ -269,12 +248,12 @@ sub _usage {
     my $ishelp   = shift;
     my $terminal = -t STDOUT;
     my $red      = ( $COLOUR && $terminal ) ? "\e[0;31m" : '';
-    my $yellow = '';    #( $COLOUR && $terminal ) ? "\e[0;33m" : '';
-    my $grey   = '';    #( $COLOUR && $terminal ) ? "\e[1;30m" : '';
-    my $reset  = ( $COLOUR && $terminal ) ? "\e[0m" : '';
-    my $parent = $caller;
-    my @args   = @{ $args{$caller} };
-    my @opts   = @{ $opts{$caller} };
+    my $yellow   = '';    #( $COLOUR && $terminal ) ? "\e[0;33m" : '';
+    my $grey     = '';    #( $COLOUR && $terminal ) ? "\e[1;30m" : '';
+    my $reset    = ( $COLOUR && $terminal ) ? "\e[0m" : '';
+    my $parent   = $caller;
+    my @args     = @{ $args{$caller} };
+    my @opts     = @{ $opts{$caller} };
     my @parents;
     my @usage;
     my @uargs;
@@ -352,6 +331,41 @@ sub _usage {
         next if $opt->{hidden} and !$ishelp;
 
         ( my $name = $opt->{name} ) =~ s/_/-/g;
+
+        if ( $opt->{isa} eq 'Bool' and $opt->{default} ) {
+            $name = 'no-' . $name;
+        }
+
+        my $default = '';
+        if ( $PRINT_DEFAULT && defined $opt->{default} and !$opt->{ishelp} ) {
+            my $value =
+              ref $opt->{default} eq 'CODE'
+              ? $opt->{default}->( {%$opt} )
+              : $opt->{default};
+            if ( $opt->{isa} eq 'Bool' ) {
+                $value = $value ? 'true' : 'false';
+            }
+            $default = " [default: $value]";
+        }
+
+        if ($PRINT_ISA) {
+            if ( $opt->{isa_name} ) {
+                $name .= '=' . uc $opt->{isa_name};
+            }
+            elsif ($opt->{isa} eq 'Str'
+                || $opt->{isa} eq 'HashRef'
+                || $opt->{isa} eq 'ArrayRef' )
+            {
+                $name .= '=STR';
+            }
+            elsif ( $opt->{isa} eq 'Int' ) {
+                $name .= '=INT';
+            }
+            elsif ( $opt->{isa} eq 'Num' ) {
+                $name .= '=NUM';
+            }
+        }
+
         $name .= ',' if $opt->{alias};
         push(
             @uopts,
@@ -360,19 +374,19 @@ sub _usage {
                 $opt->{alias}
                 ? '-' . $opt->{alias}
                 : '',
-                $opt->{comment}
+                $opt->{comment} . $default
             ]
         );
     }
 
     if (@uopts) {
-        my $w1 = max( map { length $_->[0] } @uopts );
+        my $w1  = max( map { length $_->[0] } @uopts );
         my $fmt = '%-' . $w1 . "s %s";
 
         @uopts = map { [ sprintf( $fmt, $_->[0], $_->[1] ), $_->[2] ] } @uopts;
     }
 
-    my $w1 = max( map { length $_->[0] } @usage, @uargs, @uopts );
+    my $w1     = max( map { length $_->[0] } @usage, @uargs, @uopts );
     my $format = '    %-' . $w1 . "s   %s\n";
 
     if (@usage) {
@@ -436,9 +450,10 @@ sub usage {
 # Option/Argument processing
 # ------------------------------------------------------------------------
 sub _optargs {
-    my $caller  = shift;
-    my $source  = \@_;
-    my $package = $caller;
+    my $caller      = shift;
+    my $source      = \@_;
+    my $source_hash = {};
+    my $package     = $caller;
 
     if ( !@_ and @ARGV ) {
         my $CODESET =
@@ -450,6 +465,10 @@ sub _optargs {
         }
 
         $source = \@ARGV;
+    }
+    else {
+        $source_hash = { map { %$_ } grep { ref $_ eq 'HASH' } @$source };
+        $source      = [ grep { ref $_ ne 'HASH' } @$source ];
     }
 
     map { Carp::croak('_optargs argument undefined!') if !defined $_ } @$source;
@@ -471,7 +490,12 @@ sub _optargs {
         my $result;
 
         if ( $try->{type} eq 'opt' ) {
-            GetOptionsFromArray( $source, $try->{ISA} => \$result );
+            if ( exists $source_hash->{ $try->{name} } ) {
+                $result = delete $source_hash->{ $try->{name} };
+            }
+            else {
+                GetOptionsFromArray( $source, $try->{ISA} => \$result );
+            }
         }
         elsif ( $try->{type} eq 'arg' ) {
             if (@$source) {
@@ -518,6 +542,9 @@ sub _optargs {
 
                 # TODO: type check using Param::Utils?
             }
+            elsif ( exists $source_hash->{ $try->{name} } ) {
+                $result = delete $source_hash->{ $try->{name} };
+            }
             elsif ( $try->{required} and !$ishelp ) {
                 $missing_required++;
                 next;
@@ -529,7 +556,7 @@ sub _optargs {
                 if ($ABBREV) {
                     require Text::Abbrev;
                     my %words =
-                      map { m/^$package\:\:(\w+)$/; $1 => 1 }
+                      map  { m/^$package\:\:(\w+)$/; $1 => 1 }
                       grep { m/^$package\:\:(\w+)$/ }
                       keys %seen;
                     my %abbrev = Text::Abbrev::abbrev( keys %words );
@@ -541,7 +568,7 @@ sub _optargs {
 
                 if ( exists $seen{$newpackage} ) {
                     $package = $newpackage;
-                    @config = grep { $_->{type} eq 'opt' } @config;
+                    @config  = grep { $_->{type} eq 'opt' } @config;
                     push( @config, @{ $opts{$package} }, @{ $args{$package} } );
                 }
                 elsif ( !$ishelp ) {
@@ -582,8 +609,11 @@ sub _optargs {
         die _usage($package);
     }
     elsif (@$source) {
+        die _usage( $package, "Unexpected options or arguments: @$source" );
+    }
+    elsif ( my @unexpected = keys %$source_hash ) {
         die _usage( $package,
-            qq{Unexpected option or argument "} . ( shift @$source ) . '"' );
+            "Unexpected HASH options or arguments: @unexpected" );
     }
 
     # Re-calculate the default if it was a subref
@@ -613,27 +643,7 @@ sub class_optargs {
 
     die $@ unless eval "require $caller;";
 
-    my ( $class, $optargs );
-
-    if (@_) {
-        my @args;
-
-        foreach my $element (@_) {
-            if ( ref $element eq 'HASH' ) {
-                push( @args,
-                    '--' . $_, defined $element->{$_} ? $element->{$_} : () )
-                  for keys %$element;
-            }
-            else {
-                push( @args, $element );
-            }
-        }
-
-        ( $class, $optargs ) = _optargs( $caller, @args );
-    }
-    else {
-        ( $class, $optargs ) = _optargs($caller);
-    }
+    my ( $class, $optargs ) = _optargs( $caller, @_ );
 
     croak $@ unless eval "require $class;1;";
     return ( $class, $optargs );
@@ -644,18 +654,11 @@ sub dispatch {
     my $class  = shift;
 
     croak 'dispatch($method, $class, [@argv])' unless $method and $class;
-    croak $@ unless eval "require $class;1;";
+    croak $@                                   unless eval "require $class;1;";
 
     my ( $package, $optargs ) = class_optargs( $class, @_ );
 
-    croak $@ unless eval "require $package";
-
     my $sub = $package->can($method);
-    if ( !$sub ) {
-        croak $@ unless eval "require $package;";
-        $sub = $package->can($method);
-    }
-
     die "Can't find method $method via package $package" unless $sub;
 
     $dispatching{$class}++;
@@ -681,7 +684,7 @@ Getopt::Args - integrated argument and option processing
 
 =head1 VERSION
 
-0.1.16 (2014-10-01)
+0.1.21 (2022-09-29)
 
 =head1 SYNOPSIS
 
@@ -705,6 +708,10 @@ Getopt::Args - integrated argument and option processing
     print "Painting $ref->{item}\n" unless $ref->{quiet};
 
 =head1 DESCRIPTION
+
+I<Deprecated>: development on Getopt::Args stopped in 2016. Consider using
+L<Getopt::Args2> instead, which is faster and better looking in many ways
+:-)
 
 B<Getopt::Args> processes Perl script I<options> and I<arguments>.  This is
 in contrast with most modules in the Getopt::* namespace, which deal
@@ -1091,6 +1098,11 @@ following table:
      'ArrayRef'      's@'
      'HashRef'       's%'
 
+=item isa_name
+
+When C<$Getopt::Args::PRINT_ISA> is set to a true value, this value will be
+printed instead of the generic value from C<isa>.
+
 =item comment
 
 Required. Used to generate the usage/help message.
@@ -1103,6 +1115,12 @@ If this is a subroutine reference it will be called with a hashref
 containg all option/argument values after parsing the source has
 finished.  The value to be set must be returned, and any changes to the
 hashref are ignored.
+
+For "Bool" options setting "default" to a true has a special effect:
+the the usage message formats it as "--no-option" instead of
+"--option". If you do use a true default value for Bool options you
+probably want to reverse the normal meaning of your "comment" value as
+well.
 
 =item alias
 
@@ -1127,6 +1145,11 @@ usage message is a help request.
 This is handy if you have developer-only options, or options that are
 very rarely used that you don't want cluttering up your normal usage
 message.
+
+=item arg_name
+
+When C<$Getopt::Args::PRINT_OPT_ARG> is set to a true value, this value will
+be printed instead of the generic value from C<isa>.
 
 =back
 
@@ -1198,11 +1221,21 @@ If C<$Getopt::Args::SORT> is a true value then sub-commands will be listed
 in usage messages alphabetically instead of in the order they were
 defined.
 
+=item $Getopt::Args::PRINT_DEFAULT
+
+If C<$Getopt::Args::PRINT_DEFAULT> is a true value then usage will print the
+default value of all options.
+
+=item $Getopt::Args::PRINT_ISA
+
+If C<$Getopt::Args::PRINT_ISA> is a true value then usage will print the
+type of argument a options expects.
+
 =back
 
 =head1 SEE ALSO
 
-L<Getopt::Long>, L<Exporter::Tidy>
+L<Getopt::Args2>, L<Getopt::Long>, L<Exporter::Tidy>
 
 =head1 SUPPORT & DEVELOPMENT
 
@@ -1225,7 +1258,7 @@ Mark Lawrence <nomad@null.net>
 
 =head1 LICENSE
 
-Copyright 2012-2014 Mark Lawrence <nomad@null.net>
+Copyright 2012-2022 Mark Lawrence <nomad@null.net>
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the

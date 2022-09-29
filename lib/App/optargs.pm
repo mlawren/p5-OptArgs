@@ -3,20 +3,20 @@ use strict;
 use warnings;
 use OptArgs;
 use lib 'lib';
-our $VERSION = '0.1.16';
+our $VERSION = '0.1.21';
 
 $OptArgs::COLOUR = 1;
 
 arg class => (
     isa      => 'Str',
     required => 1,
-    comment  => 'OptArgs-based module to map',
+    comment  => 'OptArgs-based module to load',
 );
 
 arg name => (
     isa     => 'Str',
     comment => 'Name of the command',
-    default => sub { ( my $x = shift->{class} ) =~ s/.*://; $x; }
+    default => sub { '<command>' }
 );
 
 opt indent => (
@@ -45,11 +45,11 @@ sub run {
     die $@ unless eval "require $opts->{class};";
 
     my $initial = do { my @tmp = split( /::/, $opts->{class} ) };
-    my $indent = $opts->{spacer} x $opts->{indent};
+    my $indent  = $opts->{spacer} x $opts->{indent};
 
     binmode( STDOUT, ':encoding(utf8)' );
 
-    foreach my $cmd ( OptArgs::_cmdlist( $opts->{class} ) ) {
+    foreach my $cmd ( OptArgs::_cmdlist() ) {
         my $length = do { my @tmp = split( /::/, $cmd ) }
           - $initial;
         my $space = $indent x $length;
@@ -84,7 +84,7 @@ App::optargs - implementation of the optargs(1) command
 
 =head1 VERSION
 
-0.1.16 development release.
+0.1.21_1 development release.
 
 =head1 SYNOPSIS
 
@@ -114,7 +114,7 @@ Mark Lawrence <nomad@null.net>
 
 =head1 LICENSE
 
-Copyright 2012-2014 Mark Lawrence <nomad@null.net>
+Copyright 2012-2022 Mark Lawrence <nomad@null.net>
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
