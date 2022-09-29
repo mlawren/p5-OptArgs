@@ -4,7 +4,6 @@ author:
   - 'Mark Lawrence <nomad@null.net>'
 build_requires:
   ExtUtils::MakeMaker: '0'
-  IO::Capture::Stdout: '0'
   POSIX: '0'
   Test2::V0: '0'
   Test::Output: '0'
@@ -47,5 +46,5 @@ requires:
   perl: '5.016'
 resources:
   repository: ssh://git@github.com/mlawren/p5-OptArgs.git
-version: v2.0.0_4
+version: v2.0.0_5
 x_serialization_backend: 'CPAN::Meta::YAML version 0.018'

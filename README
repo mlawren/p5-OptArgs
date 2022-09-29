@@ -2,7 +2,7 @@ NAME
     OptArgs2 - command-line argument and option processor
 
 VERSION
-    2.0.0_4 (2022-09-28)
+    2.0.0_5 (2022-09-29)
 
 SYNOPSIS
         #!/usr/bin/env perl
@@ -279,8 +279,8 @@ DESCRIPTION
         as needed. It's first argument is generally the top-level
         command name you used in your first "cmd()" call.
 
-            my ($class, $opts) = class_optargs('App::demo');
-
+            my ($class, $opts, $file) = class_optargs('App::demo');
+            require $file;
             printf "Running %s with %s\n", $class, Dumper($opts)
               unless $opts->{quiet};
 
@@ -350,8 +350,8 @@ DESCRIPTION
                 $class->new($opts)->run;
 
   Argument Definition
-    Arguments are key/hashref pairs defined inside a "cmd()" or
-    "subcmd()" optargs arrayref like so:
+    Arguments are key/hashref pairs defined inside an optargs =>
+    arrayref like so:
 
         optargs => [
             name => {
@@ -364,7 +364,9 @@ DESCRIPTION
             },
         ],
 
-    The following paramters are accepted:
+    Any underscores in the name (i.e. the optargs "key") are replaced by
+    dashes (-) for presentation and command-line parsing. The following
+    parameters are accepted:
 
     comment
         Required. Used to generate the usage/help message.
@@ -417,8 +419,9 @@ DESCRIPTION
         setting.
 
   Option Definition
-    Arguments are defined similar to arguments inside a "cmd()" or
-    "subcmd()" optargs arrayref like so:
+    Options are defined like arguments inside an optargs => arrayref
+    like so, the key difference being the leading "--" for the "isa"
+    parameter:
 
         optargs => [
             colour => {
@@ -430,9 +433,9 @@ DESCRIPTION
             },
         ],
 
-    Any underscores in the name (i.e. the optargs key) are replaced by
+    Any underscores in the name (i.e. the optargs "key") are replaced by
     dashes (-) for presentation and command-line parsing. The following
-    paramters are accepted:
+    parameters are accepted:
 
     alias
         A single character alias.
@@ -578,7 +581,7 @@ FUNCTIONS
             "require".
 
         Throws an error / usage exception object (typically
-        "OptArgs2::Usage") for missing or invalid arguments/options.
+        "OptArgs2::Usage::*") for missing or invalid arguments/options.
         Uses OptArgs2::Pager for Help output.
 
         As an aid for testing, if the passed in argument @argv (not
@@ -587,7 +590,7 @@ FUNCTIONS
         boolean option.
 
     cols() -> Integer
-        Returns the terminal column width.
+        Returns the terminal column width. Only exported on request.
 
     cmd( $class, %parameters ) -> OptArgs2::Cmd
         Define a top-level command identified by $class which is
@@ -602,7 +605,7 @@ FUNCTIONS
             A description of the command. Required.
 
         optargs
-            A subref containing argument and option definitions. Note
+            An arrayref containing argument and option definitions. Note
             that options are inherited by subcommands so you don't need
             to define them again in child subcommands.
 
@@ -632,7 +635,7 @@ FUNCTIONS
             $opts HASHref result directly.
 
     rows() -> Integer
-        Returns the terminal row height.
+        Returns the terminal row height. Only exported on request.
 
     subcmd( $subclass, %parameters ) -> OptArgs2::Cmd
         Defines the subcommand $subclass of a previously defined

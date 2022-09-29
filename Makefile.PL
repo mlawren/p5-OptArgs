@@ -8,7 +8,7 @@ WriteMakefile(
     NAME       => 'OptArgs2',
     ABSTRACT   => 'CLI argument and option processing',
     AUTHOR     => 'Mark Lawrence <nomad@null.net>',
-    VERSION    => '2.0.0_4',
+    VERSION    => '2.0.0_5',
     LICENSE    => 'gpl_3',
     test       => { RECURSIVE_TEST_FILES => 1, },
     PM_FILTER  => 'perl -ne "print unless /(^|\#\# )CI_PM_FILTER/"',

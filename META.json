@@ -60,7 +60,6 @@
       },
       "test" : {
          "requires" : {
-            "IO::Capture::Stdout" : "0",
             "POSIX" : "0",
             "Test2::V0" : "0",
             "Test::Output" : "0"
@@ -75,6 +74,6 @@
          "url" : "ssh://git@github.com/mlawren/p5-OptArgs.git"
       }
    },
-   "version" : "v2.0.0_4",
+   "version" : "v2.0.0_5",
    "x_serialization_backend" : "JSON::PP version 4.02"
 }
