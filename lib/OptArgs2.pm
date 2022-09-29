@@ -331,13 +331,6 @@ package OptArgs2::Opt {
         my $proto = shift;
         my $ref   = {@_};
 
-        if ( exists $ref->{ishelp} ) {
-            Carp::carp( '"ishelp" is deprecated in favour of '
-                  . '"isa => OptArgs2::STYLE_HELP"' );
-            delete $ref->{ishelp};
-            $ref->{isa} //= OptArgs2::STYLE_HELP;
-        }
-
         if ( $ref->{isa} =~ m/^Help/ ) {    # one of the STYLE_HELPs
             my $style = $ref->{isa};
             my $name  = $style;
