@@ -19,7 +19,7 @@
         - None.
 
     Packaging:
-        - None.
+        - Remove unnecessary direct dependency on IO::Capture::Stdout
 
 2.0.0_4 (2022-09-28)
 
