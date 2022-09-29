@@ -19,7 +19,7 @@
         - None.
 
     Packaging:
-        - None.
+        - Add missing ExtUtils::MakeMaker::CPANfile dependency
 
 2.0.0_5 (2022-09-29)
 
