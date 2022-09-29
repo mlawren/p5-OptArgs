@@ -1785,7 +1785,7 @@ as of the version 2 series that is no longer the case.
 
 This distribution is managed via github:
 
-    https://github.com/mlawren/p5-OptArgs2/
+    https://github.com/mlawren/p5-OptArgs/
 
 This distribution follows the semantic versioning model:
 
