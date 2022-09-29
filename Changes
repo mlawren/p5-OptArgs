@@ -1,16 +1,4 @@
-0.1.21_1 (yyyy-mm-dd)
-
-    API / Behaviour Changes:
-        - None.
-
-    New Features:
-        - None.
-
-    Enhancements:
-        - None.
-
-    Bug Fixes:
-        - None.
+0.1.21 (yyyy-mm-dd)
 
     Documentation:
         - Mark as depreciated and point to OptArgs2

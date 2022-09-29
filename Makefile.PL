@@ -8,7 +8,7 @@ WriteMakefile(
     NAME       => 'OptArgs',
     ABSTRACT   => 'CLI argument and option processing',
     AUTHOR     => 'Mark Lawrence <nomad@null.net>',
-    VERSION    => '0.1.21_1',
+    VERSION    => '0.1.21',
     LICENSE    => 'gpl_3',
     test       => { RECURSIVE_TEST_FILES => 1, },
     EXE_FILES  => ['bin/optargs'],
