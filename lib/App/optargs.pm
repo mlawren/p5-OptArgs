@@ -45,7 +45,7 @@ sub run {
     die $@ unless eval "require $opts->{class};";
 
     my $initial = do { my @tmp = split( /::/, $opts->{class} ) };
-    my $indent = $opts->{spacer} x $opts->{indent};
+    my $indent  = $opts->{spacer} x $opts->{indent};
 
     binmode( STDOUT, ':encoding(utf8)' );
 
@@ -114,7 +114,7 @@ Mark Lawrence <nomad@null.net>
 
 =head1 LICENSE
 
-Copyright 2012-2014 Mark Lawrence <nomad@null.net>
+Copyright 2012-2022 Mark Lawrence <nomad@null.net>
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
