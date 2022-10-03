@@ -1020,9 +1020,7 @@ package OptArgs2::SubCmd {
     use OptArgs2::SubCmd_CI
       isa => 'OptArgs2::CmdBase',
       has => {
-
-        # once legacy code goes move this into CmdBase
-        name => {
+        name => {    # once legacy code goes move this into CmdBase
             init_arg => undef,
             default  => sub {
                 my $x = $_[0]->class;
