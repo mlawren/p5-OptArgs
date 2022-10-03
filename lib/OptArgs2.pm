@@ -187,8 +187,10 @@ sub subcmd {
 }
 
 sub usage {
-    my $class =
-      shift || OptArgs2->throw_error( 'Usage', 'usage($CLASS,[$style])' );
+    my $class = shift || do {
+        my ($pkg) = caller;
+        $pkg;
+    };
     my $style = shift;
 
     OptArgs2->throw_error( 'CmdNotFound', "command not found: $class" )
@@ -1807,10 +1809,11 @@ don't want cluttering up your normal usage message.
 
 =back
 
-=item usage( $class, [STYLE] ) -> Str
+=item usage( [$class] ) -> Str
 
 Only exported on request, this function returns the usage string for
-the command C<$class>.
+the command C<$class> or the class of the calling package (.e.g
+"main").
 
 =back
 

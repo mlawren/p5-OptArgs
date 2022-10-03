@@ -650,9 +650,10 @@ FUNCTIONS
             rarely-used commands that you don't want cluttering up your
             normal usage message.
 
-    usage( $class, [STYLE] ) -> Str
+    usage( [$class] ) -> Str
         Only exported on request, this function returns the usage string
-        for the command $class.
+        for the command $class or the class of the calling package (.e.g
+        "main").
 
 SEE ALSO
     OptArgs2::Pager, OptArgs2::StatusLine, Getopt::Long
