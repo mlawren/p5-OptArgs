@@ -174,14 +174,14 @@ sub subcmd {
         "no '::' in class '$class' - must have a parent" )
       unless $class =~ m/(.+)::(.+)/;
 
-    my ( $parent_class, $name ) = ( $1, $2 );
+    my $parent_class = $1;
 
     OptArgs2->throw_error( 'ParentCmdNotFound',
         "parent class not found: " . $parent_class )
       unless exists $COMMAND{$parent_class};
 
     $COMMAND{$class} = $COMMAND{$parent_class}->add_cmd(
-        name => $name,
+        class => $class,
         @_
     );
 }
@@ -474,6 +474,7 @@ package OptArgs2::CmdBase {
       has      => {
         abbrev  => { is       => 'rw', },
         args    => { default  => sub { [] }, },
+        class   => { required => 1, },
         comment => { required => 1, },
         hidden  => {},
         no_help => { default => 0 },
@@ -643,11 +644,9 @@ package OptArgs2::CmdBase {
                     $result = $abbrev{$result} // $result;
                 }
 
-                ( my $subcmd = $result ) =~ s/-/_/g;
-
-                if ( exists $cmd->_subcmds->{$subcmd} ) {
+                if ( exists $cmd->_subcmds->{$result} ) {
                     shift @$source;
-                    $cmd = $cmd->_subcmds->{$subcmd};
+                    $cmd = $cmd->_subcmds->{$result};
                     push( @opts, @{ $cmd->opts } );
 
                     # Ignoring any remaining arguments
@@ -985,10 +984,11 @@ package OptArgs2::Cmd {
     use OptArgs2::Cmd_CI
       isa => 'OptArgs2::CmdBase',
       has => {
-        class => { required => 1, },
-        name  => {
+        name => {
             default => sub {
                 my $x = $_[0]->class;
+
+                # once legacy code goes move this into optargs()
                 if ( $x eq 'main' ) {
                     require File::Basename;
                     File::Basename::basename($0),;
@@ -1020,16 +1020,21 @@ package OptArgs2::SubCmd {
     use OptArgs2::SubCmd_CI
       isa => 'OptArgs2::CmdBase',
       has => {
-        name   => { required => 1, },
+
+        # once legacy code goes move this into CmdBase
+        name => {
+            init_arg => undef,
+            default  => sub {
+                my $x = $_[0]->class;
+                $x =~ s/.*://;
+                $x =~ s/_/-/g;
+                $x;
+            },
+        },
         parent => { required => 1, },
       };
 
     our @CARP_NOT = @OptArgs2::CARP_NOT;
-
-    sub class {
-        my $self = shift;
-        $self->parent->class . '::' . $self->name;
-    }
 }
 
 1;
