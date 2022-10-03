@@ -477,7 +477,6 @@ package OptArgs2::CmdBase {
         class   => { required => 1, },
         comment => { required => 1, },
         hidden  => {},
-        no_help => { default => 0 },
         optargs => {
             is      => 'rw',
             default => sub { [] }
@@ -1000,6 +999,7 @@ package OptArgs2::Cmd {
                 }
             },
         },
+        no_help => { default => 0 },
       };
 
     our @CARP_NOT = @OptArgs2::CARP_NOT;
