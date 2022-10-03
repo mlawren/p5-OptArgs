@@ -4,7 +4,7 @@ use warnings;
 package OptArgs2;
 use Encode qw/decode/;
 use Exporter::Tidy
-  default => [qw/class_optargs cmd optargs subcmd/],
+  default => [qw/class_optargs cmd optargs subcmd arg opt/],
   other   => [qw/usage cols rows/];
 
 our $VERSION  = '2.0.0_6';
@@ -26,8 +26,8 @@ sub STYLE_HELP()        { 'Help' }
 sub STYLE_HELPTREE()    { 'HelpTree' }
 sub STYLE_HELPSUMMARY() { 'HelpSummary' }
 
+our %CURRENT;                               # legacy interface
 my %COMMAND;
-
 my @chars;
 
 sub _chars {
@@ -197,6 +197,28 @@ sub usage {
     return $COMMAND{$class}->usage_string($style);
 }
 
+# Legacy interface, no longer documented
+
+sub arg {
+    my $name = shift;
+
+    $OptArgs2::CURRENT //= cmd( ( scalar caller ), comment => '' );
+    $OptArgs2::CURRENT->add_arg(
+        name => $name,
+        @_,
+    );
+}
+
+sub opt {
+    my $name = shift;
+
+    $OptArgs2::CURRENT //= cmd( ( scalar caller ), comment => '' );
+    $OptArgs2::CURRENT->add_opt(
+        name => $name,
+        @_,
+    );
+}
+
 package OptArgs2::Status {
     use overload
       bool     => sub { 1 },
@@ -330,6 +352,12 @@ package OptArgs2::Opt {
     sub new_from {
         my $proto = shift;
         my $ref   = {@_};
+
+        # legacy interface
+        if ( exists $ref->{ishelp} ) {
+            delete $ref->{ishelp};
+            $ref->{isa} //= OptArgs2::STYLE_HELP;
+        }
 
         if ( $ref->{isa} =~ m/^Help/ ) {    # one of the STYLE_HELPs
             my $style = $ref->{isa};
@@ -475,6 +503,13 @@ package OptArgs2::CmdBase {
 
     sub BUILD {
         my $self = shift;
+
+        # legacy interface
+        if ( 'CODE' eq ref $self->optargs ) {
+            local $OptArgs2::CURRENT = $self;
+            $self->optargs->();
+            return;
+        }
 
         while ( my ( $name, $args ) = splice @{ $self->optargs }, 0, 2 ) {
             if ( $args->{isa} =~ s/^--// ) {
@@ -975,7 +1010,9 @@ package OptArgs2::Cmd {
         $self->add_opt(
             isa          => OptArgs2::STYLE_HELP,
             show_default => 0,
-        ) unless $self->no_help;
+          )
+          unless $self->no_help
+          or 'CODE' eq ref $self->optargs;    # legacy interface
     }
 }
 
