@@ -1,9 +1,9 @@
 2.0.0_6 (yyyy-mm-dd)
 
     API / Behaviour Changes:
-        - Restore legacy arg(), opt() and "optargs => sub {}"
-          interfaces to ease migration, however they remain
-          undocumented.
+        - Partially restore legacy arg(), opt() and "optargs => sub {}"
+          interfaces to ease migration. The arg "fallback" parameter
+          was not restored, and neither was any documentation.
 
     New Features:
         - None.
@@ -14,7 +14,7 @@
     Bug Fixes:
         - None.
 
-    Code Maintenanc:e
+    Code Maintenance
         - None.
 
     Dependencies:
