@@ -4,6 +4,8 @@
         - Partially restore legacy arg(), opt() and "optargs => sub {}"
           interfaces to ease migration. The arg "fallback" parameter
           was not restored, and neither was any documentation.
+        - StatusLine reworked to be much simpler in interface and
+          implementation.
 
     New Features:
         - None.

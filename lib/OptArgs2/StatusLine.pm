@@ -1,113 +1,78 @@
 use strict;
 use warnings;
 
-package OptArgs2::StatusLine {
+package OptArgs2::StatusLine;
 
-    our @CARP_NOT;
+sub RS { chr(30) }
+my $RS = RS;
 
-    sub _croak {
-        @CARP_NOT = (__PACKAGE__);
-        require Carp;
-        Carp::croak(@_);
-    }
-
-    sub import {
-        no strict 'refs';
-        my $class  = shift;
-        my $caller = scalar caller;
-
-        while (@_) {
-            my ( $l, $p ) = ( shift, shift );
-
-            if ( $l =~ s/^\$(.*)// ) {
-                $l = $caller . '::' . $1;
-            }
-            else {
-                die 'first argument must be like "$scalar"';
-            }
-
-            my $x;
-            if ( defined $p && $p =~ s/^\$(.*)// ) {
-                my $o = make_line_prefix( $x, my $y );
-                $p = $caller . '::' . $1;
-                *{$p} = \$y;
-            }
-            else {
-                make_line( $x, $p );
-            }
-
-            *{$l} = \$x;
-        }
-    }
-
-    sub make_line {
-        my $o = tie $_[0], 'OptArgs2::StatusLine::Line';
-        $o->{prefix} = $_[1] // '';
-        $o;
-    }
-
-    sub make_line_prefix {
-        my $o = tie $_[0], 'OptArgs2::StatusLine::Line';
-        tie $_[1], 'OptArgs2::StatusLine::Prefix', $o;
-        $o;
-    }
+sub TIESCALAR {
+    my $class = shift;
+    bless [], $class;
 }
 
-package OptArgs2::StatusLine::Line {
+sub FETCH { $_[0]->[0] }
 
-    sub TIESCALAR {
-        my $class = shift;
-        no strict 'refs';
-        bless {
-            prefix => '',
-            val    => undef,
-        }, $class;
-    }
+sub STORE {
+    my $self = shift;
+    my $arg  = shift // return;
+    my $str;
 
-    sub FETCH {
-        my $self = shift;
-        $self->{val};
-    }
-
-    sub STORE {
-        my $self = shift;
-        $self->{val} = shift // return;
-        return if not defined $self->{val};
-
-        my $NL = $self->{val} =~ s/\n\z// ? 1 : 0;
-        my $fh = select;
-
-        if ( -t $fh ) {
-            $fh->printflush( $self->{prefix}
-                  . $self->{val} . "\e[K"
-                  . ( $NL ? "\n" : "\r" ) );
+    if ( 'SCALAR' eq ref $arg ) {
+        if ( not defined $self->[0] ) {
+            $str = $$arg . $RS;
         }
         else {
-            $fh->print( $self->{prefix} . $self->{val} . "\n" );
+            $str = $self->[0] =~ s/[^$RS]+/$$arg/r;
         }
-
-        $self->{val} = '' if $NL;
     }
+    elsif ( $arg =~ m/$RS/ ) {
+        $str = $arg;
+    }
+    elsif ( not defined $self->[0] ) {
+        require File::Basename;
+        $str = File::Basename::basename($0) . ': ' . RS . $arg;
+    }
+    elsif ( $self->[0] =~ m/(.*)$RS/ ) {
+        $str = $1 . RS . $arg;
+    }
+    else {
+        warn "Internal Error - should never happen!";
+        return;
+    }
+
+    my $NL = $str =~ s/\n\z// ? "\n" : "\r";
+    my $fh = select;
+
+    if ( -t $fh ) {
+        $fh->printflush( $str . "\e[K" . $NL );
+    }
+    else {
+        $fh->print( $str . "\n" );
+    }
+
+    $str =~ s/(.*$RS).*/$1/ if $NL eq "\n";
+    $self->[0] = $str;
 }
 
-package OptArgs2::StatusLine::Prefix {
+sub import {
+    my $class  = shift;
+    my $caller = scalar caller;
 
-    sub TIESCALAR {
-        my ( $class, $line ) = @_;
-        bless \$line, $class;
-    }
+    no strict 'refs';
+    foreach my $arg (@_) {
+        if ( $arg =~ m/^\$(.*)/ ) {
+            my $name = $1;
+            tie my $x, 'OptArgs2::StatusLine';
+            *{ $caller . '::' . $name } = \$x;
+        }
+        elsif ( $arg eq 'RS' ) {
+            *{ $caller . '::RS' } = \&RS;
+        }
+        else {
+            die 'expected "RS" or "$scalar"';
+        }
 
-    sub FETCH {
-        my $self = shift;
-        $$self->{prefix};
-    }
-
-    sub STORE {
-        my $self        = shift;
-        my $o           = $$self;
-        my $was_defined = defined $o->{prefix};
-        $o->{prefix} = shift;
-        $o->STORE( $o->{val} ) if defined $o->{prefix} and $was_defined;
     }
 }
 
@@ -125,54 +90,68 @@ OptArgs2::StatusLine - terminal status line
 
 =head1 SYNOPSIS
 
-    use OptArgs2::StatusLine '$line', '$prefix';
-    use Time::HiRes 'sleep'; # just for simulating work
+    use OptArgs2::StatusLine '$status';
+    use Time::HiRes 'sleep';    # just for simulating work
 
-    $prefix = '[prog] ';
-    $line   = 'working ... '; sleep .7;
+    $status = 'working ... ';
+    sleep .7;
 
     foreach my $i ( 1 .. 10 ) {
-        $line .= " $i"; sleep .2;
+        $status .= " $i";
+        sleep .3;
     }
 
-    # You can localize both $line and $prefix
-    # If referencing the outer scope $prefix you must
-    # stringify it with ""
+    # You can localize $status for temporary changes
     {
-        local $prefix = "$prefix" . '[debug] ';
-        local $line   = "temporary info"; sleep .8;
+        local $status = "temporary info";
+        sleep .8;
     }
 
-    sleep .7;    # back to old value for a while
-    $line = "Done.\n";
+    # Right back where you started
+    sleep .7;
+    $status = "Done.\n";
 
 =head1 DESCRIPTION
 
 B<OptArgs2::StatusLine> provides a simple terminal status line
-implementation, using Perl's C<tie()> mechanism on scalars.
+implementation, using the L<perltie> mechanism. Simply assigning to a
+C<$scalar> prints the string to the terminal. The terminal line will be
+overwritten by the next assignment unless it ends with a newline.
 
-The first argument must be a variable name starting with '$' which is
-imported into your namespace.  Updates or concatenations to that
-variable get printed immediately.
+You can create a status C<$scalar> at import time as shown in the
+SYNOPSIS, or you can C<tie> your own variable manually, even in a HASH:
 
-    use OptArgs2::StatusLine '$line';
+    my $self = bless {}, 'My::Class';
+    tie $self->{status}, 'OptArgs2::StatusLine';
+    $self->{status} = 'my status line';
 
-If the optional second argument is provided it get prefixed to every
-line of output, which you might like to use with your script's name:
+Status variables have a default prefix of "program-name: ". You can
+change that two ways:
 
-    use File::Basename;
-    use OptArgs2::StatusLine '$line', '['.basename($0).'] ';
+=over
 
-If the second argument starts with '$' then it gets imported like
-$line, allowing you to update the prefix dynamically as shown in the
-synopsis.
+=item * Assign a scalar reference:
 
-If you would like multiple status lines you can import them all at
-once:
+    $status = \'New Prefix: ';
+    $status = 'fine';             # "New Prefix: fine"
 
-    use OptArgs2::StatusLine
-      '$line'  => '[myprog] ',
-      '$debug' => '[myprog] (debug) ';
+=item * Use an ASCII record separator (i.e. chr(30)) which you can
+import as RS() if you prefer:
+
+    use OptArgs2::StatusLine 'RS';
+
+    $status = 'Other: ' . RS . 'my status'; # "Other: my status"
+    $status = 'something else';             # "Other: something else"
+
+=back
+
+You can import multiple status variables in one statement:
+
+    use OptArgs2::StatusLine '$status', '$d_status';
+
+    untie $d_status unless $DEBUG;
+    $status   = 'frobnicating';
+    $d_status = 'frobnicating in detail, maybe';
 
 =head1 SEE ALSO
 
@@ -182,7 +161,7 @@ L<OptArgs2>
 
 This distribution is managed via github:
 
-    https://github.com/mlawren/p5-OptArgs2/tree/devel
+    https://github.com/mlawren/p5-OptArgs2
 
 This distribution follows the semantic versioning model:
 

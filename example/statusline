@@ -2,28 +2,39 @@
 use strict;
 use warnings;
 use lib 'lib';
-use File::Basename;
-use OptArgs2::StatusLine '$line', '$prefix';
+use OptArgs2::StatusLine '$status', 'RS';
 use Time::HiRes 'sleep';
 
-$prefix = '[' . basename($0) . '] ';
-$line   = 'working ... ';
+$|++;
+
+# Just a simple status line
+$status = 'working ... ';
 sleep .5;
 
-foreach my $i ( 1, 2, 3 ) {
-    $line .= " $i";
+my $i = 1;
+foreach ( 0 .. 2 ) {
+    $status .= ' ' . $i++;
     sleep .8;
+    $status .= "\n" if $_ % 2;    # newlines hang around the terminal
 }
 
-# You can localize both $line and $prefix
-# for temporary status lines
+# You can localize messages
 {
-    local $prefix = "$prefix" . '[debug] ';
-    local $line   = "temporary activity";
-    sleep 1.5;
+    local $status = 'this is temporary';
+    sleep 0.9;
+
+    # You can change the prefix using the Record Separator RS
+    $status = 'My Cool Prefix: ' . RS . 'still temporary';
+    sleep 0.9;
 }
 
-# back to old value
+# And the original returns automatically
+
 sleep 1.3;
 
-$line = "Done.\n";
+# A new prefix
+$status = 'example: ' . RS . "Sort of Done.\n";
+
+sleep 0.9;
+$status .= ' ....';
+$status .= "Really done.\n";

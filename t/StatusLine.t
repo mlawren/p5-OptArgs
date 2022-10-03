@@ -1,41 +1,46 @@
 #!perl
 use strict;
 use warnings;
-use OptArgs2::StatusLine;
-use OptArgs2::StatusLine '$line';
-use OptArgs2::StatusLine
-  '$line2' => 'prefix:',
-  '$line3' => '$prefix';
+use OptArgs2::StatusLine 'RS', '$line';
 use Test2::V0;
-use Test::Output;
+use Test::Output 'stdout_from';
 
-my ( $i, $old ) = ( 0, undef );
+my $prefix1 = 'StatusLine.t: ' . RS;
+my $prefix2 = 'new:' . RS;
+my $prefix3 = 'newer:' . RS;
+my $i       = 0;
+my $old     = undef;
 
 is $line, undef, 'initially undefined';
-stdout_is { $line = $i; } "$i\n", 'assignment';
+
+is stdout_from( sub { $line = $i; } ), "$prefix1$i\n", 'assignment ' . $line;
 $i++;
-stdout_is { $line = $i; } "$i\n", 'reassignment';
+is stdout_from( sub { $line = $i; } ), "$prefix1$i\n", 'reassignment ' . $line;
 $old = $line;
 $i++;
-stdout_is { $line .= $i; } "${line}${i}\n", 'concatenation';
+is stdout_from( sub { $line .= $i; } ), "$old$i\n", 'concatenation ' . $line;
 
-is $line2, undef, 'initially undefined';
-$i = 0;
-stdout_is { $line2 = $i; } "prefix:$i\n", 'assignment';
-$i++;
-stdout_is { $line2 = $i; } "prefix:$i\n", 'reassignment';
-$old = $line2;
-$i++;
-stdout_is { $line2 .= $i; } "prefix:${line2}${i}\n", 'concatenation';
+# Just hide this from test output
+stdout_from( sub { $line = 'A' } );
 
-is $line3, undef, 'initially undefined';
-$i = 0;
-stdout_is { $line3 = $i; } "$i\n", 'assignment';
-stdout_is { $prefix = 'junk:' } "junk:$i\n", 'change of prefix';
+is stdout_from( sub { $line = \'new:' } ), "${prefix2}A\n",
+  'new prefix scalar ref ' . $line;
+
+is stdout_from( sub { $line = $i; } ), "$prefix2$i\n", 'assignment ' . $line;
 $i++;
-stdout_is { $line3 = $i; } "${prefix}$i\n", 'reassignment';
-$old = $line3;
+is stdout_from( sub { $line = $i; } ), "$prefix2$i\n", 'reassignment ' . $line;
+$old = $line;
 $i++;
-stdout_is { $line3 .= $i; } "${prefix}${line3}${i}\n", 'concatenation';
+is stdout_from( sub { $line .= $i; } ), "$old$i\n", 'concatenation ' . $line;
+
+is stdout_from( sub { $line = $prefix3 . 'B' } ), "${prefix3}B\n",
+  'newer prefix RS ' . $line;
+
+is stdout_from( sub { $line = $i; } ), "$prefix3$i\n", 'assignment ' . $line;
+$i++;
+is stdout_from( sub { $line = $i; } ), "$prefix3$i\n", 'reassignment ' . $line;
+$old = $line;
+$i++;
+is stdout_from( sub { $line .= $i; } ), "$old$i\n", 'concatenation ' . $line;
 
 done_testing();
