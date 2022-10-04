@@ -912,7 +912,7 @@ package OptArgs2::CmdBase {
                     $have_subcmd++;
                     last ARG;
                 }
-                elsif ( 'OptArgRef' ne $arg->isa ) {
+                else {
                     push( @uargs, [ '  Arguments:', '', '', '' ] ) if !$i;
                     my ( $n, $a, $t, $c ) = $arg->name_alias_type_comment(
                         $arg->show_default
