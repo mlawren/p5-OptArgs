@@ -4,10 +4,10 @@ use warnings;
 package OptArgs2;
 use Encode qw/decode/;
 use Exporter::Tidy
-  default => [qw/class_optargs cmd optargs subcmd/],
+  default => [qw/class_optargs cmd optargs subcmd arg opt/],
   other   => [qw/usage cols rows/];
 
-our $VERSION  = '2.0.0_5';
+our $VERSION  = '2.0.0_6';
 our @CARP_NOT = (
     qw/
       OptArgs2
@@ -26,8 +26,8 @@ sub STYLE_HELP()        { 'Help' }
 sub STYLE_HELPTREE()    { 'HelpTree' }
 sub STYLE_HELPSUMMARY() { 'HelpSummary' }
 
+our %CURRENT;                               # legacy interface
 my %COMMAND;
-
 my @chars;
 
 sub _chars {
@@ -174,27 +174,51 @@ sub subcmd {
         "no '::' in class '$class' - must have a parent" )
       unless $class =~ m/(.+)::(.+)/;
 
-    my ( $parent_class, $name ) = ( $1, $2 );
+    my $parent_class = $1;
 
     OptArgs2->throw_error( 'ParentCmdNotFound',
         "parent class not found: " . $parent_class )
       unless exists $COMMAND{$parent_class};
 
     $COMMAND{$class} = $COMMAND{$parent_class}->add_cmd(
-        name => $name,
+        class => $class,
         @_
     );
 }
 
 sub usage {
-    my $class =
-      shift || OptArgs2->throw_error( 'Usage', 'usage($CLASS,[$style])' );
+    my $class = shift || do {
+        my ($pkg) = caller;
+        $pkg;
+    };
     my $style = shift;
 
     OptArgs2->throw_error( 'CmdNotFound', "command not found: $class" )
       unless exists $COMMAND{$class};
 
     return $COMMAND{$class}->usage_string($style);
+}
+
+# Legacy interface, no longer documented
+
+sub arg {
+    my $name = shift;
+
+    $OptArgs2::CURRENT //= cmd( ( scalar caller ), comment => '' );
+    $OptArgs2::CURRENT->add_arg(
+        name => $name,
+        @_,
+    );
+}
+
+sub opt {
+    my $name = shift;
+
+    $OptArgs2::CURRENT //= cmd( ( scalar caller ), comment => '' );
+    $OptArgs2::CURRENT->add_opt(
+        name => $name,
+        @_,
+    );
 }
 
 package OptArgs2::Status {
@@ -331,6 +355,12 @@ package OptArgs2::Opt {
         my $proto = shift;
         my $ref   = {@_};
 
+        # legacy interface
+        if ( exists $ref->{ishelp} ) {
+            delete $ref->{ishelp};
+            $ref->{isa} //= OptArgs2::STYLE_HELP;
+        }
+
         if ( $ref->{isa} =~ m/^Help/ ) {    # one of the STYLE_HELPs
             my $style = $ref->{isa};
             my $name  = $style;
@@ -446,9 +476,9 @@ package OptArgs2::CmdBase {
       has      => {
         abbrev  => { is       => 'rw', },
         args    => { default  => sub { [] }, },
+        class   => { required => 1, },
         comment => { required => 1, },
         hidden  => {},
-        no_help => { default => 0 },
         optargs => {
             is      => 'rw',
             default => sub { [] }
@@ -475,6 +505,13 @@ package OptArgs2::CmdBase {
 
     sub BUILD {
         my $self = shift;
+
+        # legacy interface
+        if ( 'CODE' eq ref $self->optargs ) {
+            local $OptArgs2::CURRENT = $self;
+            $self->optargs->();
+            return;
+        }
 
         while ( my ( $name, $args ) = splice @{ $self->optargs }, 0, 2 ) {
             if ( $args->{isa} =~ s/^--// ) {
@@ -608,11 +645,9 @@ package OptArgs2::CmdBase {
                     $result = $abbrev{$result} // $result;
                 }
 
-                ( my $subcmd = $result ) =~ s/-/_/g;
-
-                if ( exists $cmd->_subcmds->{$subcmd} ) {
+                if ( exists $cmd->_subcmds->{$result} ) {
                     shift @$source;
-                    $cmd = $cmd->_subcmds->{$subcmd};
+                    $cmd = $cmd->_subcmds->{$result};
                     push( @opts, @{ $cmd->opts } );
 
                     # Ignoring any remaining arguments
@@ -877,7 +912,7 @@ package OptArgs2::CmdBase {
                     $have_subcmd++;
                     last ARG;
                 }
-                elsif ( 'OptArgRef' ne $arg->isa ) {
+                else {
                     push( @uargs, [ '  Arguments:', '', '', '' ] ) if !$i;
                     my ( $n, $a, $t, $c ) = $arg->name_alias_type_comment(
                         $arg->show_default
@@ -901,7 +936,7 @@ package OptArgs2::CmdBase {
                     ? eval { $optargs->{ $opt->name } // undef }
                     : ()
                 );
-                push( @uopts, [ '    ' . $n, $a, uc($t), $c ] );
+                push( @uopts, [ '    ' . $n, $a, $t, $c ] );
             }
         }
 
@@ -950,10 +985,11 @@ package OptArgs2::Cmd {
     use OptArgs2::Cmd_CI
       isa => 'OptArgs2::CmdBase',
       has => {
-        class => { required => 1, },
-        name  => {
+        name => {
             default => sub {
                 my $x = $_[0]->class;
+
+                # once legacy code goes move this into optargs()
                 if ( $x eq 'main' ) {
                     require File::Basename;
                     File::Basename::basename($0),;
@@ -965,6 +1001,7 @@ package OptArgs2::Cmd {
                 }
             },
         },
+        no_help => { default => 0 },
       };
 
     our @CARP_NOT = @OptArgs2::CARP_NOT;
@@ -975,7 +1012,9 @@ package OptArgs2::Cmd {
         $self->add_opt(
             isa          => OptArgs2::STYLE_HELP,
             show_default => 0,
-        ) unless $self->no_help;
+          )
+          unless $self->no_help
+          or 'CODE' eq ref $self->optargs;    # legacy interface
     }
 }
 
@@ -983,16 +1022,19 @@ package OptArgs2::SubCmd {
     use OptArgs2::SubCmd_CI
       isa => 'OptArgs2::CmdBase',
       has => {
-        name   => { required => 1, },
+        name => {    # once legacy code goes move this into CmdBase
+            init_arg => undef,
+            default  => sub {
+                my $x = $_[0]->class;
+                $x =~ s/.*://;
+                $x =~ s/_/-/g;
+                $x;
+            },
+        },
         parent => { required => 1, },
       };
 
     our @CARP_NOT = @OptArgs2::CARP_NOT;
-
-    sub class {
-        my $self = shift;
-        $self->parent->class . '::' . $self->name;
-    }
 }
 
 1;
@@ -1005,7 +1047,7 @@ OptArgs2 - command-line argument and option processor
 
 =head1 VERSION
 
-2.0.0_5 (2022-09-29)
+2.0.0_6 (2022-10-04)
 
 =head1 SYNOPSIS
 
@@ -1767,10 +1809,11 @@ don't want cluttering up your normal usage message.
 
 =back
 
-=item usage( $class, [STYLE] ) -> Str
+=item usage( [$class] ) -> Str
 
 Only exported on request, this function returns the usage string for
-the command C<$class>.
+the command C<$class> or the class of the calling package (.e.g
+"main").
 
 =back
 
@@ -1785,7 +1828,7 @@ as of the version 2 series that is no longer the case.
 
 This distribution is managed via github:
 
-    https://github.com/mlawren/p5-OptArgs2/
+    https://github.com/mlawren/p5-OptArgs/
 
 This distribution follows the semantic versioning model:
 

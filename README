@@ -2,7 +2,7 @@ NAME
     OptArgs2 - command-line argument and option processor
 
 VERSION
-    2.0.0_5 (2022-09-29)
+    2.0.0_6 (2022-10-04)
 
 SYNOPSIS
         #!/usr/bin/env perl
@@ -650,9 +650,10 @@ FUNCTIONS
             rarely-used commands that you don't want cluttering up your
             normal usage message.
 
-    usage( $class, [STYLE] ) -> Str
+    usage( [$class] ) -> Str
         Only exported on request, this function returns the usage string
-        for the command $class.
+        for the command $class or the class of the calling package (.e.g
+        "main").
 
 SEE ALSO
     OptArgs2::Pager, OptArgs2::StatusLine, Getopt::Long
@@ -663,7 +664,7 @@ SEE ALSO
 SUPPORT & DEVELOPMENT
     This distribution is managed via github:
 
-        https://github.com/mlawren/p5-OptArgs2/
+        https://github.com/mlawren/p5-OptArgs/
 
     This distribution follows the semantic versioning model:
 

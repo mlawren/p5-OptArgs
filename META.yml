@@ -8,7 +8,6 @@ build_requires:
   Test2::V0: '0'
   Test::Output: '0'
 configure_requires:
-  ExtUtils::MakeMaker: '6.17'
   ExtUtils::MakeMaker::CPANfile: '0.09'
   File::Spec: '0'
 dynamic_config: 1
@@ -46,5 +45,5 @@ requires:
   perl: '5.016'
 resources:
   repository: ssh://git@github.com/mlawren/p5-OptArgs.git
-version: v2.0.0_5
+version: v2.0.0_6
 x_serialization_backend: 'CPAN::Meta::YAML version 0.018'
