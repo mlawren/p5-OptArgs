@@ -14,7 +14,7 @@
         - None.
 
     Bug Fixes:
-        - None.
+        - Option types & defaults are no longer UPPERCASE
 
     Code Maintenance
         - None.

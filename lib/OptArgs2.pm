@@ -936,7 +936,7 @@ package OptArgs2::CmdBase {
                     ? eval { $optargs->{ $opt->name } // undef }
                     : ()
                 );
-                push( @uopts, [ '    ' . $n, $a, uc($t), $c ] );
+                push( @uopts, [ '    ' . $n, $a, $t, $c ] );
             }
         }
 
