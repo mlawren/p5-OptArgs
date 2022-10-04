@@ -7,20 +7,8 @@
         - StatusLine reworked to be much simpler in interface and
           implementation.
 
-    New Features:
-        - None.
-
-    Enhancements:
-        - None.
-
     Bug Fixes:
         - Option types & defaults are no longer UPPERCASE
-
-    Code Maintenance
-        - None.
-
-    Dependencies:
-        - None.
 
     Packaging:
         - Add missing ExtUtils::MakeMaker::CPANfile dependency
