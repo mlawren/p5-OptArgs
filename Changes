@@ -19,7 +19,7 @@
         - None.
 
     Packaging:
-        - None.
+        - Adjust no_index list in Makefile.PL
 
 2.0.0 (2022-10-05)
 

@@ -21,14 +21,19 @@ WriteMakefile(
                 qw/
                   OptArgs2::Arg
                   OptArgs2::Arg_CI
-                  OptArgs2::Cmd
-                  OptArgs2::Cmd_CI
                   OptArgs2::CODEREF
+                  OptArgs2::Cmd
+                  OptArgs2::CmdBase
+                  OptArgs2::CmdBase_CI
+                  OptArgs2::Cmd_CI
                   OptArgs2::Opt
+                  OptArgs2::OptArgBase
+                  OptArgs2::OptArgBase_CI
                   OptArgs2::Opt_CI
                   OptArgs2::Pager_CI
-                  OptArgs2::StatusLine::Line
-                  OptArgs2::StatusLine::Prefix
+                  OptArgs2::Status
+                  OptArgs2::SubCmd
+                  OptArgs2::SubCmd_CI
                   /
             ],
         },
