@@ -45,5 +45,5 @@ requires:
   perl: '5.016'
 resources:
   repository: ssh://git@github.com/mlawren/p5-OptArgs.git
-version: v2.0.0_6
+version: v2.0.0
 x_serialization_backend: 'CPAN::Meta::YAML version 0.018'

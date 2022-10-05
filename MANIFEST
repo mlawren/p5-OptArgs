@@ -20,6 +20,7 @@ README
 t/abbrev.t
 t/OptArgs2.t
 t/pager.t
+t/rt-144053-safe.t
 t/StatusLine.t
 t/subcommand.t
 TODO

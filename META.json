@@ -65,7 +65,7 @@
          }
       }
    },
-   "release_status" : "unstable",
+   "release_status" : "stable",
    "resources" : {
       "bugtracker" : {},
       "repository" : {
@@ -73,6 +73,6 @@
          "url" : "ssh://git@github.com/mlawren/p5-OptArgs.git"
       }
    },
-   "version" : "v2.0.0_6",
+   "version" : "v2.0.0",
    "x_serialization_backend" : "JSON::PP version 4.02"
 }
