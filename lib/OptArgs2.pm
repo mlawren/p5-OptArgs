@@ -21,10 +21,10 @@ our @CARP_NOT = (
 );
 
 # constants
-sub STYLE_USAGE()       { 'Usage' }         # default
-sub STYLE_HELP()        { 'Help' }
-sub STYLE_HELPTREE()    { 'HelpTree' }
-sub STYLE_HELPSUMMARY() { 'HelpSummary' }
+sub USAGE_USAGE()       { 'Usage' }         # default
+sub USAGE_HELP()        { 'Help' }
+sub USAGE_HELPTREE()    { 'HelpTree' }
+sub USAGE_HELPSUMMARY() { 'HelpSummary' }
 
 our %CURRENT;                               # legacy interface
 my %COMMAND;
@@ -358,10 +358,10 @@ package OptArgs2::Opt {
         # legacy interface
         if ( exists $ref->{ishelp} ) {
             delete $ref->{ishelp};
-            $ref->{isa} //= OptArgs2::STYLE_HELP;
+            $ref->{isa} //= OptArgs2::USAGE_HELP;
         }
 
-        if ( $ref->{isa} =~ m/^Help/ ) {    # one of the STYLE_HELPs
+        if ( $ref->{isa} =~ m/^Help/ ) {    # one of the USAGE_HELPs
             my $style = $ref->{isa};
             my $name  = $style;
             $name =~ s/([a-z])([A-Z])/$1-$2/g;
@@ -374,18 +374,18 @@ package OptArgs2::Opt {
                 my $val = shift;
 
                 if ( $val == 1 ) {
-                    OptArgs2->throw_usage( OptArgs2::STYLE_HELP,
-                        $cmd->usage_string(OptArgs2::STYLE_HELP) );
+                    OptArgs2->throw_usage( OptArgs2::USAGE_HELP,
+                        $cmd->usage_string(OptArgs2::USAGE_HELP) );
                 }
                 elsif ( $val == 2 ) {
-                    OptArgs2->throw_usage( OptArgs2::STYLE_HELPTREE,
-                        $cmd->usage_string(OptArgs2::STYLE_HELPTREE) );
+                    OptArgs2->throw_usage( OptArgs2::USAGE_HELPTREE,
+                        $cmd->usage_string(OptArgs2::USAGE_HELPTREE) );
                 }
                 else {
                     OptArgs2->throw_usage(
                         'UnexpectedOptArg',
                         $cmd->usage_string(
-                            OptArgs2::STYLE_USAGE,
+                            OptArgs2::USAGE_USAGE,
                             qq{"--$ref->{name}" used too many times}
                         )
                     );
@@ -777,7 +777,7 @@ package OptArgs2::CmdBase {
         map { $_->[0]->( $cmd, $optargs->{ $_->[1] } ) } @trigger;
 
         OptArgs2->throw_usage( $reason->[0],
-            $cmd->usage_string( OptArgs2::STYLE_USAGE, $reason->[1] ) )
+            $cmd->usage_string( OptArgs2::USAGE_USAGE, $reason->[1] ) )
           if $reason;
 
         return ( $cmd->class, $optargs, ( $cmd->class . '.pm' ) =~ s!::!/!gr );
@@ -788,7 +788,7 @@ package OptArgs2::CmdBase {
         my $depth = shift || 0;
 
         return [
-            $depth, $self->usage_string(OptArgs2::STYLE_HELPSUMMARY),
+            $depth, $self->usage_string(OptArgs2::USAGE_HELPSUMMARY),
             $self->comment
           ],
           map { $_->_usage_tree( $depth + 1 ) }
@@ -797,11 +797,11 @@ package OptArgs2::CmdBase {
 
     sub usage_string {
         my $self  = shift;
-        my $style = shift || OptArgs2::STYLE_USAGE;
+        my $style = shift || OptArgs2::USAGE_USAGE;
         my $error = shift // '';
         my $usage = '';
 
-        if ( $style eq OptArgs2::STYLE_HELPTREE ) {
+        if ( $style eq OptArgs2::USAGE_HELPTREE ) {
             my ( @w1, @w2 );
             my @items = map {
                 $_->[0] = ' ' x ( $_->[0] * 3 );
@@ -841,7 +841,7 @@ package OptArgs2::CmdBase {
 
         # Summary line
         $usage .= join( ' ', map { $_->name } @parents ) . ' '
-          if @parents and $style ne OptArgs2::STYLE_HELPSUMMARY;
+          if @parents and $style ne OptArgs2::USAGE_HELPSUMMARY;
         $usage .= $self->name;
 
         my ( $red, $grey, $reset ) = ( '', '', '' );
@@ -865,14 +865,14 @@ package OptArgs2::CmdBase {
             $usage .= ']' unless $arg->required;
         }
 
-        return $usage if $style eq OptArgs2::STYLE_HELPSUMMARY;
+        return $usage if $style eq OptArgs2::USAGE_HELPSUMMARY;
 
         $usage .= ' [OPTIONS...]' if @opts;
         $usage .= "\n";
 
         # Synopsis
         $usage .= "\n  Synopsis:\n    " . $self->comment . "\n"
-          if $style eq OptArgs2::STYLE_HELP and length $self->comment;
+          if $style eq OptArgs2::USAGE_HELP and length $self->comment;
 
         # Build arguments
         my @sargs;
@@ -894,7 +894,7 @@ package OptArgs2::CmdBase {
                       map  { $_->[1] }
                       sort { $a->[0] cmp $b->[0] }
                       map  { [ $_->name, $_ ] }
-                      grep { $style eq OptArgs2::STYLE_HELP or !$_->hidden }
+                      grep { $style eq OptArgs2::USAGE_HELP or !$_->hidden }
                       @{ $arg->cmd->subcmds };
 
                     foreach my $subcmd (@sorted_subs) {
@@ -903,7 +903,7 @@ package OptArgs2::CmdBase {
                             [
                                 '    '
                                   . $subcmd->usage_string(
-                                    OptArgs2::STYLE_HELPSUMMARY),
+                                    OptArgs2::USAGE_HELPSUMMARY),
                                 $subcmd->comment
                             ]
                         );
@@ -930,7 +930,7 @@ package OptArgs2::CmdBase {
         if (@opts) {
             push( @uopts, [ "  Options:", '', '', '' ] );
             foreach my $opt (@opts) {
-                next if $style ne OptArgs2::STYLE_HELP and $opt->hidden;
+                next if $style ne OptArgs2::USAGE_HELP and $opt->hidden;
                 my ( $n, $a, $t, $c ) = $opt->name_alias_type_comment(
                     $opt->show_default
                     ? eval { $optargs->{ $opt->name } // undef }
@@ -1010,7 +1010,7 @@ package OptArgs2::Cmd {
         my $self = shift;
 
         $self->add_opt(
-            isa          => OptArgs2::STYLE_HELP,
+            isa          => OptArgs2::USAGE_HELP,
             show_default => 0,
           )
           unless $self->no_help
