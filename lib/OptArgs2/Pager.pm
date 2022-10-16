@@ -29,6 +29,7 @@ use OptArgs2::Pager_CI {
     },
 };
 
+our $VERSION  = '2.0.1_1';
 our @CARP_NOT = (__PACKAGE__);
 
 sub _build_pager {

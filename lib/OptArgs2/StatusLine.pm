@@ -3,6 +3,8 @@ use warnings;
 
 package OptArgs2::StatusLine;
 
+our $VERSION = '2.0.1_1';
+
 sub RS { chr(30) }
 my $RS = RS;
 
