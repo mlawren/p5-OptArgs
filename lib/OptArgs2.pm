@@ -26,7 +26,7 @@ sub USAGE_HELP()        { 'Help' }
 sub USAGE_HELPTREE()    { 'HelpTree' }
 sub USAGE_HELPSUMMARY() { 'HelpSummary' }
 
-our %CURRENT;                               # legacy interface
+our $CURRENT;                               # legacy interface
 my %COMMAND;
 my @chars;
 
@@ -158,6 +158,11 @@ sub cmd {
 
 sub optargs {
     my $class = caller;
+
+    if ($CURRENT) {    # Legacy interface
+        return ( class_optargs($class) )[1];
+    }
+
     cmd( $class, @_ );
     ( class_optargs($class) )[1];
 }
@@ -202,19 +207,22 @@ sub usage {
 # Legacy interface, no longer documented
 
 sub arg {
-    my $name = shift;
+    my $name  = shift;
+    my $class = scalar caller;
 
-    $OptArgs2::CURRENT //= cmd( ( scalar caller ), comment => '' );
+    $OptArgs2::CURRENT //= cmd( $class, comment => '' );
     $OptArgs2::CURRENT->add_arg(
         name => $name,
         @_,
     );
+
 }
 
 sub opt {
-    my $name = shift;
+    my $name  = shift;
+    my $class = scalar caller;
 
-    $OptArgs2::CURRENT //= cmd( ( scalar caller ), comment => '' );
+    $OptArgs2::CURRENT //= cmd( $class, comment => '' );
     $OptArgs2::CURRENT->add_opt(
         name => $name,
         @_,
