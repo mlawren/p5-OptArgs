@@ -159,7 +159,7 @@ sub cmd {
 sub optargs {
     my $class = caller;
 
-    if ($CURRENT) {    # Legacy interface
+    if ( exists $COMMAND{$class} ) {    # Legacy interface
         return ( class_optargs($class) )[1];
     }
 
