@@ -5,29 +5,29 @@ use Carp ();
 use Exporter::Tidy other => [qw/page start_pager stop_pager/];
 use File::Which;
 use IO::Handle;
-use OptArgs2::Pager_CI {
+use Class::Inline
 
-    # User provided arguments
-    auto     => { default => 1, },
-    encoding => { default => ':utf8', },
-    pager    => { default => \&_build_pager, },
+  # User provided arguments
+  auto     => { default => 1, },
+  encoding => { default => ':utf8', },
+  pager    => { default => \&_build_pager, },
 
-    # Attributes
-    fh => {
-        init_arg => undef,
-        is       => 'rw',
-        default  => sub { IO::Handle->new },
-    },
-    orig_fh => {
-        init_arg => undef,
-        default  => sub { select },
-    },
-    pid => {
-        init_arg => undef,
-        is       => 'rw',
-        init_arg => undef,
-    },
-};
+  # Attributes
+  fh => {
+    init_arg => undef,
+    is       => 'rw',
+    default  => sub { IO::Handle->new },
+  },
+  orig_fh => {
+    init_arg => undef,
+    default  => sub { select },
+  },
+  pid => {
+    init_arg => undef,
+    is       => 'rw',
+    init_arg => undef,
+  },
+  ;
 
 our $VERSION  = '2.0.1_1';
 our @CARP_NOT = (__PACKAGE__);

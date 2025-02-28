@@ -11,8 +11,6 @@ WriteMakefile(
     VERSION    => '2.0.1_1',
     LICENSE    => 'gpl_3',
     test       => { RECURSIVE_TEST_FILES => 1, },
-    dist       => { PREOP => 'class-inline-filter $(DISTVNAME)', },   #CIFILTER#
-    PM_FILTER  => 'class-inline-filter',                              #CIFILTER#
     META_MERGE => {
         dynamic_config => 1,
         'meta-spec'    => { version => 2 },
@@ -20,20 +18,13 @@ WriteMakefile(
             package => [
                 qw/
                   OptArgs2::Arg
-                  OptArgs2::Arg_CI
                   OptArgs2::CODEREF
                   OptArgs2::Cmd
                   OptArgs2::CmdBase
-                  OptArgs2::CmdBase_CI
-                  OptArgs2::Cmd_CI
                   OptArgs2::Opt
                   OptArgs2::OptArgBase
-                  OptArgs2::OptArgBase_CI
-                  OptArgs2::Opt_CI
-                  OptArgs2::Pager_CI
                   OptArgs2::Status
                   OptArgs2::SubCmd
-                  OptArgs2::SubCmd_CI
                   /
             ],
         },

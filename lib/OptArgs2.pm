@@ -256,9 +256,9 @@ package OptArgs2::CODEREF {
 }
 
 package OptArgs2::OptArgBase {
-    use OptArgs2::OptArgBase_CI
+    use Class::Inline
       abstract => 1,
-      has      => {
+      FIELDS   => {
         comment      => { required => 1, },
         default      => {},
         getopt       => {},
@@ -286,13 +286,12 @@ package OptArgs2::OptArgBase {
 }
 
 package OptArgs2::Arg {
-    use OptArgs2::Arg_CI
-      isa => 'OptArgs2::OptArgBase',
-      has => {
-        cmd      => { is => 'rw', weaken => 1, },
-        fallthru => {},
-        greedy   => {},
-      };
+    use parent -norequire, 'OptArgs2::OptArgBase';
+    use Class::Inline
+      cmd      => { is => 'rw', weaken => 1, },
+      fallthru => {},
+      greedy   => {},
+      ;
 
     our @CARP_NOT = @OptArgs2::CARP_NOT;
     my %arg2getopt = (
@@ -339,13 +338,12 @@ package OptArgs2::Arg {
 }
 
 package OptArgs2::Opt {
-    use OptArgs2::Opt_CI
-      isa => 'OptArgs2::OptArgBase',
-      has => {
-        alias   => {},
-        hidden  => {},
-        trigger => {},
-      };
+    use parent -norequire, 'OptArgs2::OptArgBase';
+    use Class::Inline
+      alias   => {},
+      hidden  => {},
+      trigger => {},
+      ;
 
     our @CARP_NOT = @OptArgs2::CARP_NOT;
 
@@ -479,10 +477,10 @@ package OptArgs2::CmdBase {
       '""'     => sub { shift->class },
       fallback => 1;
     use Getopt::Long qw/GetOptionsFromArray/;
-    use List::Util qw/max/;
-    use OptArgs2::CmdBase_CI
+    use List::Util   qw/max/;
+    use Class::Inline
       abstract => 1,
-      has      => {
+      FIELDS   => {
         abbrev  => { is       => 'rw', },
         args    => { default  => sub { [] }, },
         class   => { required => 1, },
@@ -1005,27 +1003,25 @@ package OptArgs2::CmdBase {
 }
 
 package OptArgs2::Cmd {
-    use OptArgs2::Cmd_CI
-      isa => 'OptArgs2::CmdBase',
-      has => {
-        name => {
-            default => sub {
-                my $x = $_[0]->class;
+    use parent -norequire, 'OptArgs2::CmdBase';
+    use Class::Inline name => {
+        default => sub {
+            my $x = $_[0]->class;
 
-                # once legacy code goes move this into optargs()
-                if ( $x eq 'main' ) {
-                    require File::Basename;
-                    File::Basename::basename($0),;
-                }
-                else {
-                    $x =~ s/.*://;
-                    $x =~ s/_/-/g;
-                    $x;
-                }
-            },
+            # once legacy code goes move this into optargs()
+            if ( $x eq 'main' ) {
+                require File::Basename;
+                File::Basename::basename($0),;
+            }
+            else {
+                $x =~ s/.*://;
+                $x =~ s/_/-/g;
+                $x;
+            }
         },
-        no_help => { default => 0 },
-      };
+      },
+      no_help => { default => 0 },
+      ;
 
     our @CARP_NOT = @OptArgs2::CARP_NOT;
 
@@ -1042,20 +1038,18 @@ package OptArgs2::Cmd {
 }
 
 package OptArgs2::SubCmd {
-    use OptArgs2::SubCmd_CI
-      isa => 'OptArgs2::CmdBase',
-      has => {
-        name => {    # once legacy code goes move this into CmdBase
-            init_arg => undef,
-            default  => sub {
-                my $x = $_[0]->class;
-                $x =~ s/.*://;
-                $x =~ s/_/-/g;
-                $x;
-            },
+    use parent -norequire, 'OptArgs2::CmdBase';
+    use Class::Inline name => {   # once legacy code goes move this into CmdBase
+        init_arg => undef,
+        default  => sub {
+            my $x = $_[0]->class;
+            $x =~ s/.*://;
+            $x =~ s/_/-/g;
+            $x;
         },
-        parent => { required => 1, },
-      };
+      },
+      parent => { required => 1, },
+      ;
 
     our @CARP_NOT = @OptArgs2::CARP_NOT;
 }
