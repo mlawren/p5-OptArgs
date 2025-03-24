@@ -83,6 +83,7 @@ sub throw_error {
 
 my %usage_types = (
     ArgRequired      => undef,
+    GetOptError      => undef,
     Help             => undef,
     HelpSummary      => undef,
     HelpTree         => undef,
@@ -618,7 +619,21 @@ package OptArgs2::CmdBase {
                     $result = delete $source_hash->{$name};
                 }
                 else {
-                    GetOptionsFromArray( $source, $try->getopt => \$result );
+                    my @errors;
+                    local $SIG{__WARN__} = sub { push @errors, $_[0] };
+
+                    my $ok = eval {
+                        GetOptionsFromArray( $source,
+                            $try->getopt => \$result );
+                    };
+                    if ( !$ok ) {
+                        my $error =
+                            length $@ ? $@
+                          : @errors   ? join( "\n", @errors )
+                          :             'unknown';
+
+                        $reason //= [ GetOptError => $error ];
+                    }
                 }
 
                 if ( defined($result) and my $t = $try->trigger ) {
