@@ -376,7 +376,7 @@ package OptArgs2::Opt {
       },
       isa_name => {
         default => sub {
-            uc '(' . $isa2name{ $_[0]->isa } . ')';
+            '(' . $isa2name{ $_[0]->isa } . ')';
         },
       },
       ;
@@ -618,9 +618,9 @@ package OptArgs2::CmdBase {
         my @args = @{ $cmd->args };
 
       OPTARGS: while ( @opts or @args ) {
-            while ( my $try = shift @opts ) {
+            while ( my $opt = shift @opts ) {
                 my $result;
-                my $name = $try->name;
+                my $name = $opt->name;
 
                 if ( exists $source_hash->{$name} ) {
                     $result = delete $source_hash->{$name};
@@ -631,7 +631,7 @@ package OptArgs2::CmdBase {
 
                     my $ok = eval {
                         GetOptionsFromArray( $source,
-                            $try->getopt => \$result );
+                            $opt->getopt => \$result );
                     };
                     if ( !$ok ) {
                         my $error =
@@ -643,11 +643,11 @@ package OptArgs2::CmdBase {
                     }
                 }
 
-                if ( defined($result) and my $t = $try->trigger ) {
+                if ( defined($result) and my $t = $opt->trigger ) {
                     push @trigger, [ $t, $name ];
                 }
 
-                if ( defined( $result //= $try->default ) ) {
+                if ( defined( $result //= $opt->default ) ) {
 
                     if ( 'CODE' eq ref $result ) {
                         tie $optargs->{$name}, 'OptArgs2::CODEREF', $optargs,
@@ -658,122 +658,136 @@ package OptArgs2::CmdBase {
                         $optargs->{$name} = $result;
                     }
                 }
-                elsif ( $try->required ) {
+                elsif ( $opt->required ) {
                     $name =~ s/_/-/g;
                     $reason //=
                       [ 'OptRequired', qq{missing required option "--$name"} ];
                 }
             }
 
-            # Sub command check
-            if ( @$source and my @subcmds = @{ $cmd->subcmds } ) {
-                my $result = $source->[0];
-                if ( $cmd->abbrev ) {
-                    require Text::Abbrev;
-                    my %abbrev =
-                      Text::Abbrev::abbrev( map { $_->name } @subcmds );
-                    $result = $abbrev{$result} // $result;
-                }
-
-                if ( exists $cmd->_subcmds->{$result} ) {
-                    shift @$source;
-                    $cmd = $cmd->_subcmds->{$result};
-                    push( @opts, @{ $cmd->opts } );
-
-                    # Ignoring any remaining arguments
-                    @args = @{ $cmd->args };
-
-                    next OPTARGS;
-                }
-            }
-
-            while ( my $try = shift @args ) {
+            while ( my $arg = shift @args ) {
                 my $result;
-                my $name = $try->name;
+                my $name = $arg->name;
+                my $isa  = $arg->isa;
 
                 if (@$source) {
+
+                    # TODO: do this check for every element in
+                    # @$source, which means moving this down
+                    # somewhere...
                     if (
-                        #                        $try->isa ne 'SubCmd'
-                        #                        and (
                         ( $source->[0] =~ m/^--\S/ )
                         or (
                             $source->[0] =~ m/^-\S/
                             and !(
                                 $source->[0] =~ m/^-\d/
-                                and (  $try->isa ne 'Num'
-                                    or $try->isa ne 'Int' )
+                                and (  $arg->isa ne 'Num'
+                                    or $arg->isa ne 'Int' )
                             )
                         )
                       )
-
-                      #                      )
                     {
                         my $o = shift @$source;
                         $reason //= [ 'OptUnknown', qq{unknown option "$o"} ];
                         last OPTARGS;
                     }
 
-                    if ( $try->greedy ) {
+#                    if ( $arg->greedy ) {
+#
+#                        # Interesting feature or not? "GREEDY... LATER"
+#                        # my @later;
+#                        # if ( @args and @$source > @args ) {
+#                        #     push( @later, pop @$source ) for @args;
+#                        # }
+#                        # Should also possibly check early for post-greedy arg,
+#                        # except they might be wanted for display
+#                        # purposes
+#
+#                        if ( $arg->isa eq 'ArrayRef' )
+#                        {
+#                            $result = [@$source];
+#                        }
+#                        elsif ( $arg->isa eq 'HashRef' ) {
+#                            $result = {
+#                                map { split /=/, $_ }
+#                                  split /,/, @$source
+#                            };
+#                        }
+#                        else {
+#                            $result = "@$source";
+#                        }
+#
+#                        $source = [];
+#
+#                        #                        $source = \@later;
+#                    }
+                    if ( $isa eq 'SubCmd' ) {
+                        my $test = $source->[0];
 
-                        # Interesting feature or not? "GREEDY... LATER"
-                        # my @later;
-                        # if ( @args and @$source > @args ) {
-                        #     push( @later, pop @$source ) for @args;
-                        # }
-                        # Should also possibly check early for post-greedy arg,
-                        # except they might be wanted for display
-                        # purposes
-
-                        if ( $try->isa eq 'ArrayRef' or $try->isa eq 'SubCmd' )
+                        if ( $cmd->abbrev
+                            and my @subcmds = @{ $cmd->subcmds } )
                         {
-                            $result = [@$source];
+                            require Text::Abbrev;
+                            my %abbrev =
+                              Text::Abbrev::abbrev( map { $_->name } @subcmds );
+                            $test = $abbrev{$test} // $test;
                         }
-                        elsif ( $try->isa eq 'HashRef' ) {
-                            $result = {
-                                map { split /=/, $_ }
-                                  split /,/, @$source
-                            };
+
+                        if ( exists $cmd->_subcmds->{$test} ) {
+                            shift @$source;
+                            $cmd = $cmd->_subcmds->{$test};
+                            push( @opts, @{ $cmd->opts } );
+
+                            # Replace rest of current cmd arguments with new
+                            @args = @{ $cmd->args };
+                            if ( @{ $cmd->args }
+                                && $cmd->args->[0]->isa ne 'SubCmd' )
+                            {
+                                # Add a fake Arg to the list to check
+                                # for subcommands.
+                                unshift @args,
+                                  OptArgs2::Arg->new(
+                                    isa     => 'SubCmd',
+                                    name    => '__internal',
+                                    comment => '__internal',
+                                  );
+                            }
+                            next OPTARGS;
+                        }
+                        next OPTARGS if $arg->name eq '__internal';
+
+                        $result = shift @$source;
+                        if ( $arg->fallthru ) {
+                            $optargs->{$name} = $result;
                         }
                         else {
-                            $result = "@$source";
+                            $reason //=
+                              [ 'SubCmdUnknown', "unknown $name: $result" ];
                         }
-
-                        $source = [];
-
-                        #                        $source = \@later;
                     }
-                    elsif ( $try->isa eq 'ArrayRef' ) {
-                        $result = [ shift @$source ];
+                    elsif ( $isa eq 'ArrayRef' ) {
+                        $result = [ $arg->greedy ? @$source : shift @$source ];
                     }
-                    elsif ( $try->isa eq 'HashRef' ) {
-                        $result =
-                          { map { split /=/, $_ } split /,/, shift @$source };
+                    elsif ( $isa eq 'HashRef' ) {
+                        $result = {
+                            map { split /=/, $_ } split /,/,
+                            $arg->greedy ? @$source : shift @$source
+                        };
                     }
                     else {
-                        $result = shift @$source;
+                        $result = $arg->greedy ? "@$source" : shift @$source;
                     }
 
-                    # TODO: type check using Param::Utils?
+                    $source = [] if $arg->greedy;
+
                 }
                 elsif ( exists $source_hash->{$name} ) {
                     $result = delete $source_hash->{$name};
                 }
 
-                if ( defined( $result //= $try->default ) ) {
-                    $reason //= [
-                        'SubCmdUnknown',
-                        "unknown $name: "
-                          . (
-                            ( 'ARRAY' eq ref $result )  ? $result->[0]
-                            : ( 'HASH' eq ref $result ) ? (
-                                join ',',
-                                map { "$_=$result->{$_}" } keys %$result
-                              )
-                            : $result
-                          )
-                      ]
-                      if $try->isa eq 'SubCmd' and not $try->fallthru;
+                # TODO: type check using Param::Utils?
 
+                if ( defined( $result //= $arg->default ) ) {
                     if ( 'CODE' eq ref $result ) {
                         tie $optargs->{$name}, 'OptArgs2::CODEREF', $optargs,
                           $name,
@@ -783,7 +797,7 @@ package OptArgs2::CmdBase {
                         $optargs->{$name} = $result;
                     }
                 }
-                elsif ( $try->required ) {
+                elsif ( $arg->required ) {
                     $reason //= ['ArgRequired'];
                 }
             }
