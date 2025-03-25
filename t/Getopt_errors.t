@@ -6,7 +6,7 @@ use Test2::V0;
 
 @ARGV = ( '--range', 'a' );
 
-like(
+isa_ok(
     dies {
         optargs(
             comment => 'script to paint things',
@@ -18,8 +18,7 @@ like(
             ],
         );
     },
-    qr/requires a value/,
-    'catch warning'
+    'OptArgs2::Usage::GetOptError'
 );
 
 done_testing;
