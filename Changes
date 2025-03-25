@@ -20,6 +20,7 @@
 
     Packaging:
         - Adjust no_index list in Makefile.PL
+        - Fix broken homepage and bugtracker urls
 
 2.0.0 (2022-10-05)
 

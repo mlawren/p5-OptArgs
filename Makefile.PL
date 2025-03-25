@@ -30,8 +30,8 @@ WriteMakefile(
         },
         resources => {
             bugtracker =>
-              { web => 'https//github.com/mlawren/p5-OptArgs/issues', },
-            homepage   => 'https//github.com/mlawren/p5-OptArgs',
+              { web => 'https://github.com/mlawren/p5-OptArgs/issues', },
+            homepage   => 'https://github.com/mlawren/p5-OptArgs',
             repository => {
                 type => 'git',
                 url  => 'ssh://git@github.com/mlawren/p5-OptArgs.git',
