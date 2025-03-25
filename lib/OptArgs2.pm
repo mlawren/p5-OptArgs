@@ -1631,8 +1631,8 @@ processing before usage exceptions are raised.  This is primarily to
 support --help or --version options which would typically override
 usage errors.
 
-    opt version => (
-        isa     => 'Flag',
+    version => (
+        isa     => '--Flag',
         alias   => 'V',
         comment => 'print version string and exit',
         trigger => sub {
