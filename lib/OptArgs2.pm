@@ -317,6 +317,10 @@ package OptArgs2::Arg {
         OptArgs2->throw_error( 'Conflict',
             q{'default' and 'required' conflict} )
           if $self->required and defined $self->default;
+
+        OptArgs2->throw_error( 'Conflict',
+            q{'isa SubCmd' and 'greedy' conflict} )
+          if $self->greedy and $self->isa eq 'SubCmd';
     }
 
     sub name_alias_type_comment {
