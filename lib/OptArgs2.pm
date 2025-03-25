@@ -262,8 +262,6 @@ package OptArgs2::OptArgBase {
         comment      => { required => 1, },
         default      => {},
         getopt       => {},
-        isa          => { required => 1, },
-        isa_name     => { is       => 'rw', },
         name         => { required => 1, },
         required     => {},
         show_default => {},
@@ -271,29 +269,19 @@ package OptArgs2::OptArgBase {
       ;
 
     our @CARP_NOT = @OptArgs2::CARP_NOT;
-    our %isa2name = (
+
+}
+
+package OptArgs2::Arg {
+    use parent -norequire, 'OptArgs2::OptArgBase';
+    my %isa2name = (
         'ArrayRef' => 'Str',
-        'Bool'     => '',
-        'Counter'  => '',
-        'Flag'     => '',
         'HashRef'  => 'Str',
         'Int'      => 'Int',
         'Num'      => 'Num',
         'Str'      => 'Str',
         'SubCmd'   => 'Str',
     );
-
-}
-
-package OptArgs2::Arg {
-    use parent -norequire, 'OptArgs2::OptArgBase';
-    use Class::Inline
-      cmd      => { is => 'rw', weaken => 1, },
-      fallthru => {},
-      greedy   => {},
-      ;
-
-    our @CARP_NOT = @OptArgs2::CARP_NOT;
     my %arg2getopt = (
         'Str'      => '=s',
         'Int'      => '=i',
@@ -302,6 +290,26 @@ package OptArgs2::Arg {
         'HashRef'  => '=s%',
         'SubCmd'   => '=s',
     );
+    use Class::Inline
+      cmd      => { is => 'rw', weaken => 1, },
+      fallthru => {},
+      greedy   => {},
+      isa      => {
+        required => 1,
+        isa      => sub {
+            $isa2name{ $_[0] } // OptArgs2->throw_error( 'InvalidIsa',
+                'invalid isa type: ' . $_[0] );
+            $_[0];
+        },
+      },
+      isa_name => {
+        default => sub {
+            '(' . $isa2name{ $_[0]->isa } . ')';
+        },
+      },
+      ;
+
+    our @CARP_NOT = @OptArgs2::CARP_NOT;
 
     sub BUILD {
         my $self = shift;
@@ -315,18 +323,9 @@ package OptArgs2::Arg {
         my $self  = shift;
         my $value = shift;
 
-        my $deftype = '';
-        if ( defined $value ) {
-            $deftype = '[' . $value . ']';
-        }
-        else {
-            $deftype = $self->isa_name
-              // $OptArgs2::OptArgBase::isa2name{ $self->isa }
-              // OptArgs2->throw_error( 'InvalidIsa',
-                'invalid isa type: ' . $self->isa );
-        }
-
+        my $deftype = ( defined $value ) ? '[' . $value . ']' : $self->isa_name;
         my $comment = $self->comment;
+
         if ( $self->required ) {
             $comment .= ' ' if length $comment;
             $comment .= '*required*';
@@ -339,14 +338,16 @@ package OptArgs2::Arg {
 
 package OptArgs2::Opt {
     use parent -norequire, 'OptArgs2::OptArgBase';
-    use Class::Inline
-      alias   => {},
-      hidden  => {},
-      trigger => {},
-      ;
-
-    our @CARP_NOT = @OptArgs2::CARP_NOT;
-
+    my %isa2name = (
+        'ArrayRef' => 'Str',
+        'Bool'     => '',
+        'Counter'  => '',
+        'Flag'     => '',
+        'HashRef'  => 'Str',
+        'Int'      => 'Int',
+        'Num'      => 'Num',
+        'Str'      => 'Str',
+    );
     my %isa2getopt = (
         'ArrayRef' => '=s@',
         'Bool'     => '!',
@@ -357,6 +358,26 @@ package OptArgs2::Opt {
         'Num'      => '=f',
         'Str'      => '=s',
     );
+    use Class::Inline
+      alias   => {},
+      hidden  => {},
+      trigger => {},
+      isa     => {
+        required => 1,
+        isa      => sub {
+            $isa2name{ $_[0] } // OptArgs2->throw_error( 'InvalidIsa',
+                'invalid isa type: ' . $_[0] );
+            $_[0];
+        },
+      },
+      isa_name => {
+        default => sub {
+            uc '(' . $isa2name{ $_[0]->isa } . ')';
+        },
+      },
+      ;
+
+    our @CARP_NOT = @OptArgs2::CARP_NOT;
 
     sub new_from {
         my $proto = shift;
@@ -438,26 +459,10 @@ package OptArgs2::Opt {
             $alias = '-' . $alias;
         }
 
+        my $isa     = $self->isa;
         my $deftype = '';
-        if ( defined $value ) {
-            if ( $self->isa eq 'Flag' ) {
-                $deftype = '(set)';
-            }
-            elsif ( $self->isa eq 'Bool' ) {
-                $deftype = '(' . ( $value ? 'true' : 'false' ) . ')';
-            }
-            elsif ( $self->isa eq 'Counter' ) {
-                $deftype = '(' . $value . ')';
-            }
-            else {
-                $deftype = '[' . $value . ']';
-            }
-        }
-        else {
-            $deftype = $self->isa_name
-              // $OptArgs2::OptArgBase::isa2name{ $self->isa }
-              // OptArgs2->throw_error( 'InvalidIsa',
-                'invalid isa type: ' . $self->isa );
+        if ( $isa ne 'Flag' and $isa ne 'Bool' and $isa ne 'Counter' ) {
+            $deftype = defined $value ? '[' . $value . ']' : $self->isa_name;
         }
 
         my $comment = $self->comment;
