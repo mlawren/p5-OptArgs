@@ -1121,7 +1121,7 @@ OptArgs2 - command-line argument and option processor
         comment => 'handy work app',
         optargs => [
             command => {
-                isa      => 'Str',
+                isa      => 'SubCmd',
                 required => 1,
                 comment  => 'the action to take',
             },
