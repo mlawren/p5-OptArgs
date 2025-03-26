@@ -1,10 +1,4 @@
-2.0.1_1 (yyyy-mm-dd)
-
-    API / Behaviour Changes:
-        - None.
-
-    New Features:
-        - None.
+2.0.1_1 (2025-03-26)
 
     Enhancements:
         - Catch and re-throw Getopt::Long errors (Thanks to Diab
@@ -12,12 +6,6 @@
 
     Bug Fixes:
         - Restore broken legacy API calls from "main" package.
-
-    Code Maintenance
-        - None.
-
-    Dependencies:
-        - None.
 
     Packaging:
         - Adjust no_index list in Makefile.PL
