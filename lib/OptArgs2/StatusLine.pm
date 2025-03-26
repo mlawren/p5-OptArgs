@@ -3,6 +3,8 @@ use warnings;
 
 package OptArgs2::StatusLine;
 
+our $VERSION = '2.0.1_1';
+
 sub RS { chr(30) }
 my $RS = RS;
 
@@ -86,7 +88,7 @@ OptArgs2::StatusLine - terminal status line
 
 =head1 VERSION
 
-2.0.0 (2022-10-05)
+2.0.1_1 (2025-03-26)
 
 =head1 SYNOPSIS
 

@@ -20,15 +20,13 @@
       ],
       "package" : [
          "OptArgs2::Arg",
-         "OptArgs2::Arg_CI",
-         "OptArgs2::Cmd",
-         "OptArgs2::Cmd_CI",
          "OptArgs2::CODEREF",
+         "OptArgs2::Cmd",
+         "OptArgs2::CmdBase",
          "OptArgs2::Opt",
-         "OptArgs2::Opt_CI",
-         "OptArgs2::Pager_CI",
-         "OptArgs2::StatusLine::Line",
-         "OptArgs2::StatusLine::Prefix"
+         "OptArgs2::OptArgBase",
+         "OptArgs2::Status",
+         "OptArgs2::SubCmd"
       ]
    },
    "prereqs" : {
@@ -65,14 +63,17 @@
          }
       }
    },
-   "release_status" : "stable",
+   "release_status" : "unstable",
    "resources" : {
-      "bugtracker" : {},
+      "bugtracker" : {
+         "web" : "https://github.com/mlawren/p5-OptArgs/issues"
+      },
+      "homepage" : "https://github.com/mlawren/p5-OptArgs",
       "repository" : {
          "type" : "git",
          "url" : "ssh://git@github.com/mlawren/p5-OptArgs.git"
       }
    },
-   "version" : "v2.0.0",
-   "x_serialization_backend" : "JSON::PP version 4.02"
+   "version" : "v2.0.1_1",
+   "x_serialization_backend" : "JSON::PP version 4.07"
 }

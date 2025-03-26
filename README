@@ -2,7 +2,7 @@ NAME
     OptArgs2 - command-line argument and option processor
 
 VERSION
-    2.0.0 (2022-10-05)
+    2.0.1_1 (2025-03-26)
 
 SYNOPSIS
         #!/usr/bin/env perl
@@ -35,7 +35,7 @@ SYNOPSIS
             comment => 'handy work app',
             optargs => [
                 command => {
-                    isa      => 'Str',
+                    isa      => 'SubCmd',
                     required => 1,
                     comment  => 'the action to take',
                 },
@@ -493,8 +493,8 @@ DESCRIPTION
         is primarily to support --help or --version options which would
         typically override usage errors.
 
-            opt version => (
-                isa     => 'Flag',
+            version => (
+                isa     => '--Flag',
                 alias   => 'V',
                 comment => 'print version string and exit',
                 trigger => sub {

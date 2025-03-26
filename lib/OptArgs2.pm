@@ -7,7 +7,7 @@ use Exporter::Tidy
   default => [qw/class_optargs cmd optargs subcmd arg opt/],
   other   => [qw/usage cols rows/];
 
-our $VERSION  = '2.0.0';
+our $VERSION  = '2.0.1_1';
 our @CARP_NOT = (
     qw/
       OptArgs2
@@ -21,12 +21,12 @@ our @CARP_NOT = (
 );
 
 # constants
-sub STYLE_USAGE()       { 'Usage' }         # default
-sub STYLE_HELP()        { 'Help' }
-sub STYLE_HELPTREE()    { 'HelpTree' }
-sub STYLE_HELPSUMMARY() { 'HelpSummary' }
+sub USAGE_USAGE()       { 'Usage' }         # default
+sub USAGE_HELP()        { 'Help' }
+sub USAGE_HELPTREE()    { 'HelpTree' }
+sub USAGE_HELPSUMMARY() { 'HelpSummary' }
 
-our %CURRENT;                               # legacy interface
+our $CURRENT;                               # legacy interface
 my %COMMAND;
 my @chars;
 
@@ -83,6 +83,7 @@ sub throw_error {
 
 my %usage_types = (
     ArgRequired      => undef,
+    GetOptError      => undef,
     Help             => undef,
     HelpSummary      => undef,
     HelpTree         => undef,
@@ -158,6 +159,11 @@ sub cmd {
 
 sub optargs {
     my $class = caller;
+
+    if ( exists $COMMAND{$class} ) {    # Legacy interface
+        return ( class_optargs($class) )[1];
+    }
+
     cmd( $class, @_ );
     ( class_optargs($class) )[1];
 }
@@ -202,19 +208,22 @@ sub usage {
 # Legacy interface, no longer documented
 
 sub arg {
-    my $name = shift;
+    my $name  = shift;
+    my $class = scalar caller;
 
-    $OptArgs2::CURRENT //= cmd( ( scalar caller ), comment => '' );
+    $OptArgs2::CURRENT //= cmd( $class, comment => '' );
     $OptArgs2::CURRENT->add_arg(
         name => $name,
         @_,
     );
+
 }
 
 sub opt {
-    my $name = shift;
+    my $name  = shift;
+    my $class = scalar caller;
 
-    $OptArgs2::CURRENT //= cmd( ( scalar caller ), comment => '' );
+    $OptArgs2::CURRENT //= cmd( $class, comment => '' );
     $OptArgs2::CURRENT->add_opt(
         name => $name,
         @_,
@@ -247,14 +256,61 @@ package OptArgs2::CODEREF {
 }
 
 package OptArgs2::OptArgBase {
-    use OptArgs2::OptArgBase_CI
+    ### START Class::Inline ### v0.0.1 Wed Mar 26 17:48:32 2025
+require Carp;
+our ( @_CLASS, $_FIELDS, %_NEW );
+
+sub _NEW {
+    CORE::state $fix_FIELDS = do {
+        $_FIELDS = { @_CLASS > 1 ? @_CLASS : %{ $_CLASS[0] } };
+        $_FIELDS = $_FIELDS->{'FIELDS'} if exists $_FIELDS->{'FIELDS'};
+    };
+    if ( my @missing = grep { not exists $_[0]->{$_} } 'comment', 'name' ) {
+        Carp::croak( 'OptArgs2::OptArgBase required initial argument(s): '
+              . join( ', ', @missing ) );
+    }
+    map { delete $_[1]->{$_} } 'comment', 'default', 'getopt', 'name',
+      'required', 'show_default';
+}
+
+sub __RO {
+    my ( undef, undef, undef, $sub ) = caller(1);
+    Carp::confess("attribute $sub is read-only");
+}
+sub comment      { __RO() if @_ > 1; $_[0]{'comment'}      // undef }
+sub default      { __RO() if @_ > 1; $_[0]{'default'}      // undef }
+sub getopt       { __RO() if @_ > 1; $_[0]{'getopt'}       // undef }
+sub name         { __RO() if @_ > 1; $_[0]{'name'}         // undef }
+sub required     { __RO() if @_ > 1; $_[0]{'required'}     // undef }
+sub show_default { __RO() if @_ > 1; $_[0]{'show_default'} // undef }
+
+sub _dump {
+    my $self = shift;
+    my $x    = do {
+        require Data::Dumper;
+        no warnings 'once';
+        local $Data::Dumper::Indent   = 1;
+        local $Data::Dumper::Maxdepth = ( shift // 2 );
+        local $Data::Dumper::Sortkeys = 1;
+        Data::Dumper::Dumper($self);
+    };
+    $x =~ s/.*?{/{/;
+    $x =~ s/}.*?\n$/}/;
+    my $i = 0;
+    my @list;
+    do {
+        @list = caller( $i++ );
+    } until $list[3] eq __PACKAGE__ . '::_dump';
+    warn "$self $x at $list[1]:$list[2]\n";
+}
+
+@_CLASS = grep 1,### END Class::Inline ###
+
       abstract => 1,
-      has      => {
+      FIELDS   => {
         comment      => { required => 1, },
         default      => {},
         getopt       => {},
-        isa          => { required => 1, },
-        isa_name     => { is       => 'rw', },
         name         => { required => 1, },
         required     => {},
         show_default => {},
@@ -262,30 +318,19 @@ package OptArgs2::OptArgBase {
       ;
 
     our @CARP_NOT = @OptArgs2::CARP_NOT;
-    our %isa2name = (
+
+}
+
+package OptArgs2::Arg {
+    use parent -norequire, 'OptArgs2::OptArgBase';
+    my %isa2name = (
         'ArrayRef' => 'Str',
-        'Bool'     => '',
-        'Counter'  => '',
-        'Flag'     => '',
         'HashRef'  => 'Str',
         'Int'      => 'Int',
         'Num'      => 'Num',
         'Str'      => 'Str',
         'SubCmd'   => 'Str',
     );
-
-}
-
-package OptArgs2::Arg {
-    use OptArgs2::Arg_CI
-      isa => 'OptArgs2::OptArgBase',
-      has => {
-        cmd      => { is => 'rw', weaken => 1, },
-        fallthru => {},
-        greedy   => {},
-      };
-
-    our @CARP_NOT = @OptArgs2::CARP_NOT;
     my %arg2getopt = (
         'Str'      => '=s',
         'Int'      => '=i',
@@ -294,6 +339,119 @@ package OptArgs2::Arg {
         'HashRef'  => '=s%',
         'SubCmd'   => '=s',
     );
+    ### START Class::Inline ### v0.0.1 Wed Mar 26 17:48:32 2025
+require Scalar::Util;
+require Carp;
+our ( @_CLASS, $_FIELDS, %_NEW );
+
+sub new {
+    my $class = shift;
+    my $CLASS = ref $class || $class;
+    $_NEW{$CLASS} //= do {
+        my @possible = ($CLASS);
+        if ( defined &{"${CLASS}::DOES"} ) {
+            push @possible, grep !/^${CLASS}$/, $CLASS->DOES('*');
+        }
+        my ( @new, @build );
+        while (@possible) {
+            no strict 'refs';
+            my $c = shift @possible;
+            push @new,   $c . '::_NEW'  if exists &{ $c . '::_NEW' };
+            push @build, $c . '::BUILD' if exists &{ $c . '::BUILD' };
+            push @possible, @{ $c . '::ISA' };
+        }
+        [ [ reverse(@new) ], [ reverse(@build) ] ];
+    };
+    my $self = { @_ ? @_ > 1 ? @_ : %{ $_[0] } : () };
+    bless $self, $CLASS;
+    my $attrs = { map { ( $_ => 1 ) } keys %$self };
+    map { $self->$_($attrs) } @{ $_NEW{$CLASS}->[0] };
+    {
+        local $Carp::CarpLevel = 3;
+        Carp::carp("OptArgs2::Arg: unexpected argument '$_'") for keys %$attrs;
+    }
+    map { $self->$_ } @{ $_NEW{$CLASS}->[1] };
+    $self;
+}
+
+sub _NEW {
+    CORE::state $fix_FIELDS = do {
+        $_FIELDS = { @_CLASS > 1 ? @_CLASS : %{ $_CLASS[0] } };
+        $_FIELDS = $_FIELDS->{'FIELDS'} if exists $_FIELDS->{'FIELDS'};
+    };
+    if ( my @missing = grep { not exists $_[0]->{$_} } 'isa' ) {
+        Carp::croak( 'OptArgs2::Arg required initial argument(s): '
+              . join( ', ', @missing ) );
+    }
+    Scalar::Util::weaken( $_[0]{'cmd'} )
+      if exists $_[0]{'cmd'} && ref $_[0]{'cmd'};
+    $_[0]{'isa'} = eval { $_FIELDS->{'isa'}->{'isa'}->( $_[0]{'isa'} ) };
+    Carp::confess( 'OptArgs2::Arg isa: ' . $@ ) if $@;
+    map { delete $_[1]->{$_} } 'cmd', 'fallthru', 'greedy', 'isa', 'isa_name';
+}
+
+sub __RO {
+    my ( undef, undef, undef, $sub ) = caller(1);
+    Carp::confess("attribute $sub is read-only");
+}
+
+sub cmd {
+    if ( @_ > 1 ) {
+        $_[0]{'cmd'} = $_[1];
+        Scalar::Util::weaken( $_[0]{'cmd'} ) if ref $_[0]{'cmd'};
+    }
+    $_[0]{'cmd'} // undef;
+}
+sub fallthru { __RO() if @_ > 1; $_[0]{'fallthru'} // undef }
+sub greedy   { __RO() if @_ > 1; $_[0]{'greedy'}   // undef }
+sub isa      { __RO() if @_ > 1; $_[0]{'isa'}      // undef }
+
+sub isa_name {
+    __RO() if @_ > 1;
+    $_[0]{'isa_name'} //= $_FIELDS->{'isa_name'}->{'default'}->( $_[0] );
+}
+
+sub _dump {
+    my $self = shift;
+    my $x    = do {
+        require Data::Dumper;
+        no warnings 'once';
+        local $Data::Dumper::Indent   = 1;
+        local $Data::Dumper::Maxdepth = ( shift // 2 );
+        local $Data::Dumper::Sortkeys = 1;
+        Data::Dumper::Dumper($self);
+    };
+    $x =~ s/.*?{/{/;
+    $x =~ s/}.*?\n$/}/;
+    my $i = 0;
+    my @list;
+    do {
+        @list = caller( $i++ );
+    } until $list[3] eq __PACKAGE__ . '::_dump';
+    warn "$self $x at $list[1]:$list[2]\n";
+}
+
+@_CLASS = grep 1,### END Class::Inline ###
+
+      cmd      => { is => 'rw', weaken => 1, },
+      fallthru => {},
+      greedy   => {},
+      isa      => {
+        required => 1,
+        isa      => sub {
+            $isa2name{ $_[0] } // OptArgs2->throw_error( 'InvalidIsa',
+                'invalid isa type: ' . $_[0] );
+            $_[0];
+        },
+      },
+      isa_name => {
+        default => sub {
+            '(' . $isa2name{ $_[0]->isa } . ')';
+        },
+      },
+      ;
+
+    our @CARP_NOT = @OptArgs2::CARP_NOT;
 
     sub BUILD {
         my $self = shift;
@@ -301,24 +459,19 @@ package OptArgs2::Arg {
         OptArgs2->throw_error( 'Conflict',
             q{'default' and 'required' conflict} )
           if $self->required and defined $self->default;
+
+        OptArgs2->throw_error( 'Conflict',
+            q{'isa SubCmd' and 'greedy' conflict} )
+          if $self->greedy and $self->isa eq 'SubCmd';
     }
 
     sub name_alias_type_comment {
         my $self  = shift;
         my $value = shift;
 
-        my $deftype = '';
-        if ( defined $value ) {
-            $deftype = '[' . $value . ']';
-        }
-        else {
-            $deftype = $self->isa_name
-              // $OptArgs2::OptArgBase::isa2name{ $self->isa }
-              // OptArgs2->throw_error( 'InvalidIsa',
-                'invalid isa type: ' . $self->isa );
-        }
-
+        my $deftype = ( defined $value ) ? '[' . $value . ']' : $self->isa_name;
         my $comment = $self->comment;
+
         if ( $self->required ) {
             $comment .= ' ' if length $comment;
             $comment .= '*required*';
@@ -330,16 +483,17 @@ package OptArgs2::Arg {
 }
 
 package OptArgs2::Opt {
-    use OptArgs2::Opt_CI
-      isa => 'OptArgs2::OptArgBase',
-      has => {
-        alias   => {},
-        hidden  => {},
-        trigger => {},
-      };
-
-    our @CARP_NOT = @OptArgs2::CARP_NOT;
-
+    use parent -norequire, 'OptArgs2::OptArgBase';
+    my %isa2name = (
+        'ArrayRef' => 'Str',
+        'Bool'     => '',
+        'Counter'  => '',
+        'Flag'     => '',
+        'HashRef'  => 'Str',
+        'Int'      => 'Int',
+        'Num'      => 'Num',
+        'Str'      => 'Str',
+    );
     my %isa2getopt = (
         'ArrayRef' => '=s@',
         'Bool'     => '!',
@@ -350,6 +504,109 @@ package OptArgs2::Opt {
         'Num'      => '=f',
         'Str'      => '=s',
     );
+    ### START Class::Inline ### v0.0.1 Wed Mar 26 17:48:32 2025
+require Carp;
+our ( @_CLASS, $_FIELDS, %_NEW );
+
+sub new {
+    my $class = shift;
+    my $CLASS = ref $class || $class;
+    $_NEW{$CLASS} //= do {
+        my @possible = ($CLASS);
+        if ( defined &{"${CLASS}::DOES"} ) {
+            push @possible, grep !/^${CLASS}$/, $CLASS->DOES('*');
+        }
+        my ( @new, @build );
+        while (@possible) {
+            no strict 'refs';
+            my $c = shift @possible;
+            push @new,   $c . '::_NEW'  if exists &{ $c . '::_NEW' };
+            push @build, $c . '::BUILD' if exists &{ $c . '::BUILD' };
+            push @possible, @{ $c . '::ISA' };
+        }
+        [ [ reverse(@new) ], [ reverse(@build) ] ];
+    };
+    my $self = { @_ ? @_ > 1 ? @_ : %{ $_[0] } : () };
+    bless $self, $CLASS;
+    my $attrs = { map { ( $_ => 1 ) } keys %$self };
+    map { $self->$_($attrs) } @{ $_NEW{$CLASS}->[0] };
+    {
+        local $Carp::CarpLevel = 3;
+        Carp::carp("OptArgs2::Opt: unexpected argument '$_'") for keys %$attrs;
+    }
+    map { $self->$_ } @{ $_NEW{$CLASS}->[1] };
+    $self;
+}
+
+sub _NEW {
+    CORE::state $fix_FIELDS = do {
+        $_FIELDS = { @_CLASS > 1 ? @_CLASS : %{ $_CLASS[0] } };
+        $_FIELDS = $_FIELDS->{'FIELDS'} if exists $_FIELDS->{'FIELDS'};
+    };
+    if ( my @missing = grep { not exists $_[0]->{$_} } 'isa' ) {
+        Carp::croak( 'OptArgs2::Opt required initial argument(s): '
+              . join( ', ', @missing ) );
+    }
+    $_[0]{'isa'} = eval { $_FIELDS->{'isa'}->{'isa'}->( $_[0]{'isa'} ) };
+    Carp::confess( 'OptArgs2::Opt isa: ' . $@ ) if $@;
+    map { delete $_[1]->{$_} } 'alias', 'hidden', 'isa', 'isa_name', 'trigger';
+}
+
+sub __RO {
+    my ( undef, undef, undef, $sub ) = caller(1);
+    Carp::confess("attribute $sub is read-only");
+}
+sub alias  { __RO() if @_ > 1; $_[0]{'alias'}  // undef }
+sub hidden { __RO() if @_ > 1; $_[0]{'hidden'} // undef }
+sub isa    { __RO() if @_ > 1; $_[0]{'isa'}    // undef }
+
+sub isa_name {
+    __RO() if @_ > 1;
+    $_[0]{'isa_name'} //= $_FIELDS->{'isa_name'}->{'default'}->( $_[0] );
+}
+sub trigger { __RO() if @_ > 1; $_[0]{'trigger'} // undef }
+
+sub _dump {
+    my $self = shift;
+    my $x    = do {
+        require Data::Dumper;
+        no warnings 'once';
+        local $Data::Dumper::Indent   = 1;
+        local $Data::Dumper::Maxdepth = ( shift // 2 );
+        local $Data::Dumper::Sortkeys = 1;
+        Data::Dumper::Dumper($self);
+    };
+    $x =~ s/.*?{/{/;
+    $x =~ s/}.*?\n$/}/;
+    my $i = 0;
+    my @list;
+    do {
+        @list = caller( $i++ );
+    } until $list[3] eq __PACKAGE__ . '::_dump';
+    warn "$self $x at $list[1]:$list[2]\n";
+}
+
+@_CLASS = grep 1,### END Class::Inline ###
+
+      alias   => {},
+      hidden  => {},
+      trigger => {},
+      isa     => {
+        required => 1,
+        isa      => sub {
+            $isa2name{ $_[0] } // OptArgs2->throw_error( 'InvalidIsa',
+                'invalid isa type: ' . $_[0] );
+            $_[0];
+        },
+      },
+      isa_name => {
+        default => sub {
+            '(' . $isa2name{ $_[0]->isa } . ')';
+        },
+      },
+      ;
+
+    our @CARP_NOT = @OptArgs2::CARP_NOT;
 
     sub new_from {
         my $proto = shift;
@@ -358,10 +615,10 @@ package OptArgs2::Opt {
         # legacy interface
         if ( exists $ref->{ishelp} ) {
             delete $ref->{ishelp};
-            $ref->{isa} //= OptArgs2::STYLE_HELP;
+            $ref->{isa} //= OptArgs2::USAGE_HELP;
         }
 
-        if ( $ref->{isa} =~ m/^Help/ ) {    # one of the STYLE_HELPs
+        if ( $ref->{isa} =~ m/^Help/ ) {    # one of the USAGE_HELPs
             my $style = $ref->{isa};
             my $name  = $style;
             $name =~ s/([a-z])([A-Z])/$1-$2/g;
@@ -374,18 +631,18 @@ package OptArgs2::Opt {
                 my $val = shift;
 
                 if ( $val == 1 ) {
-                    OptArgs2->throw_usage( OptArgs2::STYLE_HELP,
-                        $cmd->usage_string(OptArgs2::STYLE_HELP) );
+                    OptArgs2->throw_usage( OptArgs2::USAGE_HELP,
+                        $cmd->usage_string(OptArgs2::USAGE_HELP) );
                 }
                 elsif ( $val == 2 ) {
-                    OptArgs2->throw_usage( OptArgs2::STYLE_HELPTREE,
-                        $cmd->usage_string(OptArgs2::STYLE_HELPTREE) );
+                    OptArgs2->throw_usage( OptArgs2::USAGE_HELPTREE,
+                        $cmd->usage_string(OptArgs2::USAGE_HELPTREE) );
                 }
                 else {
                     OptArgs2->throw_usage(
                         'UnexpectedOptArg',
                         $cmd->usage_string(
-                            OptArgs2::STYLE_USAGE,
+                            OptArgs2::USAGE_USAGE,
                             qq{"--$ref->{name}" used too many times}
                         )
                     );
@@ -431,26 +688,10 @@ package OptArgs2::Opt {
             $alias = '-' . $alias;
         }
 
+        my $isa     = $self->isa;
         my $deftype = '';
-        if ( defined $value ) {
-            if ( $self->isa eq 'Flag' ) {
-                $deftype = '(set)';
-            }
-            elsif ( $self->isa eq 'Bool' ) {
-                $deftype = '(' . ( $value ? 'true' : 'false' ) . ')';
-            }
-            elsif ( $self->isa eq 'Counter' ) {
-                $deftype = '(' . $value . ')';
-            }
-            else {
-                $deftype = '[' . $value . ']';
-            }
-        }
-        else {
-            $deftype = $self->isa_name
-              // $OptArgs2::OptArgBase::isa2name{ $self->isa }
-              // OptArgs2->throw_error( 'InvalidIsa',
-                'invalid isa type: ' . $self->isa );
+        if ( $isa ne 'Flag' and $isa ne 'Bool' and $isa ne 'Counter' ) {
+            $deftype = defined $value ? '[' . $value . ']' : $self->isa_name;
         }
 
         my $comment = $self->comment;
@@ -470,10 +711,116 @@ package OptArgs2::CmdBase {
       '""'     => sub { shift->class },
       fallback => 1;
     use Getopt::Long qw/GetOptionsFromArray/;
-    use List::Util qw/max/;
-    use OptArgs2::CmdBase_CI
+    use List::Util   qw/max/;
+    ### START Class::Inline ### v0.0.1 Wed Mar 26 17:48:32 2025
+require Scalar::Util;
+require Carp;
+our ( @_CLASS, $_FIELDS, %_NEW );
+
+sub _NEW {
+    CORE::state $fix_FIELDS = do {
+        $_FIELDS = { @_CLASS > 1 ? @_CLASS : %{ $_CLASS[0] } };
+        $_FIELDS = $_FIELDS->{'FIELDS'} if exists $_FIELDS->{'FIELDS'};
+    };
+    if ( my @missing = grep { not exists $_[0]->{$_} } 'class', 'comment' ) {
+        Carp::croak( 'OptArgs2::CmdBase required initial argument(s): '
+              . join( ', ', @missing ) );
+    }
+    Scalar::Util::weaken( $_[0]{'parent'} )
+      if exists $_[0]{'parent'} && ref $_[0]{'parent'};
+    map { delete $_[1]->{$_} } '_args', '_opts', '_subcmds', '_values',
+      'abbrev', 'args', 'class', 'comment', 'hidden', 'optargs', 'opts',
+      'parent', 'show_color', 'show_default', 'subcmds';
+}
+
+sub __RO {
+    my ( undef, undef, undef, $sub ) = caller(1);
+    Carp::confess("attribute $sub is read-only");
+}
+
+sub _args {
+    __RO() if @_ > 1;
+    $_[0]{'_args'} //= $_FIELDS->{'_args'}->{'default'}->( $_[0] );
+}
+
+sub _opts {
+    __RO() if @_ > 1;
+    $_[0]{'_opts'} //= $_FIELDS->{'_opts'}->{'default'}->( $_[0] );
+}
+
+sub _subcmds {
+    __RO() if @_ > 1;
+    $_[0]{'_subcmds'} //= $_FIELDS->{'_subcmds'}->{'default'}->( $_[0] );
+}
+
+sub _values {
+    if ( @_ > 1 ) { $_[0]{'_values'} = $_[1]; }
+    $_[0]{'_values'} // undef;
+}
+
+sub abbrev {
+    if ( @_ > 1 ) { $_[0]{'abbrev'} = $_[1]; }
+    $_[0]{'abbrev'} // undef;
+}
+
+sub args {
+    __RO() if @_ > 1;
+    $_[0]{'args'} //= $_FIELDS->{'args'}->{'default'}->( $_[0] );
+}
+sub class   { __RO() if @_ > 1; $_[0]{'class'}   // undef }
+sub comment { __RO() if @_ > 1; $_[0]{'comment'} // undef }
+sub hidden  { __RO() if @_ > 1; $_[0]{'hidden'}  // undef }
+
+sub optargs {
+    if ( @_ > 1 ) { $_[0]{'optargs'} = $_[1]; }
+    $_[0]{'optargs'} //= $_FIELDS->{'optargs'}->{'default'}->( $_[0] );
+}
+
+sub opts {
+    __RO() if @_ > 1;
+    $_[0]{'opts'} //= $_FIELDS->{'opts'}->{'default'}->( $_[0] );
+}
+sub parent { __RO() if @_ > 1; $_[0]{'parent'} // undef }
+
+sub show_color {
+    __RO() if @_ > 1;
+    $_[0]{'show_color'} //= $_FIELDS->{'show_color'}->{'default'}->( $_[0] );
+}
+
+sub show_default {
+    __RO() if @_ > 1;
+    $_[0]{'show_default'} //= $_FIELDS->{'show_default'}->{'default'};
+}
+
+sub subcmds {
+    __RO() if @_ > 1;
+    $_[0]{'subcmds'} //= $_FIELDS->{'subcmds'}->{'default'}->( $_[0] );
+}
+
+sub _dump {
+    my $self = shift;
+    my $x    = do {
+        require Data::Dumper;
+        no warnings 'once';
+        local $Data::Dumper::Indent   = 1;
+        local $Data::Dumper::Maxdepth = ( shift // 2 );
+        local $Data::Dumper::Sortkeys = 1;
+        Data::Dumper::Dumper($self);
+    };
+    $x =~ s/.*?{/{/;
+    $x =~ s/}.*?\n$/}/;
+    my $i = 0;
+    my @list;
+    do {
+        @list = caller( $i++ );
+    } until $list[3] eq __PACKAGE__ . '::_dump';
+    warn "$self $x at $list[1]:$list[2]\n";
+}
+
+@_CLASS = grep 1,### END Class::Inline ###
+
       abstract => 1,
-      has      => {
+      FIELDS   => {
         abbrev  => { is       => 'rw', },
         args    => { default  => sub { [] }, },
         class   => { required => 1, },
@@ -602,22 +949,36 @@ package OptArgs2::CmdBase {
         my @args = @{ $cmd->args };
 
       OPTARGS: while ( @opts or @args ) {
-            while ( my $try = shift @opts ) {
+            while ( my $opt = shift @opts ) {
                 my $result;
-                my $name = $try->name;
+                my $name = $opt->name;
 
                 if ( exists $source_hash->{$name} ) {
                     $result = delete $source_hash->{$name};
                 }
                 else {
-                    GetOptionsFromArray( $source, $try->getopt => \$result );
+                    my @errors;
+                    local $SIG{__WARN__} = sub { push @errors, $_[0] };
+
+                    my $ok = eval {
+                        GetOptionsFromArray( $source,
+                            $opt->getopt => \$result );
+                    };
+                    if ( !$ok ) {
+                        my $error =
+                            length $@ ? $@
+                          : @errors   ? join( "\n", @errors )
+                          :             'unknown';
+
+                        $reason //= [ GetOptError => $error ];
+                    }
                 }
 
-                if ( defined($result) and my $t = $try->trigger ) {
+                if ( defined($result) and my $t = $opt->trigger ) {
                     push @trigger, [ $t, $name ];
                 }
 
-                if ( defined( $result //= $try->default ) ) {
+                if ( defined( $result //= $opt->default ) ) {
 
                     if ( 'CODE' eq ref $result ) {
                         tie $optargs->{$name}, 'OptArgs2::CODEREF', $optargs,
@@ -628,122 +989,136 @@ package OptArgs2::CmdBase {
                         $optargs->{$name} = $result;
                     }
                 }
-                elsif ( $try->required ) {
+                elsif ( $opt->required ) {
                     $name =~ s/_/-/g;
                     $reason //=
                       [ 'OptRequired', qq{missing required option "--$name"} ];
                 }
             }
 
-            # Sub command check
-            if ( @$source and my @subcmds = @{ $cmd->subcmds } ) {
-                my $result = $source->[0];
-                if ( $cmd->abbrev ) {
-                    require Text::Abbrev;
-                    my %abbrev =
-                      Text::Abbrev::abbrev( map { $_->name } @subcmds );
-                    $result = $abbrev{$result} // $result;
-                }
-
-                if ( exists $cmd->_subcmds->{$result} ) {
-                    shift @$source;
-                    $cmd = $cmd->_subcmds->{$result};
-                    push( @opts, @{ $cmd->opts } );
-
-                    # Ignoring any remaining arguments
-                    @args = @{ $cmd->args };
-
-                    next OPTARGS;
-                }
-            }
-
-            while ( my $try = shift @args ) {
+            while ( my $arg = shift @args ) {
                 my $result;
-                my $name = $try->name;
+                my $name = $arg->name;
+                my $isa  = $arg->isa;
 
                 if (@$source) {
+
+                    # TODO: do this check for every element in
+                    # @$source, which means moving this down
+                    # somewhere...
                     if (
-                        #                        $try->isa ne 'SubCmd'
-                        #                        and (
                         ( $source->[0] =~ m/^--\S/ )
                         or (
                             $source->[0] =~ m/^-\S/
                             and !(
                                 $source->[0] =~ m/^-\d/
-                                and (  $try->isa ne 'Num'
-                                    or $try->isa ne 'Int' )
+                                and (  $arg->isa ne 'Num'
+                                    or $arg->isa ne 'Int' )
                             )
                         )
                       )
-
-                      #                      )
                     {
                         my $o = shift @$source;
                         $reason //= [ 'OptUnknown', qq{unknown option "$o"} ];
                         last OPTARGS;
                     }
 
-                    if ( $try->greedy ) {
+#                    if ( $arg->greedy ) {
+#
+#                        # Interesting feature or not? "GREEDY... LATER"
+#                        # my @later;
+#                        # if ( @args and @$source > @args ) {
+#                        #     push( @later, pop @$source ) for @args;
+#                        # }
+#                        # Should also possibly check early for post-greedy arg,
+#                        # except they might be wanted for display
+#                        # purposes
+#
+#                        if ( $arg->isa eq 'ArrayRef' )
+#                        {
+#                            $result = [@$source];
+#                        }
+#                        elsif ( $arg->isa eq 'HashRef' ) {
+#                            $result = {
+#                                map { split /=/, $_ }
+#                                  split /,/, @$source
+#                            };
+#                        }
+#                        else {
+#                            $result = "@$source";
+#                        }
+#
+#                        $source = [];
+#
+#                        #                        $source = \@later;
+#                    }
+                    if ( $isa eq 'SubCmd' ) {
+                        my $test = $source->[0];
 
-                        # Interesting feature or not? "GREEDY... LATER"
-                        # my @later;
-                        # if ( @args and @$source > @args ) {
-                        #     push( @later, pop @$source ) for @args;
-                        # }
-                        # Should also possibly check early for post-greedy arg,
-                        # except they might be wanted for display
-                        # purposes
-
-                        if ( $try->isa eq 'ArrayRef' or $try->isa eq 'SubCmd' )
+                        if ( $cmd->abbrev
+                            and my @subcmds = @{ $cmd->subcmds } )
                         {
-                            $result = [@$source];
+                            require Text::Abbrev;
+                            my %abbrev =
+                              Text::Abbrev::abbrev( map { $_->name } @subcmds );
+                            $test = $abbrev{$test} // $test;
                         }
-                        elsif ( $try->isa eq 'HashRef' ) {
-                            $result = {
-                                map { split /=/, $_ }
-                                  split /,/, @$source
-                            };
+
+                        if ( exists $cmd->_subcmds->{$test} ) {
+                            shift @$source;
+                            $cmd = $cmd->_subcmds->{$test};
+                            push( @opts, @{ $cmd->opts } );
+
+                            # Replace rest of current cmd arguments with new
+                            @args = @{ $cmd->args };
+                            if ( @{ $cmd->args }
+                                && $cmd->args->[0]->isa ne 'SubCmd' )
+                            {
+                                # Add a fake Arg to the list to check
+                                # for subcommands.
+                                unshift @args,
+                                  OptArgs2::Arg->new(
+                                    isa     => 'SubCmd',
+                                    name    => '__internal',
+                                    comment => '__internal',
+                                  );
+                            }
+                            next OPTARGS;
+                        }
+                        next OPTARGS if $arg->name eq '__internal';
+
+                        $result = shift @$source;
+                        if ( $arg->fallthru ) {
+                            $optargs->{$name} = $result;
                         }
                         else {
-                            $result = "@$source";
+                            $reason //=
+                              [ 'SubCmdUnknown', "unknown $name: $result" ];
                         }
-
-                        $source = [];
-
-                        #                        $source = \@later;
                     }
-                    elsif ( $try->isa eq 'ArrayRef' ) {
-                        $result = [ shift @$source ];
+                    elsif ( $isa eq 'ArrayRef' ) {
+                        $result = [ $arg->greedy ? @$source : shift @$source ];
                     }
-                    elsif ( $try->isa eq 'HashRef' ) {
-                        $result =
-                          { map { split /=/, $_ } split /,/, shift @$source };
+                    elsif ( $isa eq 'HashRef' ) {
+                        $result = {
+                            map { split /=/, $_ } split /,/,
+                            $arg->greedy ? @$source : shift @$source
+                        };
                     }
                     else {
-                        $result = shift @$source;
+                        $result = $arg->greedy ? "@$source" : shift @$source;
                     }
 
-                    # TODO: type check using Param::Utils?
+                    $source = [] if $arg->greedy;
+
                 }
                 elsif ( exists $source_hash->{$name} ) {
                     $result = delete $source_hash->{$name};
                 }
 
-                if ( defined( $result //= $try->default ) ) {
-                    $reason //= [
-                        'SubCmdUnknown',
-                        "unknown $name: "
-                          . (
-                            ( 'ARRAY' eq ref $result )  ? $result->[0]
-                            : ( 'HASH' eq ref $result ) ? (
-                                join ',',
-                                map { "$_=$result->{$_}" } keys %$result
-                              )
-                            : $result
-                          )
-                      ]
-                      if $try->isa eq 'SubCmd' and not $try->fallthru;
+                # TODO: type check using Param::Utils?
 
+                if ( defined( $result //= $arg->default ) ) {
                     if ( 'CODE' eq ref $result ) {
                         tie $optargs->{$name}, 'OptArgs2::CODEREF', $optargs,
                           $name,
@@ -753,7 +1128,7 @@ package OptArgs2::CmdBase {
                         $optargs->{$name} = $result;
                     }
                 }
-                elsif ( $try->required ) {
+                elsif ( $arg->required ) {
                     $reason //= ['ArgRequired'];
                 }
             }
@@ -777,7 +1152,7 @@ package OptArgs2::CmdBase {
         map { $_->[0]->( $cmd, $optargs->{ $_->[1] } ) } @trigger;
 
         OptArgs2->throw_usage( $reason->[0],
-            $cmd->usage_string( OptArgs2::STYLE_USAGE, $reason->[1] ) )
+            $cmd->usage_string( OptArgs2::USAGE_USAGE, $reason->[1] ) )
           if $reason;
 
         return ( $cmd->class, $optargs, ( $cmd->class . '.pm' ) =~ s!::!/!gr );
@@ -788,7 +1163,7 @@ package OptArgs2::CmdBase {
         my $depth = shift || 0;
 
         return [
-            $depth, $self->usage_string(OptArgs2::STYLE_HELPSUMMARY),
+            $depth, $self->usage_string(OptArgs2::USAGE_HELPSUMMARY),
             $self->comment
           ],
           map { $_->_usage_tree( $depth + 1 ) }
@@ -797,11 +1172,11 @@ package OptArgs2::CmdBase {
 
     sub usage_string {
         my $self  = shift;
-        my $style = shift || OptArgs2::STYLE_USAGE;
+        my $style = shift || OptArgs2::USAGE_USAGE;
         my $error = shift // '';
         my $usage = '';
 
-        if ( $style eq OptArgs2::STYLE_HELPTREE ) {
+        if ( $style eq OptArgs2::USAGE_HELPTREE ) {
             my ( @w1, @w2 );
             my @items = map {
                 $_->[0] = ' ' x ( $_->[0] * 3 );
@@ -841,7 +1216,7 @@ package OptArgs2::CmdBase {
 
         # Summary line
         $usage .= join( ' ', map { $_->name } @parents ) . ' '
-          if @parents and $style ne OptArgs2::STYLE_HELPSUMMARY;
+          if @parents and $style ne OptArgs2::USAGE_HELPSUMMARY;
         $usage .= $self->name;
 
         my ( $red, $grey, $reset ) = ( '', '', '' );
@@ -865,14 +1240,14 @@ package OptArgs2::CmdBase {
             $usage .= ']' unless $arg->required;
         }
 
-        return $usage if $style eq OptArgs2::STYLE_HELPSUMMARY;
+        return $usage if $style eq OptArgs2::USAGE_HELPSUMMARY;
 
         $usage .= ' [OPTIONS...]' if @opts;
         $usage .= "\n";
 
         # Synopsis
         $usage .= "\n  Synopsis:\n    " . $self->comment . "\n"
-          if $style eq OptArgs2::STYLE_HELP and length $self->comment;
+          if $style eq OptArgs2::USAGE_HELP and length $self->comment;
 
         # Build arguments
         my @sargs;
@@ -894,7 +1269,7 @@ package OptArgs2::CmdBase {
                       map  { $_->[1] }
                       sort { $a->[0] cmp $b->[0] }
                       map  { [ $_->name, $_ ] }
-                      grep { $style eq OptArgs2::STYLE_HELP or !$_->hidden }
+                      grep { $style eq OptArgs2::USAGE_HELP or !$_->hidden }
                       @{ $arg->cmd->subcmds };
 
                     foreach my $subcmd (@sorted_subs) {
@@ -903,7 +1278,7 @@ package OptArgs2::CmdBase {
                             [
                                 '    '
                                   . $subcmd->usage_string(
-                                    OptArgs2::STYLE_HELPSUMMARY),
+                                    OptArgs2::USAGE_HELPSUMMARY),
                                 $subcmd->comment
                             ]
                         );
@@ -930,7 +1305,7 @@ package OptArgs2::CmdBase {
         if (@opts) {
             push( @uopts, [ "  Options:", '', '', '' ] );
             foreach my $opt (@opts) {
-                next if $style ne OptArgs2::STYLE_HELP and $opt->hidden;
+                next if $style ne OptArgs2::USAGE_HELP and $opt->hidden;
                 my ( $n, $a, $t, $c ) = $opt->name_alias_type_comment(
                     $opt->show_default
                     ? eval { $optargs->{ $opt->name } // undef }
@@ -982,27 +1357,103 @@ package OptArgs2::CmdBase {
 }
 
 package OptArgs2::Cmd {
-    use OptArgs2::Cmd_CI
-      isa => 'OptArgs2::CmdBase',
-      has => {
-        name => {
-            default => sub {
-                my $x = $_[0]->class;
+    use parent -norequire, 'OptArgs2::CmdBase';
+    ### START Class::Inline ### v0.0.1 Wed Mar 26 17:48:32 2025
+require Carp;
+our ( @_CLASS, $_FIELDS, %_NEW );
 
-                # once legacy code goes move this into optargs()
-                if ( $x eq 'main' ) {
-                    require File::Basename;
-                    File::Basename::basename($0),;
-                }
-                else {
-                    $x =~ s/.*://;
-                    $x =~ s/_/-/g;
-                    $x;
-                }
-            },
+sub new {
+    my $class = shift;
+    my $CLASS = ref $class || $class;
+    $_NEW{$CLASS} //= do {
+        my @possible = ($CLASS);
+        if ( defined &{"${CLASS}::DOES"} ) {
+            push @possible, grep !/^${CLASS}$/, $CLASS->DOES('*');
+        }
+        my ( @new, @build );
+        while (@possible) {
+            no strict 'refs';
+            my $c = shift @possible;
+            push @new,   $c . '::_NEW'  if exists &{ $c . '::_NEW' };
+            push @build, $c . '::BUILD' if exists &{ $c . '::BUILD' };
+            push @possible, @{ $c . '::ISA' };
+        }
+        [ [ reverse(@new) ], [ reverse(@build) ] ];
+    };
+    my $self = { @_ ? @_ > 1 ? @_ : %{ $_[0] } : () };
+    bless $self, $CLASS;
+    my $attrs = { map { ( $_ => 1 ) } keys %$self };
+    map { $self->$_($attrs) } @{ $_NEW{$CLASS}->[0] };
+    {
+        local $Carp::CarpLevel = 3;
+        Carp::carp("OptArgs2::Cmd: unexpected argument '$_'") for keys %$attrs;
+    }
+    map { $self->$_ } @{ $_NEW{$CLASS}->[1] };
+    $self;
+}
+
+sub _NEW {
+    CORE::state $fix_FIELDS = do {
+        $_FIELDS = { @_CLASS > 1 ? @_CLASS : %{ $_CLASS[0] } };
+        $_FIELDS = $_FIELDS->{'FIELDS'} if exists $_FIELDS->{'FIELDS'};
+    };
+    map { delete $_[1]->{$_} } 'name', 'no_help';
+}
+
+sub __RO {
+    my ( undef, undef, undef, $sub ) = caller(1);
+    Carp::confess("attribute $sub is read-only");
+}
+
+sub name {
+    __RO() if @_ > 1;
+    $_[0]{'name'} //= $_FIELDS->{'name'}->{'default'}->( $_[0] );
+}
+
+sub no_help {
+    __RO() if @_ > 1;
+    $_[0]{'no_help'} //= $_FIELDS->{'no_help'}->{'default'};
+}
+
+sub _dump {
+    my $self = shift;
+    my $x    = do {
+        require Data::Dumper;
+        no warnings 'once';
+        local $Data::Dumper::Indent   = 1;
+        local $Data::Dumper::Maxdepth = ( shift // 2 );
+        local $Data::Dumper::Sortkeys = 1;
+        Data::Dumper::Dumper($self);
+    };
+    $x =~ s/.*?{/{/;
+    $x =~ s/}.*?\n$/}/;
+    my $i = 0;
+    my @list;
+    do {
+        @list = caller( $i++ );
+    } until $list[3] eq __PACKAGE__ . '::_dump';
+    warn "$self $x at $list[1]:$list[2]\n";
+}
+
+@_CLASS = grep 1,### END Class::Inline ###
+ name => {
+        default => sub {
+            my $x = $_[0]->class;
+
+            # once legacy code goes move this into optargs()
+            if ( $x eq 'main' ) {
+                require File::Basename;
+                File::Basename::basename($0),;
+            }
+            else {
+                $x =~ s/.*://;
+                $x =~ s/_/-/g;
+                $x;
+            }
         },
-        no_help => { default => 0 },
-      };
+      },
+      no_help => { default => 0 },
+      ;
 
     our @CARP_NOT = @OptArgs2::CARP_NOT;
 
@@ -1010,7 +1461,7 @@ package OptArgs2::Cmd {
         my $self = shift;
 
         $self->add_opt(
-            isa          => OptArgs2::STYLE_HELP,
+            isa          => OptArgs2::USAGE_HELP,
             show_default => 0,
           )
           unless $self->no_help
@@ -1019,20 +1470,97 @@ package OptArgs2::Cmd {
 }
 
 package OptArgs2::SubCmd {
-    use OptArgs2::SubCmd_CI
-      isa => 'OptArgs2::CmdBase',
-      has => {
-        name => {    # once legacy code goes move this into CmdBase
-            init_arg => undef,
-            default  => sub {
-                my $x = $_[0]->class;
-                $x =~ s/.*://;
-                $x =~ s/_/-/g;
-                $x;
-            },
+    use parent -norequire, 'OptArgs2::CmdBase';
+    ### START Class::Inline ### v0.0.1 Wed Mar 26 17:48:32 2025
+require Carp;
+our ( @_CLASS, $_FIELDS, %_NEW );
+
+sub new {
+    my $class = shift;
+    my $CLASS = ref $class || $class;
+    $_NEW{$CLASS} //= do {
+        my @possible = ($CLASS);
+        if ( defined &{"${CLASS}::DOES"} ) {
+            push @possible, grep !/^${CLASS}$/, $CLASS->DOES('*');
+        }
+        my ( @new, @build );
+        while (@possible) {
+            no strict 'refs';
+            my $c = shift @possible;
+            push @new,   $c . '::_NEW'  if exists &{ $c . '::_NEW' };
+            push @build, $c . '::BUILD' if exists &{ $c . '::BUILD' };
+            push @possible, @{ $c . '::ISA' };
+        }
+        [ [ reverse(@new) ], [ reverse(@build) ] ];
+    };
+    my $self = { @_ ? @_ > 1 ? @_ : %{ $_[0] } : () };
+    bless $self, $CLASS;
+    my $attrs = { map { ( $_ => 1 ) } keys %$self };
+    map { $self->$_($attrs) } @{ $_NEW{$CLASS}->[0] };
+    {
+        local $Carp::CarpLevel = 3;
+        Carp::carp("OptArgs2::SubCmd: unexpected argument '$_'")
+          for keys %$attrs;
+    }
+    map { $self->$_ } @{ $_NEW{$CLASS}->[1] };
+    $self;
+}
+
+sub _NEW {
+    CORE::state $fix_FIELDS = do {
+        $_FIELDS = { @_CLASS > 1 ? @_CLASS : %{ $_CLASS[0] } };
+        $_FIELDS = $_FIELDS->{'FIELDS'} if exists $_FIELDS->{'FIELDS'};
+    };
+    if ( my @missing = grep { not exists $_[0]->{$_} } 'parent' ) {
+        Carp::croak( 'OptArgs2::SubCmd required initial argument(s): '
+              . join( ', ', @missing ) );
+    }
+    map { delete $_[1]->{$_} } 'parent';
+}
+
+sub __RO {
+    my ( undef, undef, undef, $sub ) = caller(1);
+    Carp::confess("attribute $sub is read-only");
+}
+
+sub name {
+    __RO() if @_ > 1;
+    $_[0]{'name'} //= $_FIELDS->{'name'}->{'default'}->( $_[0] );
+}
+sub parent { __RO() if @_ > 1; $_[0]{'parent'} // undef }
+
+sub _dump {
+    my $self = shift;
+    my $x    = do {
+        require Data::Dumper;
+        no warnings 'once';
+        local $Data::Dumper::Indent   = 1;
+        local $Data::Dumper::Maxdepth = ( shift // 2 );
+        local $Data::Dumper::Sortkeys = 1;
+        Data::Dumper::Dumper($self);
+    };
+    $x =~ s/.*?{/{/;
+    $x =~ s/}.*?\n$/}/;
+    my $i = 0;
+    my @list;
+    do {
+        @list = caller( $i++ );
+    } until $list[3] eq __PACKAGE__ . '::_dump';
+    warn "$self $x at $list[1]:$list[2]\n";
+}
+
+@_CLASS = grep 1,### END Class::Inline ###
+ name => {   # once legacy code goes move this into CmdBase
+        init_arg => undef,
+        default  => sub {
+            my $x = $_[0]->class;
+            $x =~ s/.*://;
+            $x =~ s/_/-/g;
+            $x;
         },
-        parent => { required => 1, },
-      };
+      },
+      parent => { required => 1, },
+      ;
 
     our @CARP_NOT = @OptArgs2::CARP_NOT;
 }
@@ -1047,7 +1575,7 @@ OptArgs2 - command-line argument and option processor
 
 =head1 VERSION
 
-2.0.0 (2022-10-05)
+2.0.1_1 (2025-03-26)
 
 =head1 SYNOPSIS
 
@@ -1081,7 +1609,7 @@ OptArgs2 - command-line argument and option processor
         comment => 'handy work app',
         optargs => [
             command => {
-                isa      => 'Str',
+                isa      => 'SubCmd',
                 required => 1,
                 comment  => 'the action to take',
             },
@@ -1591,8 +2119,8 @@ processing before usage exceptions are raised.  This is primarily to
 support --help or --version options which would typically override
 usage errors.
 
-    opt version => (
-        isa     => 'Flag',
+    version => (
+        isa     => '--Flag',
         alias   => 'V',
         comment => 'print version string and exit',
         trigger => sub {
