@@ -8,7 +8,7 @@ WriteMakefile(
     NAME     => 'OptArgs2',
     ABSTRACT => 'CLI argument and option processing',
     AUTHOR   => 'Mark Lawrence <nomad@null.net>',
-    VERSION  => '2.0.1_1',
+    VERSION  => '2.0.1_2',
     LICENSE  => 'gpl_3',
     test => { RECURSIVE_TEST_FILES => 1, },
     dist => { PREOP                => 'class-inline $(DISTVNAME)', }, #CIFILTER#

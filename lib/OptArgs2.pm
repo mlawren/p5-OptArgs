@@ -7,7 +7,7 @@ use Exporter::Tidy
   default => [qw/class_optargs cmd optargs subcmd arg opt/],
   other   => [qw/usage cols rows/];
 
-our $VERSION  = '2.0.1_1';
+our $VERSION  = '2.0.1_2';
 our @CARP_NOT = (
     qw/
       OptArgs2
@@ -1087,7 +1087,7 @@ OptArgs2 - command-line argument and option processor
 
 =head1 VERSION
 
-2.0.1_1 (2025-03-26)
+2.0.1_2 (yyyy-mm-dd)
 
 =head1 SYNOPSIS
 
