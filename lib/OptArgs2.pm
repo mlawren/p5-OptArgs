@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 package OptArgs2;
-use Encode qw/decode/;
+use Encode::Locale 'decode_argv';
 use Exporter::Tidy
   default => [qw/class_optargs cmd optargs subcmd arg opt/],
   other   => [qw/usage cols rows/];
@@ -134,14 +134,7 @@ sub class_optargs {
     my @source = @_;
 
     if ( !@_ and @ARGV ) {
-        my $CODESET =
-          eval { require I18N::Langinfo; I18N::Langinfo::CODESET() };
-
-        if ($CODESET) {
-            my $codeset = I18N::Langinfo::langinfo($CODESET);
-            $_ = decode( $codeset, $_ ) for @ARGV;
-        }
-
+        decode_argv(Encode::FB_CROAK);
         @source = @ARGV;
     }
 
@@ -1708,8 +1701,7 @@ The following functions are exported by default.
 
 Parse @ARGV by default (or @argv when given) for the arguments and
 options defined for command C<$class>.  C<@ARGV> will first be decoded
-into UTF-8 (if necessary) from whatever L<I18N::Langinfo> says your
-current locale codeset is.
+using L<Encode::Locale>.
 
 Returns the following values:
 
@@ -1859,7 +1851,8 @@ the command C<$class> or the class of the calling package (.e.g
 
 =head1 SEE ALSO
 
-L<OptArgs2::Pager>, L<OptArgs2::StatusLine>, L<Getopt::Long>
+L<OptArgs2::Pager>, L<OptArgs2::StatusLine>, L<Getopt::Long>,
+L<Encode::Locale>
 
 This module used to duplicate itself on CPAN as L<Getopt::Args2>, but
 as of the version 2 series that is no longer the case.

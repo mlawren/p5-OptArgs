@@ -16,7 +16,8 @@
         - None.
 
     Dependencies:
-        - None.
+        - Add Encode::Locale.
+        - Remove direct dependency on Encode and I18N::Langinfo.
 
     Packaging:
         - None.
