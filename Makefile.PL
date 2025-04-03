@@ -40,6 +40,7 @@ WriteMakefile(
                 web  => 'https//github.com/mlawren/p5-OptArgs',
             }
         },
+        release_status => 'testing',
     },
 );
 
