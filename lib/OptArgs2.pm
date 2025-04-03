@@ -54,6 +54,7 @@ my %error_types = (
     CmdExists         => undef,
     CmdNotFound       => undef,
     Conflict          => undef,
+    DuplicateAlias    => undef,
     InvalidIsa        => undef,
     ParentCmdNotFound => undef,
     SubCmdExists      => undef,
@@ -516,8 +517,15 @@ package OptArgs2::CmdBase {
             return;
         }
 
+        my %aliases;
         while ( my ( $name, $args ) = splice @{ $self->optargs }, 0, 2 ) {
             if ( $args->{isa} =~ s/^--// ) {
+                if ( length( my $alias = $args->{alias} //= undef ) ) {
+                    OptArgs2->throw_error( 'DuplicateAlias',
+                        "duplicate '-$alias' alias by --$name" )
+                      if $aliases{$alias}++;
+                }
+
                 $self->add_opt(
                     name => $name,
                     %$args,

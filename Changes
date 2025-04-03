@@ -7,7 +7,7 @@
         - None.
 
     Enhancements:
-        - None.
+        - Disallow duplicate option aliases
 
     Bug Fixes:
         - None.
