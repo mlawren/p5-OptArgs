@@ -44,11 +44,10 @@
       "runtime" : {
          "requires" : {
             "Carp" : "0",
-            "Encode" : "2.24",
+            "Encode::Locale" : "0",
             "Exporter::Tidy" : "0",
             "File::Which" : "0",
             "Getopt::Long" : "2.37",
-            "I18N::Langinfo" : "0",
             "List::Util" : "0",
             "Term::Size::Perl" : "0",
             "Text::Abbrev" : "0",
@@ -63,7 +62,7 @@
          }
       }
    },
-   "release_status" : "unstable",
+   "release_status" : "testing",
    "resources" : {
       "bugtracker" : {
          "web" : "https://github.com/mlawren/p5-OptArgs/issues"
@@ -74,6 +73,6 @@
          "url" : "ssh://git@github.com/mlawren/p5-OptArgs.git"
       }
    },
-   "version" : "v2.0.1_1",
+   "version" : "v2.0.12",
    "x_serialization_backend" : "JSON::PP version 4.07"
 }

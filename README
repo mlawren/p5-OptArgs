@@ -2,7 +2,7 @@ NAME
     OptArgs2 - command-line argument and option processor
 
 VERSION
-    2.0.1_1 (2025-03-26)
+    v2.0.12 (2025-04-03)
 
 SYNOPSIS
         #!/usr/bin/env perl
@@ -563,8 +563,7 @@ FUNCTIONS
     class_optargs( $class, [ @argv ] ) -> ($subclass, $opts, $file)
         Parse @ARGV by default (or @argv when given) for the arguments
         and options defined for command $class. @ARGV will first be
-        decoded into UTF-8 (if necessary) from whatever I18N::Langinfo
-        says your current locale codeset is.
+        decoded using Encode::Locale.
 
         Returns the following values:
 
@@ -656,7 +655,7 @@ FUNCTIONS
         "main").
 
 SEE ALSO
-    OptArgs2::Pager, OptArgs2::StatusLine, Getopt::Long
+    OptArgs2::Pager, OptArgs2::StatusLine, Getopt::Long, Encode::Locale
 
     This module used to duplicate itself on CPAN as Getopt::Args2, but
     as of the version 2 series that is no longer the case.

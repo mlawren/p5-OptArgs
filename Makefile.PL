@@ -8,7 +8,7 @@ WriteMakefile(
     NAME     => 'OptArgs2',
     ABSTRACT => 'CLI argument and option processing',
     AUTHOR   => 'Mark Lawrence <nomad@null.net>',
-    VERSION  => '2.0.1_1',
+    VERSION  => 'v2.0.12',
     LICENSE  => 'gpl_3',
     test => { RECURSIVE_TEST_FILES => 1, },
     META_MERGE => {
@@ -38,6 +38,7 @@ WriteMakefile(
                 web  => 'https//github.com/mlawren/p5-OptArgs',
             }
         },
+        release_status => 'testing',
     },
 );
 

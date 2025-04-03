@@ -2,12 +2,12 @@ use strict;
 use warnings;
 
 package OptArgs2;
-use Encode qw/decode/;
+use Encode::Locale 'decode_argv';
 use Exporter::Tidy
   default => [qw/class_optargs cmd optargs subcmd arg opt/],
   other   => [qw/usage cols rows/];
 
-our $VERSION  = '2.0.1_1';
+our $VERSION  = 'v2.0.12';
 our @CARP_NOT = (
     qw/
       OptArgs2
@@ -54,6 +54,7 @@ my %error_types = (
     CmdExists         => undef,
     CmdNotFound       => undef,
     Conflict          => undef,
+    DuplicateAlias    => undef,
     InvalidIsa        => undef,
     ParentCmdNotFound => undef,
     SubCmdExists      => undef,
@@ -134,14 +135,7 @@ sub class_optargs {
     my @source = @_;
 
     if ( !@_ and @ARGV ) {
-        my $CODESET =
-          eval { require I18N::Langinfo; I18N::Langinfo::CODESET() };
-
-        if ($CODESET) {
-            my $codeset = I18N::Langinfo::langinfo($CODESET);
-            $_ = decode( $codeset, $_ ) for @ARGV;
-        }
-
+        decode_argv(Encode::FB_CROAK);
         @source = @ARGV;
     }
 
@@ -256,7 +250,7 @@ package OptArgs2::CODEREF {
 }
 
 package OptArgs2::OptArgBase {
-    ### START Class::Inline ### v0.0.1 Wed Mar 26 17:48:32 2025
+    ### START Class::Inline ### v0.0.1 Thu Apr  3 11:48:37 2025
 require Carp;
 our ( @_CLASS, $_FIELDS, %_NEW );
 
@@ -339,7 +333,7 @@ package OptArgs2::Arg {
         'HashRef'  => '=s%',
         'SubCmd'   => '=s',
     );
-    ### START Class::Inline ### v0.0.1 Wed Mar 26 17:48:32 2025
+    ### START Class::Inline ### v0.0.1 Thu Apr  3 11:48:37 2025
 require Scalar::Util;
 require Carp;
 our ( @_CLASS, $_FIELDS, %_NEW );
@@ -504,7 +498,7 @@ package OptArgs2::Opt {
         'Num'      => '=f',
         'Str'      => '=s',
     );
-    ### START Class::Inline ### v0.0.1 Wed Mar 26 17:48:32 2025
+    ### START Class::Inline ### v0.0.1 Thu Apr  3 11:48:37 2025
 require Carp;
 our ( @_CLASS, $_FIELDS, %_NEW );
 
@@ -712,7 +706,7 @@ package OptArgs2::CmdBase {
       fallback => 1;
     use Getopt::Long qw/GetOptionsFromArray/;
     use List::Util   qw/max/;
-    ### START Class::Inline ### v0.0.1 Wed Mar 26 17:48:32 2025
+    ### START Class::Inline ### v0.0.1 Thu Apr  3 11:48:37 2025
 require Scalar::Util;
 require Carp;
 our ( @_CLASS, $_FIELDS, %_NEW );
@@ -728,24 +722,14 @@ sub _NEW {
     }
     Scalar::Util::weaken( $_[0]{'parent'} )
       if exists $_[0]{'parent'} && ref $_[0]{'parent'};
-    map { delete $_[1]->{$_} } '_args', '_opts', '_subcmds', '_values',
-      'abbrev', 'args', 'class', 'comment', 'hidden', 'optargs', 'opts',
-      'parent', 'show_color', 'show_default', 'subcmds';
+    map { delete $_[1]->{$_} } '_subcmds', '_values', 'abbrev', 'args',
+      'class', 'comment', 'hidden', 'optargs', 'opts', 'parent', 'show_color',
+      'show_default', 'subcmds';
 }
 
 sub __RO {
     my ( undef, undef, undef, $sub ) = caller(1);
     Carp::confess("attribute $sub is read-only");
-}
-
-sub _args {
-    __RO() if @_ > 1;
-    $_[0]{'_args'} //= $_FIELDS->{'_args'}->{'default'}->( $_[0] );
-}
-
-sub _opts {
-    __RO() if @_ > 1;
-    $_[0]{'_opts'} //= $_FIELDS->{'_opts'}->{'default'}->( $_[0] );
 }
 
 sub _subcmds {
@@ -830,14 +814,8 @@ sub _dump {
             is      => 'rw',
             default => sub { [] }
         },
-        opts   => { default => sub { [] }, },
-        parent => { weaken  => 1, },
-        _opts  => {
-            default => sub { {} }
-        },
-        _args => {
-            default => sub { {} }
-        },
+        opts     => { default => sub { [] }, },
+        parent   => { weaken  => 1, },
         _subcmds => {
             default => sub { {} }
         },
@@ -860,8 +838,15 @@ sub _dump {
             return;
         }
 
+        my %aliases;
         while ( my ( $name, $args ) = splice @{ $self->optargs }, 0, 2 ) {
             if ( $args->{isa} =~ s/^--// ) {
+                if ( length( my $alias = $args->{alias} //= undef ) ) {
+                    OptArgs2->throw_error( 'DuplicateAlias',
+                        "duplicate '-$alias' alias by --$name" )
+                      if $aliases{$alias}++;
+                }
+
                 $self->add_opt(
                     name => $name,
                     %$args,
@@ -1358,7 +1343,7 @@ sub _dump {
 
 package OptArgs2::Cmd {
     use parent -norequire, 'OptArgs2::CmdBase';
-    ### START Class::Inline ### v0.0.1 Wed Mar 26 17:48:32 2025
+    ### START Class::Inline ### v0.0.1 Thu Apr  3 11:48:37 2025
 require Carp;
 our ( @_CLASS, $_FIELDS, %_NEW );
 
@@ -1471,7 +1456,7 @@ sub _dump {
 
 package OptArgs2::SubCmd {
     use parent -norequire, 'OptArgs2::CmdBase';
-    ### START Class::Inline ### v0.0.1 Wed Mar 26 17:48:32 2025
+    ### START Class::Inline ### v0.0.1 Thu Apr  3 11:48:37 2025
 require Carp;
 our ( @_CLASS, $_FIELDS, %_NEW );
 
@@ -1575,7 +1560,7 @@ OptArgs2 - command-line argument and option processor
 
 =head1 VERSION
 
-2.0.1_1 (2025-03-26)
+v2.0.12 (2025-04-03)
 
 =head1 SYNOPSIS
 
@@ -2196,8 +2181,7 @@ The following functions are exported by default.
 
 Parse @ARGV by default (or @argv when given) for the arguments and
 options defined for command C<$class>.  C<@ARGV> will first be decoded
-into UTF-8 (if necessary) from whatever L<I18N::Langinfo> says your
-current locale codeset is.
+using L<Encode::Locale>.
 
 Returns the following values:
 
@@ -2347,7 +2331,8 @@ the command C<$class> or the class of the calling package (.e.g
 
 =head1 SEE ALSO
 
-L<OptArgs2::Pager>, L<OptArgs2::StatusLine>, L<Getopt::Long>
+L<OptArgs2::Pager>, L<OptArgs2::StatusLine>, L<Getopt::Long>,
+L<Encode::Locale>
 
 This module used to duplicate itself on CPAN as L<Getopt::Args2>, but
 as of the version 2 series that is no longer the case.

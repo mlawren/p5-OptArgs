@@ -32,11 +32,10 @@ no_index:
     - OptArgs2::SubCmd
 requires:
   Carp: '0'
-  Encode: '2.24'
+  Encode::Locale: '0'
   Exporter::Tidy: '0'
   File::Which: '0'
   Getopt::Long: '2.37'
-  I18N::Langinfo: '0'
   List::Util: '0'
   Term::Size::Perl: '0'
   Text::Abbrev: '0'
@@ -45,5 +44,5 @@ resources:
   bugtracker: https://github.com/mlawren/p5-OptArgs/issues
   homepage: https://github.com/mlawren/p5-OptArgs
   repository: ssh://git@github.com/mlawren/p5-OptArgs.git
-version: v2.0.1_1
+version: v2.0.12
 x_serialization_backend: 'CPAN::Meta::YAML version 0.018'
