@@ -1,16 +1,7 @@
-2.0.1_2 (yyyy-mm-dd)
-
-    API / Behaviour Changes:
-        - None.
-
-    New Features:
-        - None.
+v2.0.12 (2025-04-03) TRIAL RELEASE
 
     Enhancements:
         - Disallow duplicate option aliases
-
-    Bug Fixes:
-        - None.
 
     Code Maintenance
         - Removed unused _opts,_args attributes from CmdBase
@@ -20,7 +11,8 @@
         - Remove direct dependency on Encode and I18N::Langinfo.
 
     Packaging:
-        - None.
+        - Large VERSION jump due to a long misunderstanding of how
+          development "a.b.c_z" numbers normalize.
 
 2.0.1_1 (2025-03-26)
 
