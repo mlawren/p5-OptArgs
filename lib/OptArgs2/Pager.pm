@@ -29,7 +29,7 @@ use Class::Inline
   },
   ;
 
-our $VERSION  = 'v2.0.12';
+our $VERSION  = 'v__NEXT__';
 our @CARP_NOT = (__PACKAGE__);
 
 sub _build_pager {
@@ -135,7 +135,7 @@ OptArgs2::Pager - pipe output to a system (text) pager
 
 =head1 VERSION
 
-v2.0.12 (2025-04-03)
+v__NEXT__ (yyyy-mm-dd)
 
 =head1 SYNOPSIS
 
