@@ -492,14 +492,8 @@ package OptArgs2::CmdBase {
             is      => 'rw',
             default => sub { [] }
         },
-        opts   => { default => sub { [] }, },
-        parent => { weaken  => 1, },
-        _opts  => {
-            default => sub { {} }
-        },
-        _args => {
-            default => sub { {} }
-        },
+        opts     => { default => sub { [] }, },
+        parent   => { weaken  => 1, },
         _subcmds => {
             default => sub { {} }
         },
