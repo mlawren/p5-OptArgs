@@ -267,11 +267,11 @@ decipher the code style enough to fix it.
 
 =head1 AUTHOR
 
-Mark Lawrence E<lt>nomad@null.netE<gt>
+Mark Lawrence E<lt>mark@rekudos.netE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2014-2022 Mark Lawrence <nomad@null.net>
+Copyright 2014-2025 Mark Lawrence <mark@rekudos.net>
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the

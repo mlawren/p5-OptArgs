@@ -1875,11 +1875,11 @@ Code is tidied up on Git commit using githook-perltidy:
 
 =head1 AUTHOR
 
-Mark Lawrence <nomad@null.net>
+Mark Lawrence <mark@rekudos.net>
 
 =head1 LICENSE
 
-Copyright 2016-2022 Mark Lawrence <nomad@null.net>
+Copyright 2016-2025 Mark Lawrence <mark@rekudos.net>
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
