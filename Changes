@@ -7,16 +7,18 @@ v0.0.0 (yyyy-mm-dd)
         - None.
 
     Enhancements:
-        - None.
+        - WARN marker for sending status to STDERR
 
     Bug Fixes:
         - None.
 
     Code Maintenance
-        - None.
+        - New tests for localization
+        - Refactoring for simplicity
 
     Dependencies:
-        - None.
+        - Remove Test::Output
+        - Add Capture::Tiny
 
     Packaging:
         - None.

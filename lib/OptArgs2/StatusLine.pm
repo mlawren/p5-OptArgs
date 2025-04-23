@@ -8,53 +8,84 @@ our $VERSION = 'v0.0.0';
 sub RS { chr(30) }
 my $RS = RS;
 
+sub WARN { chr(5) }
+my $WARN = WARN;
+
 sub TIESCALAR {
     my $class = shift;
-    bless [], $class;
+    bless( ( \my $str ), $class );
 }
 
-sub FETCH { $_[0]->[0] }
+sub FETCH { ${ $_[0] } }
 
 sub STORE {
     my $self = shift;
-    my $arg  = shift // return;
-    my $str;
+    my $arg  = shift;
+    my $warn = 0;
 
-    if ( 'SCALAR' eq ref $arg ) {
-        if ( not defined $self->[0] ) {
-            $str = $$arg . $RS;
-        }
-        else {
-            $str = $self->[0] =~ s/[^$RS]+/$$arg/r;
-        }
-    }
-    elsif ( $arg =~ m/$RS/ ) {
-        $str = $arg;
-    }
-    elsif ( not defined $self->[0] ) {
-        require File::Basename;
-        $str = File::Basename::basename($0) . ': ' . RS . $arg;
-    }
-    elsif ( $self->[0] =~ m/(.*)$RS/ ) {
-        $str = $1 . RS . $arg;
-    }
-    else {
-        warn "Internal Error - should never happen!";
+    if ( not defined $arg ) {
+        $$self = undef;
         return;
     }
 
-    my $NL = $str =~ s/\n\z// ? "\n" : "\r";
-    my $fh = select;
+    #TODO arg = undef?
 
-    if ( -t $fh ) {
-        $fh->printflush( $str . "\e[K" . $NL );
+    ( $$self // '' ) =~ m/
+        (?:(?<prefix>.*)(?:$RS))?
+        (?<msg>.+?)?
+        (?<NL>\n)?
+        \z
+        /x;
+
+    my %items = %+;
+
+    if ( 'SCALAR' eq ref $arg ) {
+        $items{prefix} = $$arg;
     }
     else {
-        $fh->print( $str . "\n" );
+        $arg =~ m/
+            (?:(?<prefix>.+?)?(?:$RS))?
+            (?<WARN>$WARN)?
+            (?<msg>.+?)?
+            (?<NL>\n)?
+            \z
+            /x;
+
+        if ( defined $+{prefix} ) {
+            $items{prefix} = $+{prefix};
+        }
+        elsif ( not defined $items{prefix} ) {
+            require File::Basename;
+            $items{prefix} = File::Basename::basename($0) . ': ';
+        }
+
+        $items{msg}  = $+{msg} if defined $+{msg};
+        $items{NL}   = $+{NL}  if defined $+{msg};
+        $items{WARN} = $+{WARN};
     }
 
-    $str =~ s/(.*$RS).*/$1/ if $NL eq "\n";
-    $self->[0] = $str;
+    $items{msg} //= '';
+    $items{NL}  //= '';
+
+    my $fh = select;
+    if ( $items{WARN} ) {
+        warn $items{prefix}, $items{msg}, -t STDERR ? "\e[K" : '', "\n";
+        $fh->print( $items{prefix}, $items{msg}, "\n" ) if not -t $fh;
+    }
+    elsif ( -t $fh ) {
+        $fh->printflush( "\e[?25l", $items{prefix}, $items{msg}, "\e[K",
+            ( $items{NL} || "\r" ) );
+    }
+    else {
+        $fh->print( $items{prefix}, $items{msg}, "\n" );
+    }
+
+    $$self = $items{prefix} . RS . $items{msg} . ( $items{NL} // '' );
+}
+
+DESTROY {
+    my $fh = select;
+    $fh->printflush("\e[?25h") if -t $fh;
 }
 
 sub import {
@@ -71,8 +102,12 @@ sub import {
         elsif ( $arg eq 'RS' ) {
             *{ $caller . '::RS' } = \&RS;
         }
+        elsif ( $arg eq 'WARN' ) {
+            *{ $caller . '::WARN' } = \&WARN;
+        }
         else {
-            die 'expected "RS" or "$scalar"';
+            require Carp;
+            Carp::croak('expected "RS", "WARN" or "$scalar"');
         }
 
     }
@@ -92,25 +127,29 @@ v0.0.0 (yyyy-mm-dd)
 
 =head1 SYNOPSIS
 
-    use OptArgs2::StatusLine '$status';
+    use OptArgs2::StatusLine '$status', 'RS', 'WARN';
     use Time::HiRes 'sleep';    # just for simulating work
 
-    $status = 'working ... ';
-    sleep .7;
+    $status = 'starting ... '; sleep .7;
+    $status = WARN. 'Warning!';
 
+    $status = 'working: ';
     foreach my $i ( 1 .. 10 ) {
-        $status .= " $i";
-        sleep .3;
+        $status .= " $i"; sleep .15;
     }
 
     # You can localize $status for temporary changes
     {
-        local $status = "temporary info";
-        sleep .8;
+        local $status = \'temporary: ';
+        foreach my $i ( 1 .. 10 ) {
+            $status = $i; sleep .15;
+        }
+        sleep 1;
     }
+    $status .= ' (previous)';
+    sleep 1;
 
     # Right back where you started
-    sleep .7;
     $status = "Done.\n";
 
 =head1 DESCRIPTION
@@ -127,6 +166,8 @@ SYNOPSIS, or you can C<tie> your own variable manually, even in a HASH:
     tie $self->{status}, 'OptArgs2::StatusLine';
     $self->{status} = 'my status line';
 
+=head2 Prefix
+
 Status variables have a default prefix of "program-name: ". You can
 change that two ways:
 
@@ -138,9 +179,9 @@ change that two ways:
     $status = 'fine';             # "New Prefix: fine"
 
 =item * Use an ASCII record separator (i.e. chr(30)) which you can
-import as RS() if you prefer:
+import as C<RS> if you prefer:
 
-    use OptArgs2::StatusLine 'RS';
+    use OptArgs2::StatusLine '$status', 'RS';
 
     $status = 'Other: ' . RS . 'my status'; # "Other: my status"
     $status = 'something else';             # "Other: something else"
@@ -151,9 +192,30 @@ You can import multiple status variables in one statement:
 
     use OptArgs2::StatusLine '$status', '$d_status';
 
-    untie $d_status unless $DEBUG;
-    $status   = 'frobnicating';
-    $d_status = 'frobnicating in detail, maybe';
+    if ($DEBUG) {
+        $d_status = \'debug: ';
+    } else {
+        untie $d_status;
+    }
+
+    $status   = 'frobnicating';     # program: frobnicating
+    $d_status = 'details matter!';  # debug: details matter!
+
+=head2 Status as Warnings
+
+A status line can be output via C<warn> by prefixing it with the ASCII
+enquiry character (i.e. chr(5)) which you can import as C<WARN> if you
+prefer:
+
+    use OptArgs2::StatusLine '$status', 'WARN';
+
+    $status = 'Things are normal';                  # STDOUT
+    $status = WARN . 'Warning! Something is wrong'; # STDERR
+
+A newline is automatically added to the end of a WARN status. A
+C<$status> can of course be passed to C<warn> directly, but that either
+results in a potientially unwanted "... at Module.pm line 6170, <$fh>
+line 1573" or the status line printed twice when it ends with a "\n".
 
 =head1 SEE ALSO
 
