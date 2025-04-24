@@ -1,27 +1,15 @@
-v__NEXT__ (yyyy-mm-dd)
-
-    API / Behaviour Changes:
-        - None.
-
-    New Features:
-        - None.
+v2.0.14 (2025-04-24) TRIAL RELEASE
 
     Enhancements:
         - StatusLine: Colourable WARN marker for warnings
 
-    Bug Fixes:
-        - None.
-
     Code Maintenance
-        - New tests for localization
-        - Refactoring for simplicity
+        - StatusLine: New tests for localization
+        - StatusLine: Code and test refactoring for simplicity
 
     Dependencies:
         - Remove Test::Output
         - Add Capture::Tiny
-
-    Packaging:
-        - None.
 
 v2.0.13 (2025-04-04)
 
