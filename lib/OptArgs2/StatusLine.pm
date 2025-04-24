@@ -8,6 +8,7 @@ our $VERSION = 'v0.0.0';
 sub RS { chr(30) }
 my $RS = RS;
 
+our $WARN_FMT = "\e[38;5;220m%s\e[0m\n";
 sub WARN { chr(5) }
 my $WARN = WARN;
 
@@ -20,27 +21,14 @@ sub FETCH { ${ $_[0] } }
 
 sub STORE {
     my $self = shift;
-    my $arg  = shift;
-    my $warn = 0;
-
-    if ( not defined $arg ) {
-        $$self = undef;
-        return;
-    }
-
-    #TODO arg = undef?
-
-    ( $$self // '' ) =~ m/
-        (?:(?<prefix>.*)(?:$RS))?
-        (?<msg>.+?)?
-        (?<NL>\n)?
-        \z
-        /x;
-
-    my %items = %+;
+    my $arg  = shift // return $$self = undef;
+    my %arg  = ();
 
     if ( 'SCALAR' eq ref $arg ) {
-        $items{prefix} = $$arg;
+        $arg{prefix} = $$arg;
+    }
+    elsif ( '' eq $arg ) {
+        $arg{msg} = '';
     }
     else {
         $arg =~ m/
@@ -51,39 +39,45 @@ sub STORE {
             \z
             /x;
 
-        if ( defined $+{prefix} ) {
-            $items{prefix} = $+{prefix};
-        }
-        elsif ( not defined $items{prefix} ) {
-            require File::Basename;
-            $items{prefix} = File::Basename::basename($0) . ': ';
-        }
-
-        $items{msg}  = $+{msg} if defined $+{msg};
-        $items{NL}   = $+{NL}  if defined $+{msg};
-        $items{WARN} = $+{WARN};
+        %arg = %+;
     }
 
-    $items{msg} //= '';
-    $items{NL}  //= '';
+    ( $$self // '' ) =~ m/
+        (?:(?<prefix>.*)(?:$RS))?
+        (?<msg>.*?)?
+        \z
+        /x;
+
+    my %next = ( %+, NL => "\r", %arg );
+
+    if ( not defined $next{prefix} ) {
+        require File::Basename;
+        $next{prefix} = File::Basename::basename($0) . ': ';
+    }
 
     my $fh = select;
-    if ( $items{WARN} ) {
-        warn $items{prefix}, $items{msg}, -t STDERR ? "\e[K" : '', "\n";
-        $fh->print( $items{prefix}, $items{msg}, "\n" ) if not -t $fh;
+    if ( $next{WARN} ) {
+        if ( -t STDERR ) {
+            warn sprintf $WARN_FMT, $next{prefix} . $next{msg} . "\e[K";
+        }
+        else {
+            warn $next{prefix}, $next{msg}, "\n";
+        }
+        $fh->print( $next{prefix}, $next{msg}, "\n" ) if not -t $fh;
     }
     elsif ( -t $fh ) {
-        $fh->printflush( "\e[?25l", $items{prefix}, $items{msg}, "\e[K",
-            ( $items{NL} || "\r" ) );
+        $fh->printflush( "\e[?25l", $next{prefix}, $next{msg}, "\e[K",
+            $next{NL} );
     }
     else {
-        $fh->print( $items{prefix}, $items{msg}, "\n" );
+        $fh->print( $next{prefix}, $next{msg}, "\n" );
     }
 
-    $$self = $items{prefix} . RS . $items{msg} . ( $items{NL} // '' );
+    $next{msg} = '' if $next{NL} eq "\n";
+    $$self = $next{prefix} . RS . $next{msg};
 }
 
-DESTROY {
+END {
     my $fh = select;
     $fh->printflush("\e[?25h") if -t $fh;
 }
@@ -113,6 +107,14 @@ sub import {
     }
 }
 
+sub _explode {
+    require Carp;
+    my $s = shift;
+    $s =~ s/\n/\\n/g;
+    $s = join( ' . RS . ', map { qq{"$_"} } split( /$RS/, $s ) );
+    Carp::carp($s);
+}
+
 1;
 
 __END__
@@ -140,7 +142,7 @@ v0.0.0 (yyyy-mm-dd)
 
     # You can localize $status for temporary changes
     {
-        local $status = \'temporary: ';
+        local $status = 'temporary: '. RS;
         foreach my $i ( 1 .. 10 ) {
             $status = $i; sleep .15;
         }
@@ -159,32 +161,31 @@ implementation, using the L<perltie> mechanism. Simply assigning to a
 C<$scalar> prints the string to the terminal. The terminal line will be
 overwritten by the next assignment unless it ends with a newline.
 
-You can create a status C<$scalar> at import time as shown in the
+You can create a C<$status> scalar at import time as shown in the
 SYNOPSIS, or you can C<tie> your own variable manually, even in a HASH:
 
     my $self = bless {}, 'My::Class';
     tie $self->{status}, 'OptArgs2::StatusLine';
     $self->{status} = 'my status line';
 
-=head2 Prefix
-
 Status variables have a default prefix of "program-name: ". You can
 change that two ways:
 
 =over
 
+=item * Use an ASCII record separator (i.e. chr(30)) which you can
+import as C<RS>, as a prefix / message divider:
+
+    use OptArgs2::StatusLine '$status', 'RS';
+
+    $status = 'msg1';                  # "program: my status"
+    $status = 'Other: ' . RS . 'msg2'; # "Other: msg2"
+    $status = 'msg3';                  # "Other: msg3"
+
 =item * Assign a scalar reference:
 
     $status = \'New Prefix: ';
     $status = 'fine';             # "New Prefix: fine"
-
-=item * Use an ASCII record separator (i.e. chr(30)) which you can
-import as C<RS> if you prefer:
-
-    use OptArgs2::StatusLine '$status', 'RS';
-
-    $status = 'Other: ' . RS . 'my status'; # "Other: my status"
-    $status = 'something else';             # "Other: something else"
 
 =back
 
@@ -193,7 +194,7 @@ You can import multiple status variables in one statement:
     use OptArgs2::StatusLine '$status', '$d_status';
 
     if ($DEBUG) {
-        $d_status = \'debug: ';
+        $d_status = 'debug: '. RS;
     } else {
         untie $d_status;
     }
@@ -201,21 +202,20 @@ You can import multiple status variables in one statement:
     $status   = 'frobnicating';     # program: frobnicating
     $d_status = 'details matter!';  # debug: details matter!
 
-=head2 Status as Warnings
-
-A status line can be output via C<warn> by prefixing it with the ASCII
-enquiry character (i.e. chr(5)) which you can import as C<WARN> if you
-prefer:
+A status line can be sent to C<STDERR> via C<warn> by prefixing a
+message with the ASCII enquiry character (i.e. chr(5)) which you can
+import as C<WARN>:
 
     use OptArgs2::StatusLine '$status', 'WARN';
 
-    $status = 'Things are normal';                  # STDOUT
-    $status = WARN . 'Warning! Something is wrong'; # STDERR
+    $status = 'Normal';           # program: normal
+    $status = WARN . 'Warning!';  # program: Warning! > /dev/stderr
 
-A newline is automatically added to the end of a WARN status. A
-C<$status> can of course be passed to C<warn> directly, but that either
-results in a potientially unwanted "... at Module.pm line 6170, <$fh>
-line 1573" or the status line printed twice when it ends with a "\n".
+A newline is automatically added to the end of a WARN status. The
+formatting of the warning is determined by 
+C<$OptArgs2::StatusLine::WARN_FMT>. This is set to
+C<"\e[38;5;220m%s\e[0m\n"> by default, colouring the text yellow. Set
+it to a plain C<"%s"> to remove formatting.
 
 =head1 SEE ALSO
 
