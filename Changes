@@ -14,6 +14,7 @@ v0.0.0 (yyyy-mm-dd)
 
     Code Maintenance
         - Improve StatusLine test coverage.
+        - Improve Pager test coverage.
 
     Dependencies:
         - None.
