@@ -1,25 +1,6 @@
-v0.0.0 (yyyy-mm-dd)
+v2.0.15 (2025-04-25)
 
-    API / Behaviour Changes:
-        - None.
-
-    New Features:
-        - None.
-
-    Enhancements:
-        - None.
-
-    Bug Fixes:
-        - None.
-
-    Code Maintenance
-        - None.
-
-    Dependencies:
-        - None.
-
-    Packaging:
-        - None.
+    No changes from v2.0.14.
 
 v2.0.14 (2025-04-24) TRIAL RELEASE
 
@@ -27,7 +8,7 @@ v2.0.14 (2025-04-24) TRIAL RELEASE
         - StatusLine: Colourable WARN marker for warnings
 
     Code Maintenance
-        - StatusLine: New tests for localization
+        - StatusLine: New tests for localized $status
         - StatusLine: Code and test refactoring for simplicity
 
     Dependencies:
