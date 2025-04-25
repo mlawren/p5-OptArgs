@@ -13,7 +13,7 @@ v0.0.0 (yyyy-mm-dd)
         - None.
 
     Code Maintenance
-        - None.
+        - Improve StatusLine test coverage.
 
     Dependencies:
         - None.
