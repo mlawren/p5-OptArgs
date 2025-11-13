@@ -1,7 +1,6 @@
 blib/
 cover_db/
 .direnv
-.envrc
 _build
 Makefile
 Makefile.old
