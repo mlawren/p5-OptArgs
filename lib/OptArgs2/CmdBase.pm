@@ -7,7 +7,7 @@ our @CARP_NOT = @OptArgs2::CARP_NOT;
 sub TIESCALAR {
     my $class = shift;
     ( 3 == @_ )
-      or Optargs2->throw_error( 'Usage', 'args: optargs,name,sub' );
+      or OptArgs2::croak( 'Usage', 'args: optargs,name,sub' );
     return bless [@_], $class;
 }
 
@@ -71,7 +71,7 @@ sub BUILD {
     while ( my ( $name, $args ) = splice @{ $self->optargs }, 0, 2 ) {
         if ( $args->{isa} =~ s/^--// ) {
             if ( length( my $alias = $args->{alias} //= undef ) ) {
-                OptArgs2->throw_error( 'DuplicateAlias',
+                OptArgs2::croak( 'DuplicateAlias',
                     "duplicate '-$alias' alias by --$name" )
                   if $aliases{$alias}++;
             }
@@ -88,6 +88,36 @@ sub BUILD {
             );
         }
     }
+}
+
+my %usage_why = (
+    ArgRequired      => undef,
+    GetOptError      => undef,
+    Help             => undef,
+    HelpSummary      => undef,
+    HelpTree         => undef,
+    OptRequired      => undef,
+    OptUnknown       => undef,
+    SubCmdRequired   => undef,
+    SubCmdUnknown    => undef,
+    UnexpectedOptArg => undef,
+);
+
+sub throw {
+    my $self = shift;
+    my $type = shift // OptArgs2::croak( 'Usage', 'throw($TYPE,$why,$info)' );
+    my $why  = shift // $type;
+    my $info = shift // '';
+    my $pkg  = 'OptArgs2::Usage::' . $why;
+
+    OptArgs2::croak( 'Usage', "unknown usage why: $why" )
+      unless exists $usage_why{$why};
+
+    no strict 'refs';
+    *{ $pkg . '::ISA' } = ['OptArgs2::Status'];
+
+    my $usage = $self->usage_string( $type, $info );
+    OptArgs2::die_paged( bless \$usage, $pkg );
 }
 
 sub add_arg {
@@ -111,7 +141,7 @@ sub add_cmd {
         parent => $self,
     );
 
-    OptArgs2->throw_error( 'CmdExists', 'cmd exists' )
+    OptArgs2::croak( 'CmdExists', 'cmd exists' )
       if exists $self->_subcmds->{ $subcmd->name };
 
     $self->_subcmds->{ $subcmd->name } = $subcmd;
@@ -142,7 +172,7 @@ sub parse {
     my $source = \@_;
 
     map {
-        OptArgs2->throw_error( 'UndefOptArg', 'optargs argument undefined!' )
+        OptArgs2::croak( 'UndefOptArg', 'optargs argument undefined!' )
           if !defined $_
     } @$source;
 
@@ -361,8 +391,7 @@ sub parse {
 
     map { $_->[0]->( $cmd, $optargs->{ $_->[1] } ) } @trigger;
 
-    OptArgs2->throw_usage( $reason->[0],
-        $cmd->usage_string( OptArgs2::USAGE_USAGE(), $reason->[1] ) )
+    $cmd->throw( OptArgs2::USAGE_USAGE(), @$reason )
       if $reason;
 
     return ( $cmd->class, $optargs, ( $cmd->class . '.pm' ) =~ s!::!/!gr );

@@ -28,8 +28,8 @@ use Class::Inline
   isa      => {
     required => 1,
     isa      => sub {
-        $isa2name{ $_[0] } // OptArgs2->throw_error( 'InvalidIsa',
-            'invalid isa type: ' . $_[0] );
+        $isa2name{ $_[0] }
+          // OptArgs2::croak( 'InvalidIsa', 'invalid isa type: ' . $_[0] );
         $_[0];
     },
   },
@@ -45,10 +45,10 @@ our @CARP_NOT = @OptArgs2::CARP_NOT;
 sub BUILD {
     my $self = shift;
 
-    OptArgs2->throw_error( 'Conflict', q{'default' and 'required' conflict} )
+    OptArgs2::croak( 'Conflict', q{'default' and 'required' conflict} )
       if $self->required and defined $self->default;
 
-    OptArgs2->throw_error( 'Conflict', q{'isa SubCmd' and 'greedy' conflict} )
+    OptArgs2::croak( 'Conflict', q{'isa SubCmd' and 'greedy' conflict} )
       if $self->greedy and $self->isa eq 'SubCmd';
 }
 

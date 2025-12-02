@@ -1,3 +1,10 @@
+package OptArgs2::Status {
+    use overload
+      bool     => sub { 1 },
+      '""'     => sub { ${ $_[0] } },
+      fallback => 1;
+}
+
 package OptArgs2;
 use strict;
 use warnings;
@@ -49,6 +56,23 @@ sub rows {
     $chars[1] // _chars()->[1];
 }
 
+sub die_paged {
+    my $err = shift // 'die_paged($ERR)';
+    if ( -t STDERR ) {
+        my $lines = scalar( split /\n/, $err );
+        $lines++ if $err =~ m/\n\z/;
+
+        if ( $lines >= OptArgs2::rows() ) {
+            require OptArgs2::Pager;
+            my $pager = OptArgs2::Pager->new( auto => 0 );
+            local *STDERR = $pager->fh;
+            die $err;
+        }
+    }
+
+    die $err;
+}
+
 my %error_types = (
     CmdExists         => undef,
     CmdNotFound       => undef,
@@ -61,13 +85,11 @@ my %error_types = (
     Usage             => undef,
 );
 
-sub throw_error {
+sub croak {
     require Carp;
-
-    my $proto = shift;
-    my $type  = shift // Carp::croak( 'Usage', 'error($TYPE, [$msg])' );
-    my $pkg   = 'OptArgs2::Error::' . $type;
-    my $msg   = shift // "($pkg)";
+    my $type = shift // Carp::croak( 'Usage', 'croak($TYPE, [$msg])' );
+    my $pkg  = 'OptArgs2::Error::' . $type;
+    my $msg  = shift // "($pkg)";
     $msg = sprintf( $msg, @_ ) if @_;
 
     Carp::croak( 'Usage', "unknown error type: $type" )
@@ -78,58 +100,15 @@ sub throw_error {
     no strict 'refs';
     *{ $pkg . '::ISA' } = ['OptArgs2::Status'];
 
-    die bless \$msg, $pkg;
-}
-
-my %usage_types = (
-    ArgRequired      => undef,
-    GetOptError      => undef,
-    Help             => undef,
-    HelpSummary      => undef,
-    HelpTree         => undef,
-    OptRequired      => undef,
-    OptUnknown       => undef,
-    SubCmdRequired   => undef,
-    SubCmdUnknown    => undef,
-    UnexpectedOptArg => undef,
-);
-
-sub throw_usage {
-    my $proto = shift;
-    my $type  = shift // $proto->error( 'Usage', 'usage($TYPE, $str)' );
-    my $str   = shift // $proto->error( 'Usage', 'usage($type, $STR)' );
-    my $pkg   = 'OptArgs2::Usage::' . $type;
-
-    $proto->error( 'Usage', "unknown usage reason: $type" )
-      unless exists $usage_types{$type};
-
-    if ( -t STDERR ) {
-        my $lines = scalar( split /\n/, $str );
-        $lines++ if $str =~ m/\n\z/;
-
-        if ( $lines >= OptArgs2::rows() ) {
-            require OptArgs2::Pager;
-            my $pager = OptArgs2::Pager->new( auto => 0 );
-            local *STDERR = $pager->fh;
-
-            no strict 'refs';
-            *{ $pkg . '::ISA' } = ['OptArgs2::Status'];
-            die bless \$str, $pkg;
-        }
-    }
-
-    no strict 'refs';
-    *{ $pkg . '::ISA' } = ['OptArgs2::Status'];
-    die bless \$str, $pkg;
+    die_paged( bless \$msg, $pkg );
 }
 
 sub class_optargs {
     my $class = shift
-      || OptArgs2->throw_error( 'Usage', 'class_optargs($CMD,[@argv])' );
+      || croak( 'Usage', 'class_optargs($CMD,[@argv])' );
 
     my $cmd = $COMMAND{$class}
-      || OptArgs2->throw_error( 'CmdNotFound',
-        'command class not found: ' . $class );
+      || croak( 'CmdNotFound', 'command class not found: ' . $class );
 
     my @source = @_;
 
@@ -142,9 +121,9 @@ sub class_optargs {
 }
 
 sub cmd {
-    my $class = shift || OptArgs2->throw_error( 'Usage', 'cmd($CLASS,@args)' );
+    my $class = shift || croak( 'Usage', 'cmd($CLASS,@args)' );
 
-    OptArgs2->throw_error( 'CmdExists', "command already defined: $class" )
+    croak( 'CmdExists', "command already defined: $class" )
       if exists $COMMAND{$class};
 
     require OptArgs2::Cmd;
@@ -163,21 +142,18 @@ sub optargs {
 }
 
 sub subcmd {
-    my $class =
-      shift || OptArgs2->throw_error( 'Usage', 'subcmd($CLASS,%%args)' );
+    my $class = shift || croak( 'Usage', 'subcmd($CLASS,%%args)' );
 
-    OptArgs2->throw_error( 'SubCmdExists',
-        "subcommand already defined: $class" )
+    croak( 'SubCmdExists', "subcommand already defined: $class" )
       if exists $COMMAND{$class};
 
-    OptArgs2->throw_error( 'ParentCmdNotFound',
+    croak( 'ParentCmdNotFound',
         "no '::' in class '$class' - must have a parent" )
       unless $class =~ m/(.+)::(.+)/;
 
     my $parent_class = $1;
 
-    OptArgs2->throw_error( 'ParentCmdNotFound',
-        "parent class not found: " . $parent_class )
+    croak( 'ParentCmdNotFound', "parent class not found: " . $parent_class )
       unless exists $COMMAND{$parent_class};
 
     $COMMAND{$class} = $COMMAND{$parent_class}->add_cmd(
@@ -193,7 +169,7 @@ sub usage {
     };
     my $style = shift;
 
-    OptArgs2->throw_error( 'CmdNotFound', "command not found: $class" )
+    croak( 'CmdNotFound', "command not found: $class" )
       unless exists $COMMAND{$class};
 
     return $COMMAND{$class}->usage_string($style);
@@ -222,13 +198,6 @@ sub opt {
         name => $name,
         @_,
     );
-}
-
-package OptArgs2::Status {
-    use overload
-      bool     => sub { 1 },
-      '""'     => sub { ${ $_[0] } },
-      fallback => 1;
 }
 
 1;

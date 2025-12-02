@@ -32,8 +32,8 @@ use Class::Inline
   isa     => {
     required => 1,
     isa      => sub {
-        $isa2name{ $_[0] } // OptArgs2->throw_error( 'InvalidIsa',
-            'invalid isa type: ' . $_[0] );
+        $isa2name{ $_[0] }
+          // OptArgs2::croak( 'InvalidIsa', 'invalid isa type: ' . $_[0] );
         $_[0];
     },
   },
@@ -69,28 +69,20 @@ sub new_from {
             my $val = shift;
 
             if ( $val == 1 ) {
-                OptArgs2->throw_usage( OptArgs2::USAGE_HELP(),
-                    $cmd->usage_string( OptArgs2::USAGE_HELP() ) );
+                $cmd->throw( OptArgs2::USAGE_HELP() );
             }
             elsif ( $val == 2 ) {
-                OptArgs2->throw_usage( OptArgs2::USAGE_HELPTREE(),
-                    $cmd->usage_string( OptArgs2::USAGE_HELPTREE() ) );
+                $cmd->throw( OptArgs2::USAGE_HELPTREE() );
             }
             else {
-                OptArgs2->throw_usage(
-                    'UnexpectedOptArg',
-                    $cmd->usage_string(
-                        OptArgs2::USAGE_USAGE(),
-                        qq{"--$ref->{name}" used too many times}
-                    )
-                );
+                $cmd->throw( OptArgs2::USAGE_USAGE(), 'UnexpectedOptArg',
+                    qq{"--$ref->{name}" used too many times} );
             }
         };
     }
 
     if ( !exists $isa2getopt{ $ref->{isa} } ) {
-        return OptArgs2->throw_error( 'InvalidIsa',
-            'invalid isa "%s" for opt "%s"',
+        return OptArgs2::croak( 'InvalidIsa', 'invalid isa "%s" for opt "%s"',
             $ref->{isa}, $ref->{name} );
     }
 
