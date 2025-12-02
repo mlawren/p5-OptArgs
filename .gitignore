@@ -16,5 +16,3 @@ LICENSE
 *.swo
 *.swp
 .gcli
-debian/liboptargs2-perl/*
-debian/.debhelper
