@@ -112,8 +112,8 @@ DESCRIPTION
 
     API changes: optargs(), cmd(), subcmd()
         Commands and subcommands are now explicitly defined using
-        "optargs()", "cmd()" and "subcmd()". The arguments to
-        "optargs()" have changed to match "cmd()".
+        optargs(), cmd() and subcmd(). The arguments to optargs() have
+        changed to match cmd().
 
     Deprecated: arg(), opt(), fallback arguments
         Optargs definitions must now be defined in an array reference
@@ -145,8 +145,8 @@ DESCRIPTION
             --help,  -h   print a usage message and exit
             --quiet, -q   output nothing while working
 
-    The "optargs()" function parses the command line (@ARGV) according
-    to the included declarations and returns a single HASH reference. If
+    The optargs() function parses the command line (@ARGV) according to
+    the included declarations and returns a single HASH reference. If
     the command is not called correctly then an exception is thrown
     containing an automatically generated usage message as shown above.
     Because OptArgs2 fully knows the valid arguments and options it can
@@ -219,9 +219,9 @@ DESCRIPTION
     syntax which we will describe over three phases:
 
     Definitions
-        Your command structure is defined using calls to the "cmd()" and
-        "subcmd()" functions. The first argument to both functions is
-        the name of the Perl class that implements the (sub-)command.
+        Your command structure is defined using calls to the cmd() and
+        subcmd() functions. The first argument to both functions is the
+        name of the Perl class that implements the (sub-)command.
 
             cmd 'App::demo' => (
                 comment => 'the demo command',
@@ -274,10 +274,10 @@ DESCRIPTION
         one or more separate packages or plugins, as you like.
 
     Parsing
-        The "class_optargs()" function is called to parse the @ARGV
-        array and call the appropriate "arg()" and "opt()" definitions
-        as needed. It's first argument is generally the top-level
-        command name you used in your first "cmd()" call.
+        The class_optargs() function is called to parse the @ARGV array
+        and call the appropriate arg() and opt() definitions as needed.
+        It's first argument is generally the top-level command name you
+        used in your first cmd() call.
 
             my ($class, $opts, $file) = class_optargs('App::demo');
             require $file;
@@ -286,7 +286,7 @@ DESCRIPTION
 
         The additional return value $class is the name of the actual
         (sub-)command to which the $opts HASHref applies. Usage
-        exceptions are raised just the same as with the "optargs()"
+        exceptions are raised just the same as with the optargs()
         function.
 
             error: unknown option "--invalid"
@@ -388,7 +388,7 @@ DESCRIPTION
         will raise an error when the given argument doesn't match any
         subcommand. However, when fallthru is true the
         non-subcommand-matching argument will be passed back to the
-        "class_optargs()" caller.
+        class_optargs() caller.
 
         This is typically useful when you have aliases that you can
         expand into real subcommands.
@@ -609,7 +609,7 @@ FUNCTIONS
             to define them again in child subcommands.
 
         no_help
-            By default "cmd()" automatically adds a default '--help'
+            By default cmd() automatically adds a default '--help'
             option. When used once a standard help message is displayed.
             When used twice a help tree showing subcommands is
             displayed. To disable the automatic help set "no_help" to a
@@ -628,10 +628,10 @@ FUNCTIONS
     optargs( @cmd_optargs ) -> HASHref
         This is a convenience function for single-level commands that:
 
-        *   passes it's arguments directly to "cmd()",
+        *   passes it's arguments directly to cmd(),
 
-        *   calls "class_optargs()" to parse '@ARGV' and returns the
-            $opts HASHref result directly.
+        *   calls class_optargs() to parse '@ARGV' and returns the $opts
+            HASHref result directly.
 
     rows() -> Integer
         Returns the terminal row height. Only exported on request.
@@ -640,7 +640,7 @@ FUNCTIONS
         Defines the subcommand $subclass of a previously defined
         (sub-)command.
 
-        Accepts the same parameters as "cmd()" in addition to the
+        Accepts the same parameters as cmd() in addition to the
         following:
 
         hidden

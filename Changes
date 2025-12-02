@@ -6,20 +6,15 @@ v0.0.0 (yyyy-mm-dd)
     New Features:
         - None.
 
-    Enhancements:
-        - None.
+    Improvements:
+        - Improve StatusLine test coverage.
+        - Improve Pager test coverage.
+        - Split (most) packages into separate files
 
     Bug Fixes:
         - None.
 
-    Code Maintenance
-        - Improve StatusLine test coverage.
-        - Improve Pager test coverage.
-
-    Dependencies:
-        - None.
-
-    Packaging:
+    Packaging/Dependencies:
         - None.
 
 v2.0.15 (2025-04-25)
