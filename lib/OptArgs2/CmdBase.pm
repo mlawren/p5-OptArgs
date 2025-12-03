@@ -1,26 +1,6 @@
+package OptArgs2::CmdBase;
 use strict;
 use warnings;
-
-package OptArgs2::CODEREF;
-our @CARP_NOT = @OptArgs2::CARP_NOT;
-
-sub TIESCALAR {
-    my $class = shift;
-    ( 3 == @_ )
-      or OptArgs2::croak( 'Usage', 'args: optargs,name,sub' );
-    return bless [@_], $class;
-}
-
-sub FETCH {
-    my $self = shift;
-    my ( $optargs, $name, $sub ) = @$self;
-    untie $optargs->{$name};
-    $optargs->{$name} = $sub->($optargs);
-}
-
-1;
-
-package OptArgs2::CmdBase;
 
 use overload
   bool     => sub { 1 },
@@ -241,6 +221,25 @@ sub parents {
     my $self = shift;
     return unless $self->parent;
     return ( $self->parent->parents, $self->parent );
+}
+
+package OptArgs2::CODEREF {
+    our @CARP_NOT = @OptArgs2::CARP_NOT;
+
+    sub TIESCALAR {
+        my $class = shift;
+        ( 3 == @_ )
+          or OptArgs2::croak( 'Usage', 'args: optargs,name,sub' );
+        return bless [@_], $class;
+    }
+
+    sub FETCH {
+        my $self = shift;
+        my ( $optargs, $name, $sub ) = @$self;
+        untie $optargs->{$name};
+        $optargs->{$name} = $sub->($optargs);
+    }
+
 }
 
 sub parse {
