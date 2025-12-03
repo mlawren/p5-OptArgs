@@ -4,7 +4,7 @@ v0.0.0 (yyyy-mm-dd)
         - None.
 
     New Features:
-        - None.
+        - "Input" type that reads the contents of a file or STDIN
 
     Improvements:
         - Improve StatusLine test coverage.

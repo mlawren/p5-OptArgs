@@ -6,6 +6,7 @@ use parent 'OptArgs2::OptArgBase';
 my %isa2name = (
     'ArrayRef' => 'Str',
     'HashRef'  => 'Str',
+    'Input'    => 'Str',
     'Int'      => 'Int',
     'Num'      => 'Num',
     'Str'      => 'Str',
@@ -14,6 +15,7 @@ my %isa2name = (
 
 my %arg2getopt = (
     'Str'      => '=s',
+    'Input'    => '=s',
     'Int'      => '=i',
     'Num'      => '=f',
     'ArrayRef' => '=s@',

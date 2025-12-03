@@ -302,6 +302,23 @@ sub parse {
                       $name,
                       $result;
                 }
+                elsif ( $opt->isa eq 'Input' ) {
+                    my $enc = $opt->encoding;
+                    tie $optargs->{$name}, 'OptArgs2::CODEREF', $optargs,
+                      $name, $result eq '-'
+                      ? sub {
+                        binmode STDIN, $enc;
+                        local $/;
+                        <STDIN>;
+                      }
+                      : sub {
+                        open my $fh, '<', $result
+                          or die sprintf "open(%s): %s\n", $result, $!;
+                        binmode $fh, $enc;
+                        local $/;
+                        <$fh>;
+                    }
+                }
                 else {
                     $optargs->{$name} = $result;
                 }
@@ -439,6 +456,23 @@ sub parse {
                     tie $optargs->{$name}, 'OptArgs2::CODEREF', $optargs,
                       $name,
                       $result;
+                }
+                elsif ( $isa eq 'Input' ) {
+                    my $enc = $arg->encoding;
+                    tie $optargs->{$name}, 'OptArgs2::CODEREF', $optargs,
+                      $name, $result eq '-'
+                      ? sub {
+                        binmode STDIN, $enc;
+                        local $/;
+                        <STDIN>;
+                      }
+                      : sub {
+                        open my $fh, '<', $result
+                          or die sprintf "open(%s): %s\n", $result, $!;
+                        binmode $fh, $enc;
+                        local $/;
+                        <$fh>;
+                    }
                 }
                 else {
                     $optargs->{$name} = $result;

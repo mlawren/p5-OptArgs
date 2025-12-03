@@ -10,6 +10,7 @@ my %isa2name = (
     'Flag'     => '',
     'HashRef'  => 'Str',
     'Int'      => 'Int',
+    'Input'    => 'Str',
     'Num'      => 'Num',
     'Str'      => 'Str',
 );
@@ -21,6 +22,7 @@ my %isa2getopt = (
     'Flag'     => '!',
     'HashRef'  => '=s%',
     'Int'      => '=i',
+    'Input'    => '=s',
     'Num'      => '=f',
     'Str'      => '=s',
 );

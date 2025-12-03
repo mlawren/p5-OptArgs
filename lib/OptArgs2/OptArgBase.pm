@@ -2,7 +2,7 @@ package OptArgs2::OptArgBase;
 use strict;
 use warnings;
 
-### START Class::Inline ### v0.0.1 Wed Dec  3 10:44:52 2025
+### START Class::Inline ### v0.0.1 Wed Dec  3 12:04:29 2025
 require Carp;
 our ( @_CLASS, $_FIELDS, %_NEW );
 
@@ -15,16 +15,21 @@ sub _NEW {
         Carp::croak( 'OptArgs2::OptArgBase required initial argument(s): '
               . join( ', ', @missing ) );
     }
-    map { delete $_[1]->{$_} } 'comment', 'default', 'getopt', 'name',
-      'required', 'show_default';
+    map { delete $_[1]->{$_} } 'comment', 'default', 'encoding', 'getopt',
+      'name', 'required', 'show_default';
 }
 
 sub __RO {
     my ( undef, undef, undef, $sub ) = caller(1);
     Carp::confess("attribute $sub is read-only");
 }
-sub comment      { __RO() if @_ > 1; $_[0]{'comment'}      // undef }
-sub default      { __RO() if @_ > 1; $_[0]{'default'}      // undef }
+sub comment { __RO() if @_ > 1; $_[0]{'comment'} // undef }
+sub default { __RO() if @_ > 1; $_[0]{'default'} // undef }
+
+sub encoding {
+    __RO() if @_ > 1;
+    $_[0]{'encoding'} //= $_FIELDS->{'encoding'}->{'default'};
+}
 sub getopt       { __RO() if @_ > 1; $_[0]{'getopt'}       // undef }
 sub name         { __RO() if @_ > 1; $_[0]{'name'}         // undef }
 sub required     { __RO() if @_ > 1; $_[0]{'required'}     // undef }
@@ -34,6 +39,7 @@ sub show_default { __RO() if @_ > 1; $_[0]{'show_default'} // undef }
   FIELDS   => {
     comment      => { required => 1, },
     default      => {},
+    encoding     => { default => ':encoding(UTF-8)' },
     getopt       => {},
     name         => { required => 1, },
     required     => {},

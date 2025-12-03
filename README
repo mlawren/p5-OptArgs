@@ -400,10 +400,15 @@ DESCRIPTION
             ------------------------------
              'Str'           '=s'
              'Int'           '=i'
+             'Input'         '=s'
              'Num'           '=f'
              'ArrayRef'      's@'
              'HashRef'       's%'
              'SubCmd'        '=s'
+
+        The "Input" type is for automatically placing the contents of a
+        file into the optargs result. When the argument '-' is provided
+        then the result comes from "STDIN".
 
     isa_name
         When provided this parameter will be presented instead of the
@@ -475,8 +480,13 @@ DESCRIPTION
              '--Counter'                      '+'
              '--HashRef'                      's%'
              '--Int'                          '=i'
+             '--Input'                        '=s'
              '--Num'                          '=f'
              '--Str'                          '=s'
+
+        The "Input" type is for automatically placing the contents of a
+        file into the optargs result. When the argument '-' is provided
+        then the result comes from "STDIN".
 
     isa_name
         When provided this parameter will be presented instead of the
@@ -551,6 +561,7 @@ DESCRIPTION
         option      ArrayRef    -               --option Str
         option      HashRef     -               --option Str
         option      Int         -               --option Int
+        option      Input       -               --option Str
         option      Num         -               --option Num
         option      Str         -               --option Str
         option      *           XX              --option XX

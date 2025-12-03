@@ -133,10 +133,11 @@ sub cmd {
 sub optargs {
     my $class = caller;
 
-    if ( exists $COMMAND{$class} ) {    # Legacy interface
+    if ( !@_ and exists $COMMAND{$class} ) {    # Legacy interface
         return ( class_optargs($class) )[1];
     }
 
+    delete $COMMAND{$class};
     cmd( $class, @_ );
     ( class_optargs($class) )[1];
 }
@@ -645,10 +646,15 @@ following table:
     ------------------------------
      'Str'           '=s'
      'Int'           '=i'
+     'Input'         '=s'
      'Num'           '=f'
      'ArrayRef'      's@'
      'HashRef'       's%'
      'SubCmd'        '=s'
+
+The C<Input> type is for automatically placing the contents of a file
+into the optargs result. When the argument '-' is provided then the
+result comes from C<STDIN>.
 
 =item isa_name
 
@@ -734,8 +740,13 @@ following table:
      '--Counter'                      '+'
      '--HashRef'                      's%'
      '--Int'                          '=i'
+     '--Input'                        '=s'
      '--Num'                          '=f'
      '--Str'                          '=s'
+
+The C<Input> type is for automatically placing the contents of a file
+into the optargs result. When the argument '-' is provided then the
+result comes from C<STDIN>.
 
 =item isa_name
 
@@ -815,6 +826,7 @@ The remaining types are presented as follows:
     option      ArrayRef    -               --option Str
     option      HashRef     -               --option Str
     option      Int         -               --option Int
+    option      Input       -               --option Str
     option      Num         -               --option Num
     option      Str         -               --option Str
     option      *           XX              --option XX
