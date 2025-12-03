@@ -21,17 +21,93 @@ sub FETCH {
 1;
 
 package OptArgs2::CmdBase;
+
 use overload
   bool     => sub { 1 },
   '""'     => sub { shift->class },
   fallback => 1;
+
 use Getopt::Long qw/GetOptionsFromArray/;
 use List::Util   qw/max/;
 use OptArgs2::Arg;
 use OptArgs2::Opt;
 use OptArgs2::SubCmd;
 
-use Class::Inline
+### START Class::Inline ### v0.0.1 Wed Dec  3 10:44:51 2025
+require Scalar::Util;
+require Carp;
+our ( @_CLASS, $_FIELDS, %_NEW );
+
+sub _NEW {
+    CORE::state $fix_FIELDS = do {
+        $_FIELDS = { @_CLASS > 1 ? @_CLASS : %{ $_CLASS[0] } };
+        $_FIELDS = $_FIELDS->{'FIELDS'} if exists $_FIELDS->{'FIELDS'};
+    };
+    if ( my @missing = grep { not exists $_[0]->{$_} } 'class', 'comment' ) {
+        Carp::croak( 'OptArgs2::CmdBase required initial argument(s): '
+              . join( ', ', @missing ) );
+    }
+    Scalar::Util::weaken( $_[0]{'parent'} )
+      if exists $_[0]{'parent'} && ref $_[0]{'parent'};
+    map { delete $_[1]->{$_} } '_subcmds', '_values', 'abbrev', 'args',
+      'class', 'comment', 'hidden', 'optargs', 'opts', 'parent', 'show_color',
+      'show_default', 'subcmds';
+}
+
+sub __RO {
+    my ( undef, undef, undef, $sub ) = caller(1);
+    Carp::confess("attribute $sub is read-only");
+}
+
+sub _subcmds {
+    __RO() if @_ > 1;
+    $_[0]{'_subcmds'} //= $_FIELDS->{'_subcmds'}->{'default'}->( $_[0] );
+}
+
+sub _values {
+    if ( @_ > 1 ) { $_[0]{'_values'} = $_[1] }
+    $_[0]{'_values'} // undef;
+}
+
+sub abbrev {
+    if ( @_ > 1 ) { $_[0]{'abbrev'} = $_[1] }
+    $_[0]{'abbrev'} // undef;
+}
+
+sub args {
+    __RO() if @_ > 1;
+    $_[0]{'args'} //= $_FIELDS->{'args'}->{'default'}->( $_[0] );
+}
+sub class   { __RO() if @_ > 1; $_[0]{'class'}   // undef }
+sub comment { __RO() if @_ > 1; $_[0]{'comment'} // undef }
+sub hidden  { __RO() if @_ > 1; $_[0]{'hidden'}  // undef }
+
+sub optargs {
+    if ( @_ > 1 ) { $_[0]{'optargs'} = $_[1] }
+    $_[0]{'optargs'} //= $_FIELDS->{'optargs'}->{'default'}->( $_[0] );
+}
+
+sub opts {
+    __RO() if @_ > 1;
+    $_[0]{'opts'} //= $_FIELDS->{'opts'}->{'default'}->( $_[0] );
+}
+sub parent { __RO() if @_ > 1; $_[0]{'parent'} // undef }
+
+sub show_color {
+    __RO() if @_ > 1;
+    $_[0]{'show_color'} //= $_FIELDS->{'show_color'}->{'default'}->( $_[0] );
+}
+
+sub show_default {
+    __RO() if @_ > 1;
+    $_[0]{'show_default'} //= $_FIELDS->{'show_default'}->{'default'};
+}
+
+sub subcmds {
+    __RO() if @_ > 1;
+    $_[0]{'subcmds'} //= $_FIELDS->{'subcmds'}->{'default'}->( $_[0] );
+}
+@_CLASS = grep 1,    ### END Class::Inline ###
   abstract => 1,
   FIELDS   => {
     abbrev  => { is       => 'rw', },

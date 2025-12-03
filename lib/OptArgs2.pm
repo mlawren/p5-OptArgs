@@ -1,14 +1,8 @@
-package OptArgs2::Status {
-    use overload
-      bool     => sub { 1 },
-      '""'     => sub { ${ $_[0] } },
-      fallback => 1;
-}
-
 package OptArgs2;
 use strict;
 use warnings;
 use Encode::Locale 'decode_argv';
+use OptArgs2::Cmd;
 use Exporter::Tidy
   default => [qw/class_optargs cmd optargs subcmd arg opt/],
   other   => [qw/usage cols rows/];
@@ -85,6 +79,13 @@ my %error_types = (
     Usage             => undef,
 );
 
+package OptArgs2::Status {
+    use overload
+      bool     => sub { 1 },
+      '""'     => sub { ${ $_[0] } },
+      fallback => 1;
+}
+
 sub croak {
     require Carp;
     my $type = shift // Carp::croak( 'Usage', 'croak($TYPE, [$msg])' );
@@ -126,7 +127,6 @@ sub cmd {
     croak( 'CmdExists', "command already defined: $class" )
       if exists $COMMAND{$class};
 
-    require OptArgs2::Cmd;
     $COMMAND{$class} = OptArgs2::Cmd->new( class => $class, @_ );
 }
 

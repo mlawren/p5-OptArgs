@@ -25,7 +25,69 @@ my %isa2getopt = (
     'Str'      => '=s',
 );
 
-use Class::Inline
+### START Class::Inline ### v0.0.1 Wed Dec  3 10:44:52 2025
+require Carp;
+our ( @_CLASS, $_FIELDS, %_NEW );
+
+sub new {
+    my $class = shift;
+    my $CLASS = ref $class || $class;
+    $_NEW{$CLASS} //= do {
+        my ( %seen, @new, @build );
+        my @possible = ($CLASS);
+        while (@possible) {
+            my $c = shift @possible;
+            no strict 'refs';
+            push @new,   $c . '::_NEW'  if exists &{ $c . '::_NEW' };
+            push @build, $c . '::BUILD' if exists &{ $c . '::BUILD' };
+            $seen{$c}++;
+            if ( exists &{ $c . '::DOES' } ) {
+                push @possible, grep { not $seen{$_}++ } $c->DOES('*');
+            }
+            push @possible, grep { not $seen{$_}++ } @{ $c . '::ISA' };
+        }
+        [ [ reverse(@new) ], [ reverse(@build) ] ];
+    };
+    my $self = { @_ ? @_ > 1 ? @_ : %{ $_[0] } : () };
+    bless $self, $CLASS;
+    my $attrs = { map { ( $_ => 1 ) } keys %$self };
+    map { $self->$_($attrs) } @{ $_NEW{$CLASS}->[0] };
+    {
+        local $Carp::CarpLevel = 3;
+        Carp::carp("OptArgs2::Opt: unexpected argument '$_'") for keys %$attrs
+    }
+    map { $self->$_ } @{ $_NEW{$CLASS}->[1] };
+    $self;
+}
+
+sub _NEW {
+    CORE::state $fix_FIELDS = do {
+        $_FIELDS = { @_CLASS > 1 ? @_CLASS : %{ $_CLASS[0] } };
+        $_FIELDS = $_FIELDS->{'FIELDS'} if exists $_FIELDS->{'FIELDS'};
+    };
+    if ( my @missing = grep { not exists $_[0]->{$_} } 'isa' ) {
+        Carp::croak( 'OptArgs2::Opt required initial argument(s): '
+              . join( ', ', @missing ) );
+    }
+    $_[0]{'isa'} = eval { $_FIELDS->{'isa'}->{'isa'}->( $_[0]{'isa'} ) };
+    Carp::confess( 'OptArgs2::Opt isa: ' . $@ ) if $@;
+    map { delete $_[1]->{$_} } 'alias', 'hidden', 'isa', 'isa_name', 'trigger';
+}
+
+sub __RO {
+    my ( undef, undef, undef, $sub ) = caller(1);
+    Carp::confess("attribute $sub is read-only");
+}
+sub alias  { __RO() if @_ > 1; $_[0]{'alias'}  // undef }
+sub hidden { __RO() if @_ > 1; $_[0]{'hidden'} // undef }
+sub isa    { __RO() if @_ > 1; $_[0]{'isa'}    // undef }
+
+sub isa_name {
+    __RO() if @_ > 1;
+    $_[0]{'isa_name'} //= $_FIELDS->{'isa_name'}->{'default'}->( $_[0] );
+}
+sub trigger { __RO() if @_ > 1; $_[0]{'trigger'} // undef }
+@_CLASS = grep 1,    ### END Class::Inline ###
   alias   => {},
   hidden  => {},
   trigger => {},
