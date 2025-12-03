@@ -140,3 +140,39 @@ sub name_alias_type_comment {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+OptArgs2::Arg - A class representing a command positional argument
+
+=head1 SYNOPSIS
+
+  use OptArgs2::Cmd;
+
+  my $arg = OptArgs2::Cmd->new(...)->add_arg(
+    name     => 'arg_name',
+    isa      => 'Str',
+    required => 1,
+    default  => 'default_value',
+  );
+
+=head1 DESCRIPTION
+
+The C<OptArgs2::Arg> class is internal to L<OptArgs2>.
+
+=head1 AUTHOR
+
+Mark Lawrence <mark@rekudos.net>
+
+=head1 LICENSE
+
+Copyright 2016-2025 Mark Lawrence <mark@rekudos.net>
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 3 of the License, or (at your
+option) any later version.
+
+=cut
