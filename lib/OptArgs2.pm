@@ -765,15 +765,17 @@ processing before usage exceptions are raised.  This is primarily to
 support --help or --version options which would typically override
 usage errors.
 
-    version => (
-        isa     => '--Flag',
-        alias   => 'V',
-        comment => 'print version string and exit',
-        trigger => sub {
-            my ( $cmd, $value ) = @_;
-            die "$cmd version $VERSION\n";
-        }
-    );
+    optargs => [
+        version => (
+            isa     => '--Flag',
+            alias   => 'V',
+            comment => 'print version string and exit',
+            trigger => sub {
+                my ( $cmd, $value ) = @_;
+                die "$cmd version $VERSION\n";
+            }
+        ),
+    ],
 
 The trigger subref is passed two parameters: a OptArgs2::Cmd object and
 the value (if any) of the option. The OptArgs2::Cmd object is an
