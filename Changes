@@ -1,7 +1,4 @@
-v0.0.0 (yyyy-mm-dd)
-
-    API / Behaviour Changes:
-        - None.
+v2.0.16 (2025-12-05) TRIAL RELEASE
 
     New Features:
         - "Input" type that reads the contents of a file or STDIN
@@ -15,9 +12,6 @@ v0.0.0 (yyyy-mm-dd)
 
     Bug Fixes:
         - rt.cpan.org #149795: Trigger example uses deprecated syntax
-
-    Packaging/Dependencies:
-        - None.
 
 v2.0.15 (2025-04-25)
 
