@@ -10,6 +10,8 @@ v0.0.0 (yyyy-mm-dd)
         - Improve StatusLine test coverage.
         - Improve Pager test coverage.
         - Split (most) packages into separate files
+        - Update documentation examples and highlight underscore
+          handling
 
     Bug Fixes:
         - rt.cpan.org #149795: Trigger example uses deprecated syntax

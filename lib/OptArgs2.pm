@@ -218,7 +218,7 @@ v0.0.0 (yyyy-mm-dd)
     #!/usr/bin/env perl
     use OptArgs2;
 
-    # For simple scripts use optargs()
+For simple scripts use optargs():
 
     my $args = optargs(
         comment => 'script to paint things',
@@ -238,8 +238,8 @@ v0.0.0 (yyyy-mm-dd)
 
     print "Painting $args->{item}\n" unless $args->{quiet};
 
-    # For complex multi-command applications
-    # use cmd(), subcmd() and class_optargs()
+For complex multi-command applications use cmd(), subcmd() and
+class_optargs():
 
     cmd 'My::app' => (
         comment => 'handy work app',
@@ -276,7 +276,7 @@ v0.0.0 (yyyy-mm-dd)
                 required => 1,
                 comment  => 'the item to paint',
             },
-            color => {
+            my_colour => {
                 isa     => '--Str',
                 alias   => 'c',
                 comment => 'your faviourite',
@@ -365,17 +365,21 @@ following interactions from the shell:
     $ ./paint
     usage: paint ITEM [OPTIONS...]
 
-      arguments:
-        ITEM          the item to paint *required*
+      Synopsis:
+        script to paint things
 
-      options:
-        --help,  -h   print a usage message and exit
-        --quiet, -q   output nothing while working
+      Arguments:
+        ITEM            (Str)   the item to paint *required*
+
+      Options:
+        --help,      -h         print a Help message and exit
+        --quiet,     -q         output nothing while working
 
 The C<optargs()> function parses the command line (C<@ARGV>) according
 to the included declarations and returns a single HASH reference.  If
 the command is not called correctly then an exception is thrown
 containing an automatically generated usage message as shown above.
+
 Because B<OptArgs2> fully knows the valid arguments and options it can
 detect a wide range of errors:
 
@@ -398,13 +402,16 @@ And then check the usage again:
     $ ./paint
     usage: paint ITEM [MESSAGE...] [OPTIONS...]
 
-      arguments:
-        ITEM          the item to paint, *required*
-        MESSAGE       the message to paint on the item
+      Synopsis:
+        script to paint things
 
-      options:
-        --help,  -h   print a usage message and exit
-        --quiet, -q   output nothing while working
+      Arguments:
+        ITEM            (Str)   the item to paint *required*
+        MESSAGE         (Str)   the message to paint on the item
+
+      Options:
+        --help,      -h         print a Help message and exit
+        --quiet,     -q         output nothing while working
 
 Note that optional arguments are surrounded by square brackets, and
 that three dots (...) are postfixed to greedy arguments. A greedy
@@ -420,7 +427,7 @@ might make sense here, specified by a leading '--' type:
 
     optargs => [
         ...
-        colour => {
+        my_colour => {
             isa           => '--Str',
             default       => 'blue',
             comment       => 'the colour to use',
@@ -431,14 +438,17 @@ This now produces the following usage output:
 
     usage: paint ITEM [MESSAGE...] [OPTIONS...]
 
-      arguments:
-        ITEM               the item to paint
-        MESSAGE            the message to paint on the item
+      Synopsis:
+        script to paint things
 
-      options:
-        --colour=STR, -c   the colour to use [blue]
-        --help,       -h   print a usage message and exit
-        --quiet,      -q   output nothing while working
+      Arguments:
+        ITEM            (Str)   the item to paint *required*
+        MESSAGE         (Str)   the message to paint on the item
+
+      Options:
+        --help,      -h         print a Help message and exit
+        --my-colour, -c [blue]  the colour to paint
+        --quiet,     -q         output nothing while working
 
 =head2 Multi-Level Commands
 
@@ -490,12 +500,13 @@ of the Perl class that implements the (sub-)command.
         ],
     );
 
-    # Command hierarchy for the above code,
-    # printed by using '-h' twice:
-    #
-    #     demo COMMAND [OPTIONS...]
-    #         demo foo ACTION [OPTIONS...]
-    #         demo bar [OPTIONS...]
+The command hierarchy for the above code is displayed when help is
+asked for twice:
+
+    $ demo -h -h
+    demo COMMAND [OPTIONS...]
+        demo foo ACTION [OPTIONS...]
+        demo bar [OPTIONS...]
 
 An argument of type 'SubCmd' is an explicit indication that subcommands
 can occur in that position. The command hierarchy is based upon the
@@ -523,10 +534,12 @@ are raised just the same as with the C<optargs()> function.
 
     usage: demo COMMAND [OPTIONS...]
 
-        COMMAND       command to run
-          bar           demo bar
-          foo           demo foo
+      Command:      command to run *required*
+        bar         demo bar
+        foo ACTION  demo foo
 
+      Options:
+        --help,  -h   print a Help message and exit
         --quiet, -q   run quietly
 
 Note that options are inherited by subcommands.
@@ -567,9 +580,9 @@ names that match the actual implementation modules.
         ],
     }
 
-The reason for keeping this separate from lib/App/demo.pm is speed of
-loading. I don't want to have to load all of the modules that App::demo
-itself uses just to find out that I called the command incorrectly.
+My reason for keeping this separate from lib/App/demo.pm is speed.  I
+don't want users to wait while loading all modules that App::demo
+itself uses, just to find out that the command was called incorrectly.
 
 =item bin/demo
 
@@ -589,11 +602,10 @@ The command script itself is then usually fairly short:
 
 =head2 Argument Definition
 
-Arguments are key/hashref pairs defined inside an optargs => arrayref
-like so:
+Arguments are key/hashref pairs defined inside the optargs arrayref.
 
     optargs => [
-        name => {
+        file_name => {
             isa      => 'Str',
             comment  => 'the file to parse',
             default  => '-',
@@ -603,9 +615,15 @@ like so:
         },
     ],
 
-Any underscores in the name (i.e. the optargs "key") are replaced by
-dashes (-) for presentation and command-line parsing.  The following
-parameters are accepted:
+Any underscores in the name (i.e. the optargs "key") are kept for
+presentation, matching the C<$ENV_KEY> convention:
+
+    usage: cmd [FILE_NAME] [OPTIONS...]
+
+      Arguments:
+        FILE_NAME           (Str)  the file to parse
+
+The following argument parameters are accepted:
 
 =over
 
@@ -652,9 +670,9 @@ following table:
      'HashRef'       's%'
      'SubCmd'        '=s'
 
-The C<Input> type is for automatically placing the contents of a file
-into the optargs result. When the argument '-' is provided then the
-result comes from C<STDIN>.
+The C<Input> type is for automatically reading the contents of a file
+into the optargs result. When the argument is '-' then the result comes
+from C<STDIN>.
 
 =item isa_name
 
@@ -673,14 +691,14 @@ messages. Overrides the (sub-)command's C<show_default> setting.
 
 =back
 
-
 =head2 Option Definition
 
-Options are defined like arguments inside an optargs => arrayref like
-so, the key difference being the leading "--" for the "isa" parameter:
+Options are defined inside the optargs arrayref, similarly to
+arguments. The key difference is the leading "--" for the "isa"
+parameter:
 
     optargs => [
-        colour => {
+        my_colour => {
             isa          => '--Str',
             alias        => 'c',
             comment      => 'the colour to paint',
@@ -689,9 +707,10 @@ so, the key difference being the leading "--" for the "isa" parameter:
         },
     ],
 
-Any underscores in the name (i.e. the optargs "key") are replaced by
-dashes (-) for presentation and command-line parsing.  The following
-parameters are accepted:
+Any underscores in the option name are replaced by dashes (-) for
+presentation, but both C<--my_colour> and C<--my-colour> are accepted.
+
+The following construction parameters are valid:
 
 =over
 
@@ -841,9 +860,9 @@ The following functions are exported by default.
 
 =over
 
-=item class_optargs( $class, [ @argv ] ) -> ($subclass, $opts, $file)
+=item class_optargs( $class, [ @list ] ) -> ($subclass, $opts, $file)
 
-Parse @ARGV by default (or @argv when given) for the arguments and
+Parse @ARGV by default (or @list when given) for the arguments and
 options defined for command C<$class>.  C<@ARGV> will first be decoded
 using L<Encode::Locale>.
 
@@ -872,9 +891,9 @@ Throws an error / usage exception object (typically
 C<OptArgs2::Usage::*>) for missing or invalid arguments/options. Uses
 L<OptArgs2::Pager> for Help output.
 
-As an aid for testing, if the passed in argument C<@argv> (not @ARGV)
-contains a HASH reference, the key/value combinations of the hash will
-be added as options. An undefined value means a boolean option.
+As an aid for testing, if the passed in argument C<@list> contains a
+HASH reference, the key/value combinations of the hash will be added as
+options. An undefined value is taken to mean a boolean option.
 
 =item cols() -> Integer
 
@@ -916,7 +935,7 @@ set C<no_help> to a true value.
 
 =item show_color
 
-Boolean indicating if usage messages should use ANSI terminal color
+Boolean indicating if usage messages should use ANSI terminal colour
 codes to highlight different elements. True by default.
 
 =item show_default
