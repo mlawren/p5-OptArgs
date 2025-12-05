@@ -13,7 +13,7 @@ v0.0.0 (yyyy-mm-dd)
         - Minor documentation updates.
 
     Packaging/Dependencies:
-        - None.
+        - Allow packages in the filesystem to be indexed
 
 v2.0.16 (2025-12-05) TRIAL RELEASE
 

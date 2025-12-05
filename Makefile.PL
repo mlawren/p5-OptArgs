@@ -17,14 +17,8 @@ WriteMakefile(
         no_index       => {
             package => [
                 qw/
-                  OptArgs2::Arg
                   OptArgs2::CODEREF
-                  OptArgs2::Cmd
-                  OptArgs2::CmdBase
-                  OptArgs2::Opt
-                  OptArgs2::OptArgBase
                   OptArgs2::Status
-                  OptArgs2::SubCmd
                   /
             ],
         },
