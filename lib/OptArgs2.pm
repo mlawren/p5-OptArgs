@@ -356,6 +356,9 @@ options most likely would become Flag options instead.
 
 =back
 
+This module used to duplicate itself on CPAN as L<Getopt::Args2>, but
+as of the version 2 series that is no longer the case.
+
 =head2 Simple Commands
 
 To demonstrate the simple use case (i.e. with no subcommands) lets put
@@ -1014,11 +1017,8 @@ the command C<$class> or the class of the calling package (.e.g
 
 =head1 SEE ALSO
 
-L<OptArgs2::Pager>, L<OptArgs2::StatusLine>, L<Getopt::Long>,
-L<Encode::Locale>
-
-This module used to duplicate itself on CPAN as L<Getopt::Args2>, but
-as of the version 2 series that is no longer the case.
+L<Getopt::Long>, L<Encode::Locale>, L<OptArgs2::Pager>,
+L<OptArgs2::StatusLine>
 
 =head1 SUPPORT & DEVELOPMENT
 
