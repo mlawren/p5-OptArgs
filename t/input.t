@@ -6,7 +6,7 @@ use Test2::V0;
 
 my $o;
 
-@ARGV = ('MANIFEST.SKIP');
+@ARGV = ('cpanfile');
 $o    = optargs(
     comment => 'type Input',
     optargs => [
@@ -18,7 +18,7 @@ $o    = optargs(
     ],
 );
 
-like $o->{input}, qr/MYMETA/, 'type Input from argument';
+like $o->{input}, qr/CPANfile/, 'type Input from argument';
 
 @ARGV = ( '--input' => 'cpanfile' );
 $o    = optargs(
