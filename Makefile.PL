@@ -5,12 +5,12 @@ use 5.016;
 use ExtUtils::MakeMaker::CPANfile;
 
 WriteMakefile(
-    NAME     => 'OptArgs2',
-    ABSTRACT => 'CLI argument and option processing',
-    AUTHOR   => 'Mark Lawrence <nomad@null.net>',
-    VERSION  => 'v2.0.15',
-    LICENSE  => 'gpl_3',
-    test => { RECURSIVE_TEST_FILES => 1, },
+    NAME       => 'OptArgs2',
+    ABSTRACT   => 'CLI argument and option processing',
+    AUTHOR     => 'Mark Lawrence <nomad@null.net>',
+    VERSION    => 'v2.0.16',
+    LICENSE    => 'gpl_3',
+    test       => { RECURSIVE_TEST_FILES => 1, },
     META_MERGE => {
         dynamic_config => 1,
         'meta-spec'    => { version => 2 },
@@ -38,7 +38,7 @@ WriteMakefile(
                 web  => 'https//github.com/mlawren/p5-OptArgs',
             }
         },
-        release_status => 'stable',
+        release_status => 'testing',
     },
 );
 
