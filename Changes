@@ -1,19 +1,10 @@
-v0.0.0 (yyyy-mm-dd)
-
-    API / Behaviour Changes:
-        - None.
-
-    Bug Fixes:
-        - None.
-
-    New Features:
-        - None.
+v2.0.17 (2025-12-11)
 
     Improvements:
         - Minor documentation updates.
 
-    Packaging/Dependencies:
-        - Allow packages in the filesystem to be indexed
+    Packaging:
+        - Index previously hidden packages.
 
 v2.0.16 (2025-12-05) TRIAL RELEASE
 
