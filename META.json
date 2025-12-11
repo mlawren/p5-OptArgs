@@ -19,14 +19,8 @@
          "inc"
       ],
       "package" : [
-         "OptArgs2::Arg",
          "OptArgs2::CODEREF",
-         "OptArgs2::Cmd",
-         "OptArgs2::CmdBase",
-         "OptArgs2::Opt",
-         "OptArgs2::OptArgBase",
-         "OptArgs2::Status",
-         "OptArgs2::SubCmd"
+         "OptArgs2::Status"
       ]
    },
    "prereqs" : {
@@ -62,7 +56,7 @@
          }
       }
    },
-   "release_status" : "testing",
+   "release_status" : "stable",
    "resources" : {
       "bugtracker" : {
          "web" : "https://github.com/mlawren/p5-OptArgs/issues"
@@ -73,6 +67,6 @@
          "url" : "ssh://git@github.com/mlawren/p5-OptArgs.git"
       }
    },
-   "version" : "v2.0.16",
+   "version" : "v2.0.17",
    "x_serialization_backend" : "JSON::PP version 4.16"
 }

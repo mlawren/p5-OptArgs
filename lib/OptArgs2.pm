@@ -7,7 +7,7 @@ use Exporter::Tidy
   default => [qw/class_optargs cmd optargs subcmd arg opt/],
   other   => [qw/usage cols rows/];
 
-our $VERSION  = 'v2.0.16';
+our $VERSION  = 'v2.0.17';
 our @CARP_NOT = (
     qw/
       OptArgs2
@@ -211,7 +211,7 @@ OptArgs2 - command-line argument and option processor
 
 =head1 VERSION
 
-v2.0.16 (2025-12-05)
+v2.0.17 (2025-12-11)
 
 =head1 SYNOPSIS
 
@@ -355,6 +355,9 @@ prefix. What this means in practise is that many of your existing Bool
 options most likely would become Flag options instead.
 
 =back
+
+This module used to duplicate itself on CPAN as L<Getopt::Args2>, but
+as of the version 2 series that is no longer the case.
 
 =head2 Simple Commands
 
@@ -1014,11 +1017,8 @@ the command C<$class> or the class of the calling package (.e.g
 
 =head1 SEE ALSO
 
-L<OptArgs2::Pager>, L<OptArgs2::StatusLine>, L<Getopt::Long>,
-L<Encode::Locale>
-
-This module used to duplicate itself on CPAN as L<Getopt::Args2>, but
-as of the version 2 series that is no longer the case.
+L<Getopt::Long>, L<Encode::Locale>, L<OptArgs2::Pager>,
+L<OptArgs2::StatusLine>
 
 =head1 SUPPORT & DEVELOPMENT
 

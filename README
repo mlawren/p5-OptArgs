@@ -2,7 +2,7 @@ NAME
     OptArgs2 - command-line argument and option processor
 
 VERSION
-    v2.0.16 (2025-12-05)
+    v2.0.17 (2025-12-11)
 
 SYNOPSIS
         #!/usr/bin/env perl
@@ -129,6 +129,9 @@ DESCRIPTION
         "[no-]" prefix. What this means in practise is that many of your
         existing Bool options most likely would become Flag options
         instead.
+
+    This module used to duplicate itself on CPAN as Getopt::Args2, but
+    as of the version 2 series that is no longer the case.
 
   Simple Commands
     To demonstrate the simple use case (i.e. with no subcommands) lets
@@ -687,10 +690,7 @@ FUNCTIONS
         "main").
 
 SEE ALSO
-    OptArgs2::Pager, OptArgs2::StatusLine, Getopt::Long, Encode::Locale
-
-    This module used to duplicate itself on CPAN as Getopt::Args2, but
-    as of the version 2 series that is no longer the case.
+    Getopt::Long, Encode::Locale, OptArgs2::Pager, OptArgs2::StatusLine
 
 SUPPORT & DEVELOPMENT
     This distribution is managed via github:

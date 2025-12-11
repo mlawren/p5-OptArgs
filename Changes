@@ -1,3 +1,11 @@
+v2.0.17 (2025-12-11)
+
+    Improvements:
+        - Minor documentation updates.
+
+    Packaging:
+        - Index previously hidden packages.
+
 v2.0.16 (2025-12-05) TRIAL RELEASE
 
     New Features:

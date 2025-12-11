@@ -22,14 +22,8 @@ no_index:
     - t
     - inc
   package:
-    - OptArgs2::Arg
     - OptArgs2::CODEREF
-    - OptArgs2::Cmd
-    - OptArgs2::CmdBase
-    - OptArgs2::Opt
-    - OptArgs2::OptArgBase
     - OptArgs2::Status
-    - OptArgs2::SubCmd
 requires:
   Carp: '0'
   Encode::Locale: '0'
@@ -44,5 +38,5 @@ resources:
   bugtracker: https://github.com/mlawren/p5-OptArgs/issues
   homepage: https://github.com/mlawren/p5-OptArgs
   repository: ssh://git@github.com/mlawren/p5-OptArgs.git
-version: v2.0.16
+version: v2.0.17
 x_serialization_backend: 'CPAN::Meta::YAML version 0.018'
